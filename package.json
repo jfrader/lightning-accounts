@@ -1,8 +1,8 @@
 {
   "name": "lightning-accounts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "REST API For hosting custodial lightning balance and users",
-  "main": "src/index.ts",
+  "main": "dist/Client.ts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "scripts": {
     "start": "yarn build && pm2 start ecosystem.config.json --no-daemon",
