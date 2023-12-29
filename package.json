@@ -35,6 +35,10 @@
     "Fran <jfrader.com>",
     "Antonio Lázaro"
   ],
+  "files": [
+    "dist/Client.ts",
+    "dist/swagger.json"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",
