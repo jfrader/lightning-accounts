@@ -1,23 +1,36 @@
-import express from 'express';
-import auth from '../../middlewares/auth';
-import validate from '../../middlewares/validate';
-import { userValidation } from '../../validations';
-import { userController } from '../../controllers';
+import express from "express"
+import auth from "../../middlewares/auth"
+import validate from "../../middlewares/validate"
+import { userValidation } from "../../validations"
+import { userController } from "../../controllers"
+import { UserRights } from "../../config/roles"
 
-const router = express.Router();
-
-router
-  .route('/')
-  .post(auth('manageUsers'), validate(userValidation.createUser), userController.createUser)
-  .get(auth('getUsers'), validate(userValidation.getUsers), userController.getUsers);
+const router = express.Router()
 
 router
-  .route('/:userId')
-  .get(auth('getUsers'), validate(userValidation.getUser), userController.getUser)
-  .patch(auth('manageUsers'), validate(userValidation.updateUser), userController.updateUser)
-  .delete(auth('manageUsers'), validate(userValidation.deleteUser), userController.deleteUser);
+  .route("/")
+  .post(
+    auth(UserRights.users_write),
+    validate(userValidation.createUser),
+    userController.createUser
+  )
+  .get(auth(UserRights.users_read), validate(userValidation.getUsers), userController.getUsers)
 
-export default router;
+router
+  .route("/:userId")
+  .get(auth(UserRights.users_read), validate(userValidation.getUser), userController.getUser)
+  .patch(
+    auth(UserRights.users_write),
+    validate(userValidation.updateUser),
+    userController.updateUser
+  )
+  .delete(
+    auth(UserRights.users_write),
+    validate(userValidation.deleteUser),
+    userController.deleteUser
+  )
+
+export default router
 
 /**
  * @swagger

@@ -1,18 +1,6 @@
-# RESTful API Node Server Boilerplate
-
-A boilerplate/starter project for quickly building RESTful APIs using [Node.js](https://nodejs.org), [TypeScript](https://www.typescriptlang.org), [Express](https://expressjs.com), and [Prisma](https://www.prisma.io).
-
-This project is an adaptation of the project [RESTful API Node Server Boilerplate](https://github.com/hagopj13/node-express-boilerplate) using a [PostgreSQL](https://www.postgresql.org) database with [Prisma](https://www.prisma.io) ORM. Many of the files are just an adaptation to [TypeScript](https://www.typescriptlang.org) from the files of the previously mentioned project.
 
 ## Quick Start
 
-Clone the repo:
-
-```bash
-git clone --depth 1 https://github.com/antonio-lazaro/prisma-express-typescript-boilerplate.git
-cd prisma-express-typescript-boilerplate
-npx rimraf ./.git
-```
 
 Install the dependencies:
 
@@ -27,6 +15,10 @@ cp .env.example .env
 
 # open .env and modify the environment variables (if needed)
 ```
+
+## Disclaimer
+
+Based off of this boilerplate https://github.com/antonio-lazaro/prisma-express-typescript-boilerplate
 
 ## Table of Contents
 

@@ -1,8 +1,8 @@
-import { RequestHandler } from 'express';
-import { Request, Response, NextFunction } from 'express-serve-static-core';
+import { RequestHandler } from "express"
+import { Request, Response, NextFunction } from "express-serve-static-core"
 
 export interface CustomParamsDictionary {
-  [key: string]: any;
+  [key: string]: any
 }
 
 const catchAsync =
@@ -12,7 +12,7 @@ const catchAsync =
     res: Response<any, Record<string, any>, number>,
     next: NextFunction
   ) => {
-    Promise.resolve(fn(req, res, next)).catch((err) => next(err));
-  };
+    Promise.resolve(fn(req, res, next)).catch((err) => next(err))
+  }
 
-export default catchAsync;
+export default catchAsync

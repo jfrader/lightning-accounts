@@ -1,9 +1,9 @@
 {
-  "name": "prisma-express-typescript-boilerplate",
+  "name": "lightning-accounts",
   "version": "1.0.0",
-  "description": "REST API Boilerplate with Node JS, TypeScript, Express and Prisma",
+  "description": "REST API For hosting custodial lightning balance and users",
   "main": "src/index.ts",
-  "repository": "https://github.com/antonio-lazaro/prisma-express-typescript-boilerplate.git",
+  "repository": "https://github.com/jfrader/lightning-accounts.git",
   "scripts": {
     "start": "yarn build && pm2 start ecosystem.config.json --no-daemon",
     "dev": "cross-env NODE_ENV=development nodemon src/index.ts",
@@ -13,6 +13,8 @@
     "lint:fix": "eslint . --fix",
     "prettier": "prettier --check **/*.ts",
     "prettier:fix": "prettier --write **/*.ts",
+    "swagger:specs": "cross-env NODE_ENV=development ts-node src/swaggerSpecs.ts",
+    "swagger:client": "yarn swagger-typescript-api -p ./dist/swagger.json -o ./dist -n Client.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up",
@@ -21,30 +23,19 @@
     "docker:dev-db:start": "docker-compose -f docker-compose.only-db-dev.yml up -d",
     "docker:dev-db:stop": "docker-compose -f docker-compose.only-db-dev.yml down",
     "prepare": "husky install",
-    "build": "rimraf build && tsc -p tsconfig.json"
+    "build": "rimraf build && tsc -p tsconfig.json",
+    "prepublishOnly": "yarn swagger:specs && yarn swagger:client"
   },
   "keywords": [
-    "node",
-    "node.js",
-    "typescript",
-    "boilerplate",
-    "express",
-    "rest",
-    "api",
-    "prisma",
-    "postgresql",
-    "es6",
-    "es7",
-    "es8",
-    "es9",
-    "docker",
-    "passport",
-    "joi",
-    "eslint",
-    "prettier"
+    "bitcoin",
+    "lightning",
+    "satoshi"
   ],
-  "author": "Antonio Lázaro",
-  "license": "ISC",
+  "authors": [
+    "Fran <jfrader.com>",
+    "Antonio Lázaro"
+  ],
+  "license": "MIT",
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",
     "@jest/globals": "^29.3.1",
@@ -72,7 +63,8 @@
     "node-mocks-http": "^1.12.1",
     "nodemon": "^2.0.20",
     "prettier": "^2.8.1",
-    "prisma": "^4.10.1",
+    "prisma": "^5.7.1",
+    "swagger-typescript-api": "^13.0.3",
     "supertest": "^6.3.3",
     "swagger-jsdoc": "^6.2.5",
     "swagger-ui-express": "^4.6.0",
@@ -81,7 +73,7 @@
     "typescript": "^4.9.4"
   },
   "dependencies": {
-    "@prisma/client": "^4.7.1",
+    "@prisma/client": "^5.7.1",
     "@types/bcryptjs": "^2.4.2",
     "@types/nodemailer": "^6.4.7",
     "bcryptjs": "^2.4.3",
@@ -93,6 +85,7 @@
     "helmet": "^6.0.1",
     "http-status": "^1.5.3",
     "joi": "^17.7.0",
+    "lightning": "^10.2.1",
     "moment": "^2.29.4",
     "morgan": "^1.10.0",
     "nodemailer": "^6.8.0",

@@ -20,6 +20,7 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   Token           Token[]
+  wallet          Wallet?
 }
 
 model Token {
@@ -31,6 +32,36 @@ model Token {
   createdAt   DateTime  @default(now())
   user        User      @relation(fields: [userId], references: [id])
   userId      Int
+}
+
+model Wallet {
+  id            Int            @id @default(autoincrement())
+  user          User           @relation(fields: [userId], references: [id])
+  userId        Int            @unique
+  createdAt     DateTime       @default(now())
+  balanceInSats Int
+  disabled      Boolean
+  transactions  Transaction[]
+}
+
+model Transaction {
+  id             Int             @id @default(autoincrement())
+  wallet         Wallet          @relation(fields: [walletId], references: [id])
+  walletId       Int
+  valueInSats    Int
+  createdAt      DateTime        @default(now())
+  type           TransactionType
+  description    String?
+  walletImpacted Boolean
+  invoiceSettled Boolean
+  invoice        Json?
+}
+
+enum TransactionType {
+  SEND
+  RECEIVE
+  WITHDRAW
+  DEPOSIT
 }
 
 enum Role {

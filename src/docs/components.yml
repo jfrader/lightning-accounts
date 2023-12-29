@@ -2,9 +2,14 @@ components:
   schemas:
     User:
       type: object
+      required:
+        - id
+        - email
+        - name
+        - role
       properties:
         id:
-          type: string
+          type: number
         email:
           type: string
           format: email
@@ -14,10 +19,45 @@ components:
           type: string
           enum: [USER, ADMIN]
       example:
-        id: 5ebac534954b54139806c112
+        id: 2
         email: fake@example.com
         name: fake name
         role: USER
+
+    Wallet:
+      type: object
+      required:
+        - id
+        - userId
+        - balanceInSats
+        - disabled
+      properties:
+        id:
+          type: number
+        userId:
+          type: number
+        balanceInSats:
+          type: number
+        disabled:
+          type: boolean
+      example:
+        id: 2
+        userId: 1
+        balanceInSats: 8000
+        disabled: false
+
+    Me:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            wallet:
+              $ref: "#/components/schemas/Wallet"
+          example:
+            id: 5ebac534954b54139806c112
+            email: fake@example.com
+            name: fake name
+            role: USER
 
     Token:
       type: object
@@ -35,9 +75,9 @@ components:
       type: object
       properties:
         access:
-          $ref: '#/components/schemas/Token'
+          $ref: "#/components/schemas/Token"
         refresh:
-          $ref: '#/components/schemas/Token'
+          $ref: "#/components/schemas/Token"
 
     Error:
       type: object
@@ -53,7 +93,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
           example:
             code: 400
             message: Email already taken
@@ -62,7 +102,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
           example:
             code: 401
             message: Please authenticate
@@ -71,7 +111,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
           example:
             code: 403
             message: Forbidden
@@ -80,7 +120,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
           example:
             code: 404
             message: Not found
