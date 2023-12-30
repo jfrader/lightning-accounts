@@ -2,8 +2,8 @@ import httpStatus from "http-status"
 import ApiError from "../utils/ApiError"
 import { Prisma, TransactionType, Transaction, Wallet } from "@prisma/client"
 import prisma from "../client"
-import lightningService from "./lightning.service"
 import { SubscribeToInvoiceInvoiceUpdatedEvent } from "lightning"
+import lightningService from "./lightning.service"
 
 /**
  * Get wallet by user id
