@@ -21,4 +21,5 @@ db
 build
 
 # Dist
-dist/*
+dist/swagger.json
+dist/Client.ts

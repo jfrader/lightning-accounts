@@ -1,13 +1,14 @@
 {
   "name": "lightning-accounts",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/Client.ts",
   "files": [
     "node_modules/.prisma/client/*",
     "dist/Client.ts",
-    "dist/swagger.json"
+    "dist/swagger.json",
+    "dist/declarations.d.ts"
   ],
   "scripts": {
     "start": "yarn build && pm2 start ecosystem.config.json --no-daemon",
