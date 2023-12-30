@@ -1,6 +1,8 @@
+# Lightning Accounts
+
+Lightning Accounts is a Nodejs server that allows users to register and deposit/withdraw satoshis using the Bitcoin Lightning Network.
 
 ## Quick Start
-
 
 Install the dependencies:
 
@@ -22,7 +24,6 @@ Based off of this boilerplate https://github.com/antonio-lazaro/prisma-express-t
 
 ## Table of Contents
 
-- [Features](#features)
 - [Commands](#commands)
 - [Environment Variables](#environment-variables)
 - [Project Structure](#project-structure)
@@ -33,30 +34,8 @@ Based off of this boilerplate https://github.com/antonio-lazaro/prisma-express-t
 - [Authorization](#authorization)
 - [Logging](#logging)
 - [Linting](#linting)
+- [Stack](#stack)
 - [Contributing](#contributing)
-
-## Features
-
-- **SQL database**: [PostgreSQL](https://www.postgresql.org) object data modeling using [Prisma](https://www.prisma.io) ORM
-- **Authentication and authorization**: using [passport](http://www.passportjs.org)
-- **Validation**: request data validation using [Joi](https://joi.dev)
-- **Logging**: using [winston](https://github.com/winstonjs/winston) and [morgan](https://github.com/expressjs/morgan)
-- `future` **Testing**: unit and integration tests using [Jest](https://jestjs.io)
-- **Error handling**: centralized error handling mechanism
-- **API documentation**: with [swagger-jsdoc](https://github.com/Surnet/swagger-jsdoc) and [swagger-ui-express](https://github.com/scottie1984/swagger-ui-express)
-- **Process management**: advanced production process management using [PM2](https://pm2.keymetrics.io)
-- **Dependency management**: with [Yarn](https://yarnpkg.com)
-- **Environment variables**: using [dotenv](https://github.com/motdotla/dotenv) and [cross-env](https://github.com/kentcdodds/cross-env#readme)
-- **Security**: set security HTTP headers using [helmet](https://helmetjs.github.io)
-- **Santizing**: sanitize request data against xss and query injection
-- **CORS**: Cross-Origin Resource-Sharing enabled using [cors](https://github.com/expressjs/cors)
-- **Compression**: gzip compression with [compression](https://github.com/expressjs/compression)
-- **Docker support**
-- **Code coverage**: using [coveralls](https://coveralls.io)
-- **Code quality**: with [Codacy](https://www.codacy.com)
-- **Git hooks**: with [Husky](https://github.com/typicode/husky) and [lint-staged](https://github.com/okonet/lint-staged)
-- **Linting**: with [ESLint](https://eslint.org) and [Prettier](https://prettier.io)
-- **Editor config**: consistent editor configuration using [EditorConfig](https://editorconfig.org)
 
 ## Commands
 
@@ -156,6 +135,11 @@ SMTP_PORT=587
 SMTP_USERNAME=email-server-username
 SMTP_PASSWORD=email-server-password
 EMAIL_FROM=support@yourapp.com
+
+# LIGHTNING LND
+LND_CERT="base 64 encoded tls.cert"
+LND_ADMIN_MACAROON="base 64 encoded admin.macaroon"
+LND_SOCKET="127.0.0.1:10001"
 ```
 
 ## Project Structure
@@ -186,6 +170,7 @@ List of available routes:
 **Auth routes**:\
 `POST /v1/auth/register` - register\
 `POST /v1/auth/login` - login\
+`POST /v1/auth/me` - profile\
 `POST /v1/auth/refresh-tokens` - refresh auth tokens\
 `POST /v1/auth/forgot-password` - send reset password email\
 `POST /v1/auth/reset-password` - reset password\
@@ -206,12 +191,12 @@ The app has a centralized error handling mechanism.
 Controllers should try to catch the errors and forward them to the error handling middleware (by calling `next(error)`). For convenience, you can also wrap the controller inside the catchAsync utility wrapper, which forwards the error.
 
 ```javascript
-const catchAsync = require('../utils/catchAsync');
+const catchAsync = require("../utils/catchAsync")
 
 const controller = catchAsync(async (req, res) => {
   // this error will be forwarded to the error handling middleware
-  throw new Error('Something wrong happened');
-});
+  throw new Error("Something wrong happened")
+})
 ```
 
 The error handling middleware sends an error response, which has the following format:
@@ -230,16 +215,16 @@ The app has a utility ApiError class to which you can attach a response code and
 For example, if you are trying to get a user from the DB who is not found, and you want to send a 404 error, the code should look something like:
 
 ```javascript
-const httpStatus = require('http-status');
-const ApiError = require('../utils/ApiError');
-const User = require('../models/User');
+const httpStatus = require("http-status")
+const ApiError = require("../utils/ApiError")
+const User = require("../models/User")
 
 const getUser = async (userId) => {
-  const user = await User.findById(userId);
+  const user = await User.findById(userId)
   if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
-};
+}
 ```
 
 ## Validation
@@ -249,14 +234,14 @@ Request data is validated using [Joi](https://joi.dev/). Check the [documentatio
 The validation schemas are defined in the `src/validations` directory and are used in the routes by providing them as parameters to the `validate` middleware.
 
 ```javascript
-const express = require('express');
-const validate = require('../../middlewares/validate');
-const userValidation = require('../../validations/user.validation');
-const userController = require('../../controllers/user.controller');
+const express = require("express")
+const validate = require("../../middlewares/validate")
+const userValidation = require("../../validations/user.validation")
+const userController = require("../../controllers/user.controller")
 
-const router = express.Router();
+const router = express.Router()
 
-router.post('/users', validate(userValidation.createUser), userController.createUser);
+router.post("/users", validate(userValidation.createUser), userController.createUser)
 ```
 
 ## Authentication
@@ -264,13 +249,13 @@ router.post('/users', validate(userValidation.createUser), userController.create
 To require authentication for certain routes, you can use the `auth` middleware.
 
 ```javascript
-const express = require('express');
-const auth = require('../../middlewares/auth');
-const userController = require('../../controllers/user.controller');
+const express = require("express")
+const auth = require("../../middlewares/auth")
+const userController = require("../../controllers/user.controller")
 
-const router = express.Router();
+const router = express.Router()
 
-router.post('/users', auth(), userController.createUser);
+router.post("/users", auth(), userController.createUser)
 ```
 
 These routes require a valid JWT access token in the Authorization request header using the Bearer schema. If the request does not contain a valid access token, an Unauthorized (401) error is thrown.
@@ -292,13 +277,13 @@ A refresh token is valid for 30 days. You can modify this expiration time by cha
 The `auth` middleware can also be used to require certain rights/permissions to access a route.
 
 ```javascript
-const express = require('express');
-const auth = require('../../middlewares/auth');
-const userController = require('../../controllers/user.controller');
+const express = require("express")
+const auth = require("../../middlewares/auth")
+const userController = require("../../controllers/user.controller")
 
-const router = express.Router();
+const router = express.Router()
 
-router.post('/users', auth('manageUsers'), userController.createUser);
+router.post("/users", auth("manageUsers"), userController.createUser)
 ```
 
 In the example above, an authenticated user can access this route only if that user has the `manageUsers` permission.
@@ -314,14 +299,14 @@ Import the logger from `src/config/logger.js`. It is using the [Winston](https:/
 Logging should be done according to the following severity levels (ascending order from most important to least important):
 
 ```javascript
-const logger = require('<path to src>/config/logger');
+const logger = require("<path to src>/config/logger")
 
-logger.error('message'); // level 0
-logger.warn('message'); // level 1
-logger.info('message'); // level 2
-logger.http('message'); // level 3
-logger.verbose('message'); // level 4
-logger.debug('message'); // level 5
+logger.error("message") // level 0
+logger.warn("message") // level 1
+logger.info("message") // level 2
+logger.http("message") // level 3
+logger.verbose("message") // level 4
+logger.debug("message") // level 5
 ```
 
 In development mode, log messages of all severity levels will be printed to the console.
@@ -343,6 +328,29 @@ To modify the ESLint configuration, update the `.eslintrc.json` file. To modify 
 To prevent a certain file or directory from being linted, add it to `.eslintignore` and `.prettierignore`.
 
 To maintain a consistent coding style across different IDEs, the project contains `.editorconfig`
+
+## Stack
+
+- **SQL database**: [PostgreSQL](https://www.postgresql.org) object data modeling using [Prisma](https://www.prisma.io) ORM
+- **Authentication and authorization**: using [passport](http://www.passportjs.org)
+- **Validation**: request data validation using [Joi](https://joi.dev)
+- **Logging**: using [winston](https://github.com/winstonjs/winston) and [morgan](https://github.com/expressjs/morgan)
+- `future` **Testing**: unit and integration tests using [Jest](https://jestjs.io)
+- **Error handling**: centralized error handling mechanism
+- **API documentation**: with [swagger-jsdoc](https://github.com/Surnet/swagger-jsdoc) and [swagger-ui-express](https://github.com/scottie1984/swagger-ui-express)
+- **Process management**: advanced production process management using [PM2](https://pm2.keymetrics.io)
+- **Dependency management**: with [Yarn](https://yarnpkg.com)
+- **Environment variables**: using [dotenv](https://github.com/motdotla/dotenv) and [cross-env](https://github.com/kentcdodds/cross-env#readme)
+- **Security**: set security HTTP headers using [helmet](https://helmetjs.github.io)
+- **Santizing**: sanitize request data against xss and query injection
+- **CORS**: Cross-Origin Resource-Sharing enabled using [cors](https://github.com/expressjs/cors)
+- **Compression**: gzip compression with [compression](https://github.com/expressjs/compression)
+- **Docker support**
+- **Code coverage**: using [coveralls](https://coveralls.io)
+- **Code quality**: with [Codacy](https://www.codacy.com)
+- **Git hooks**: with [Husky](https://github.com/typicode/husky) and [lint-staged](https://github.com/okonet/lint-staged)
+- **Linting**: with [ESLint](https://eslint.org) and [Prettier](https://prettier.io)
+- **Editor config**: consistent editor configuration using [EditorConfig](https://editorconfig.org)
 
 ## Contributing
 
