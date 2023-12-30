@@ -1,10 +1,11 @@
 {
   "name": "lightning-accounts",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/Client.ts",
   "files": [
+    "node_modules/.prisma/client/*",
     "dist/Client.ts",
     "dist/swagger.json"
   ],
@@ -18,7 +19,7 @@
     "prettier": "prettier --check **/*.ts",
     "prettier:fix": "prettier --write **/*.ts",
     "swagger:specs": "cross-env NODE_ENV=development ts-node src/swaggerSpecs.ts",
-    "swagger:client": "yarn swagger-typescript-api -p ./dist/swagger.json -o ./dist -n Client.ts",
+    "swagger:client": "yarn swagger-typescript-api -p ./dist/swagger.json -o ./dist -n Client.ts --axios",
     "swagger:generate": "yarn swagger:specs && yarn swagger:client",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
@@ -81,12 +82,14 @@
     "@prisma/client": "^5.7.1",
     "@types/bcryptjs": "^2.4.2",
     "@types/nodemailer": "^6.4.7",
+    "axios": "^1.6.3",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-rate-limit": "^6.7.0",
+    "form-data": "^4.0.0",
     "helmet": "^6.0.1",
     "http-status": "^1.5.3",
     "joi": "^17.7.0",
@@ -99,5 +102,8 @@
     "pm2": "^5.2.2",
     "winston": "^3.8.2",
     "xss-filters": "^1.2.7"
+  },
+  "peerDependencies": {
+    "form-data": "^4.0.0"
   }
 }

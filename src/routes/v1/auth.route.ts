@@ -34,7 +34,7 @@ export default router
  * /auth/me:
  *   get:
  *     summary: Get user's own profile
- *     tags: [Auth, User]
+ *     tags: [Auth]
  *     responses:
  *       "200":
  *         description: OK

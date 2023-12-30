@@ -58,6 +58,11 @@ components:
             email: fake@example.com
             name: fake name
             role: USER
+            wallet:
+              id: 2
+              userId: 1
+              balanceInSats: 8000
+              disabled: false
 
     Token:
       type: object
