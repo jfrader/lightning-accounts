@@ -1,9 +1,13 @@
 {
   "name": "lightning-accounts",
-  "version": "1.0.1",
-  "description": "REST API For hosting custodial lightning balance and users",
-  "main": "dist/Client.ts",
+  "version": "1.0.2",
+  "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
+  "main": "dist/Client.ts",
+  "files": [
+    "dist/Client.ts",
+    "dist/swagger.json"
+  ],
   "scripts": {
     "start": "yarn build && pm2 start ecosystem.config.json --no-daemon",
     "dev": "cross-env NODE_ENV=development nodemon src/index.ts",
@@ -35,10 +39,6 @@
   "authors": [
     "Fran <jfrader.com>",
     "Antonio Lázaro"
-  ],
-  "files": [
-    "dist/Client.ts",
-    "dist/swagger.json"
   ],
   "license": "MIT",
   "devDependencies": {
