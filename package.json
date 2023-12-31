@@ -1,6 +1,6 @@
 {
   "name": "lightning-accounts",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/index.js",
@@ -106,6 +106,7 @@
     "xss-filters": "^1.2.7"
   },
   "peerDependencies": {
-    "form-data": "^4.0.0"
+    "form-data": "^4.0.0",
+    "axios": "^1.6.3"
   }
 }
