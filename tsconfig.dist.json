@@ -1,9 +1,15 @@
 {
   "compilerOptions": {
-    "target": "es2016",
-    "outDir": "./dist",
+    "target": "es5",
     "module": "commonjs",
-    "types": ["node"],
+    "lib": ["es5", "es6", "dom"],
+    "allowJs": true,
+    "jsx": "react",
+    "sourceMap": true,
+    "rootDir": "./client",
+    "downlevelIteration": true,
+    "outDir": "./dist",
+    "types": ["node", "dom"],
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
