@@ -1,6 +1,6 @@
 {
   "name": "lightning-accounts",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/index.js",
@@ -9,6 +9,7 @@
     "node_modules/form-data/*",
     "dist/index.d.ts",
     "dist/index.js",
+    "dist/index.js.map",
     "dist/swagger.json"
   ],
   "scripts": {
