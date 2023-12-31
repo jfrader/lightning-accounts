@@ -1,20 +1,21 @@
 import { Role } from "@prisma/client"
 
-export enum UserRights {
+export enum UserPermission {
   users_read = "users_read",
   users_write = "users_write",
   wallet_invoice = "wallet_read",
   wallet_pay = "wallet_pay",
+  verify_user_identity = "verify_user_identity",
   root = "root",
 }
 
 const allRoles = {
-  [Role.USER]: [UserRights.wallet_invoice, UserRights.wallet_pay],
+  [Role.USER]: [UserPermission.wallet_invoice, UserPermission.wallet_pay],
   [Role.ADMIN]: [
-    UserRights.wallet_invoice,
-    UserRights.wallet_pay,
-    UserRights.users_read,
-    UserRights.users_write,
+    UserPermission.wallet_invoice,
+    UserPermission.wallet_pay,
+    UserPermission.users_read,
+    UserPermission.users_write,
   ],
 }
 

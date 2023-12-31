@@ -83,6 +83,8 @@ components:
           $ref: "#/components/schemas/Token"
         refresh:
           $ref: "#/components/schemas/Token"
+        identity:
+          $ref: "#/components/schemas/Token"
 
     Error:
       type: object

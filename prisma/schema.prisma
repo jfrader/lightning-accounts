@@ -35,10 +35,10 @@ model Token {
 }
 
 model Wallet {
-  id            Int            @id @default(autoincrement())
-  user          User           @relation(fields: [userId], references: [id])
-  userId        Int            @unique
-  createdAt     DateTime       @default(now())
+  id            Int           @id @default(autoincrement())
+  user          User          @relation(fields: [userId], references: [id])
+  userId        Int           @unique
+  createdAt     DateTime      @default(now())
   balanceInSats Int
   disabled      Boolean
   transactions  Transaction[]
@@ -72,6 +72,8 @@ enum Role {
 enum TokenType {
   ACCESS
   REFRESH
+  IDENTITY
   RESET_PASSWORD
   VERIFY_EMAIL
+  APPLICATION
 }

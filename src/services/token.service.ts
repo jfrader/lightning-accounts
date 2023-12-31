@@ -90,6 +90,9 @@ const generateAuthTokens = async (user: { id: number }): Promise<AuthTokensRespo
   const refreshToken = generateToken(user.id, refreshTokenExpires, TokenType.REFRESH)
   await saveToken(refreshToken, user.id, refreshTokenExpires, TokenType.REFRESH)
 
+  const identityToken = generateToken(user.id, accessTokenExpires, TokenType.IDENTITY)
+  await saveToken(identityToken, user.id, accessTokenExpires, TokenType.IDENTITY)
+
   return {
     access: {
       token: accessToken,
@@ -98,6 +101,10 @@ const generateAuthTokens = async (user: { id: number }): Promise<AuthTokensRespo
     refresh: {
       token: refreshToken,
       expires: refreshTokenExpires.toDate(),
+    },
+    identity: {
+      token: identityToken,
+      expires: accessTokenExpires.toDate(),
     },
   }
 }

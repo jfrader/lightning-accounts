@@ -1,16 +1,18 @@
-import prisma from "../client"
+import prisma from "../../client"
 import { Strategy as JwtStrategy, ExtractJwt, VerifyCallback } from "passport-jwt"
-import config from "./config"
+import config from "../config"
 import { TokenType } from "@prisma/client"
+
+export const APPLICATION_STRATEGY_HEADER = "Lightning-Application-Token"
 
 const jwtOptions = {
   secretOrKey: config.jwt.secret,
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  jwtFromRequest: ExtractJwt.fromHeader(APPLICATION_STRATEGY_HEADER),
 }
 
 const jwtVerify: VerifyCallback = async (payload, done) => {
   try {
-    if (payload.type !== TokenType.ACCESS) {
+    if (payload.type !== TokenType.APPLICATION) {
       throw new Error("Invalid token type")
     }
     const user = await prisma.user.findUnique({
@@ -30,4 +32,4 @@ const jwtVerify: VerifyCallback = async (payload, done) => {
   }
 }
 
-export const jwtStrategy = new JwtStrategy(jwtOptions, jwtVerify)
+export const applicationStrategy = new JwtStrategy(jwtOptions, jwtVerify)

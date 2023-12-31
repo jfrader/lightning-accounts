@@ -3,29 +3,29 @@ import auth from "../../middlewares/auth"
 import validate from "../../middlewares/validate"
 import { userValidation } from "../../validations"
 import { userController } from "../../controllers"
-import { UserRights } from "../../config/roles"
+import { UserPermission } from "../../config/roles"
 
 const router = express.Router()
 
 router
   .route("/")
   .post(
-    auth(UserRights.users_write),
+    auth(UserPermission.users_write),
     validate(userValidation.createUser),
     userController.createUser
   )
-  .get(auth(UserRights.users_read), validate(userValidation.getUsers), userController.getUsers)
+  .get(auth(UserPermission.users_read), validate(userValidation.getUsers), userController.getUsers)
 
 router
   .route("/:userId")
-  .get(auth(UserRights.users_read), validate(userValidation.getUser), userController.getUser)
+  .get(auth(UserPermission.users_read), validate(userValidation.getUser), userController.getUser)
   .patch(
-    auth(UserRights.users_write),
+    auth(UserPermission.users_write),
     validate(userValidation.updateUser),
     userController.updateUser
   )
   .delete(
-    auth(UserRights.users_write),
+    auth(UserPermission.users_write),
     validate(userValidation.deleteUser),
     userController.deleteUser
   )

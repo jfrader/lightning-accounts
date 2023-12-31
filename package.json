@@ -1,13 +1,14 @@
 {
   "name": "lightning-accounts",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
-  "main": "dist/Client.ts",
+  "main": "dist/index.js",
   "files": [
     "node_modules/.prisma/client/*",
     "node_modules/form-data/*",
-    "dist/Client.ts",
+    "dist/index.d.ts",
+    "dist/index.js",
     "dist/swagger.json"
   ],
   "scripts": {
@@ -19,9 +20,9 @@
     "lint:fix": "eslint . --fix",
     "prettier": "prettier --check **/*.ts",
     "prettier:fix": "prettier --write **/*.ts",
-    "swagger:specs": "cross-env NODE_ENV=development ts-node src/swaggerSpecs.ts",
-    "swagger:client": "yarn swagger-typescript-api -p ./dist/swagger.json -o ./dist -n Client.ts --axios",
-    "swagger:generate": "yarn swagger:specs && yarn swagger:client",
+    "swagger:specs": "cross-env NODE_ENV=development ts-node scripts/swagger.ts",
+    "swagger:client": "yarn swagger:specs && yarn swagger-typescript-api -p ./dist/swagger.json -o ./dist -n index.ts --axios",
+    "swagger:generate": "yarn swagger:client && tsc -p tsconfig.dist.json",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up",
@@ -30,7 +31,7 @@
     "docker:dev-db:start": "docker-compose -f docker-compose.only-db-dev.yml up -d",
     "docker:dev-db:stop": "docker-compose -f docker-compose.only-db-dev.yml down",
     "prepare": "husky install",
-    "build": "rimraf build && tsc -p tsconfig.json",
+    "build": "yarn swagger:generate && rimraf build && tsc -p tsconfig.json",
     "prepublishOnly": "yarn swagger:generate"
   },
   "keywords": [
