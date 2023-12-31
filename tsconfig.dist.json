@@ -15,7 +15,8 @@
     "strict": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
-    "declaration": true
+    "declaration": true,
+    "declarationMap": true
   },
   "files": ["dist/index.ts"],
   "exclude": ["dist/**/*", "scripts/**/*", "build/**/*"]
