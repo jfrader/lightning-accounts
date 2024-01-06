@@ -12,6 +12,9 @@
     "dist/index.js.map",
     "dist/swagger.json"
   ],
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
     "start": "yarn build && pm2 start ecosystem.config.json --no-daemon",
     "dev": "cross-env NODE_ENV=development nodemon src/index.ts",
@@ -40,10 +43,7 @@
     "lightning",
     "satoshi"
   ],
-  "authors": [
-    "Fran <jfrader.com>",
-    "Antonio Lázaro"
-  ],
+  "author": "Fran <jfrader.com>",
   "license": "MIT",
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",
@@ -84,10 +84,12 @@
   "dependencies": {
     "@prisma/client": "^5.7.1",
     "@types/bcryptjs": "^2.4.2",
+    "@types/cookie-parser": "^1.4.6",
     "@types/nodemailer": "^6.4.7",
     "axios": "^1.6.3",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
@@ -101,13 +103,14 @@
     "morgan": "^1.10.0",
     "nodemailer": "^6.8.0",
     "passport": "^0.6.0",
+    "passport-cookie": "^1.0.9",
     "passport-jwt": "^4.0.0",
     "pm2": "^5.2.2",
     "winston": "^3.8.2",
     "xss-filters": "^1.2.7"
   },
   "peerDependencies": {
-    "form-data": "^4.0.0",
-    "axios": "^1.6.3"
+    "axios": "^1.6.3",
+    "form-data": "^4.0.0"
   }
 }

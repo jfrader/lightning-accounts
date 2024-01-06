@@ -10,7 +10,7 @@ import lightningService from "./lightning.service"
  * @param {number} userId
  * @returns {Promise<Wallet>}
  */
-const getUserWallet = async (userId: number): Promise<Omit<Wallet, "createdAt">> => {
+const getUserWallet = async (userId: number): Promise<Omit<Wallet, "createdAt" | "updatedAt">> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
@@ -29,7 +29,7 @@ const getUserWallet = async (userId: number): Promise<Omit<Wallet, "createdAt">>
   return user.wallet
 }
 
-const impactDeposit = async (
+const _impactDeposit = async (
   invoice: SubscribeToInvoiceInvoiceUpdatedEvent,
   walletTransaction: Transaction
 ) => {
@@ -72,7 +72,7 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
   return prisma.$transaction(
     async (tx) => {
       const invoice = await lightningService.createInvoice(sats, (settledInvoice) => {
-        impactDeposit(settledInvoice, pendingTransaction)
+        _impactDeposit(settledInvoice, pendingTransaction)
       })
 
       const pendingTransaction = await tx.transaction.create({

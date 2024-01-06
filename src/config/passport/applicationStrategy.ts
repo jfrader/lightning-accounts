@@ -1,35 +1,54 @@
-import prisma from "../../client"
-import { Strategy as JwtStrategy, ExtractJwt, VerifyCallback } from "passport-jwt"
+import { Strategy as CookieStrategy } from "passport-cookie"
 import config from "../config"
-import { TokenType } from "@prisma/client"
+import * as appsJson from "../../../applications.json"
+import { isPasswordMatch } from "../../utils/encryption"
+import { userService } from "../../services"
+import { Request } from "express"
+import logger from "../logger"
+import exclude from "../../utils/exclude"
 
-export const APPLICATION_STRATEGY_HEADER = "Lightning-Application-Token"
+export const APPLICATION_STRATEGY_COOKIE = "Lightning-Application-Token"
 
-const jwtOptions = {
-  secretOrKey: config.jwt.secret,
-  jwtFromRequest: ExtractJwt.fromHeader(APPLICATION_STRATEGY_HEADER),
+const options = {
+  cookieName: APPLICATION_STRATEGY_COOKIE,
+  signed: config.env === "production",
+  passReqToCallback: true,
 }
 
-const jwtVerify: VerifyCallback = async (payload, done) => {
+const verify = async (req: Request, cookie: string, done: (e: unknown, u: any) => void) => {
   try {
-    if (payload.type !== TokenType.APPLICATION) {
-      throw new Error("Invalid token type")
+    const [email, token] = cookie.split(":")
+    const app = appsJson.applications.find((a) => a.email === email)
+    if (!app) {
+      throw new Error("Application not found")
     }
-    const user = await prisma.user.findUnique({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-      },
-      where: { id: payload.sub },
-    })
+
+    if (req.socket.remoteAddress !== app.remoteAddress) {
+      console.log(req.socket.remoteAddress)
+      throw new Error("Unknown host")
+    }
+
+    const user = await userService.getUserByEmail(email, [
+      "id",
+      "password",
+      "email",
+      "name",
+      "role",
+    ])
+
     if (!user) {
-      return done(null, false)
+      throw new Error("Application user not found")
     }
-    done(null, user)
-  } catch (error) {
-    done(error, false)
+
+    if (await isPasswordMatch(token, user.password)) {
+      return done(null, exclude(user, ["password"]))
+    }
+
+    throw new Error("Invalid application credentials")
+  } catch (e) {
+    logger.error(e)
+    done(e, null)
   }
 }
 
-export const applicationStrategy = new JwtStrategy(jwtOptions, jwtVerify)
+export const applicationStrategy = new CookieStrategy(options, verify)

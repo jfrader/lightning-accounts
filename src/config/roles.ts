@@ -5,11 +5,12 @@ export enum UserPermission {
   users_write = "users_write",
   wallet_invoice = "wallet_read",
   wallet_pay = "wallet_pay",
-  verify_user_identity = "verify_user_identity",
+  wallet_pay_user = "wallet_pay_user",
   root = "root",
 }
 
 const allRoles = {
+  [Role.APPLICATION]: [UserPermission.users_read],
   [Role.USER]: [UserPermission.wallet_invoice, UserPermission.wallet_pay],
   [Role.ADMIN]: [
     UserPermission.wallet_invoice,

@@ -4,6 +4,7 @@ import ApiError from "../utils/ApiError"
 import { UserPermission, roleRights } from "../config/roles"
 import { NextFunction, Request, Response } from "express"
 import { User } from "@prisma/client"
+import { JwtCookie } from "../types/tokens"
 
 const verifyCallback =
   (
@@ -36,13 +37,29 @@ const auth =
   async (req: Request, res: Response, next: NextFunction) => {
     return new Promise((resolve, reject) => {
       passport.authenticate(
-        "jwt",
+        "application",
         { session: false },
-        verifyCallback(req, resolve, reject, requiredRights)
+        verifyCallback(
+          req,
+          resolve,
+          () => {
+            passport.authenticate(
+              "jwt",
+              { session: false },
+              verifyCallback(req, resolve, reject, requiredRights)
+            )(req, res, next)
+          },
+          requiredRights
+        )
       )(req, res, next)
     })
       .then(() => next())
-      .catch((err) => next(err))
+      .catch((err: ApiError) => {
+        if (err.statusCode === httpStatus.UNAUTHORIZED) {
+          res.clearCookie(JwtCookie.access)
+        }
+        next(err)
+      })
   }
 
 export default auth

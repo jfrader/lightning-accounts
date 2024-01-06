@@ -18,10 +18,6 @@ cp .env.example .env
 # open .env and modify the environment variables (if needed)
 ```
 
-## Disclaimer
-
-Based off of this boilerplate https://github.com/antonio-lazaro/prisma-express-typescript-boilerplate
-
 ## Table of Contents
 
 - [Commands](#commands)
@@ -352,13 +348,9 @@ To maintain a consistent coding style across different IDEs, the project contain
 - **Linting**: with [ESLint](https://eslint.org) and [Prettier](https://prettier.io)
 - **Editor config**: consistent editor configuration using [EditorConfig](https://editorconfig.org)
 
-## Contributing
-
-Contributions are more than welcome! Please check out the [contributing guide](CONTRIBUTING.md).
-
 ## Inspirations
 
-- [RESTful API Node Server Boilerplate](https://github.com/hagopj13/node-express-boilerplate)
+Based off this boilerplate https://github.com/antonio-lazaro/prisma-express-typescript-boilerplate
 
 ## License
 

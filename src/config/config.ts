@@ -8,7 +8,10 @@ const envVarsSchema = Joi.object()
   .keys({
     NODE_ENV: Joi.string().valid("production", "development", "test").required(),
     PORT: Joi.number().default(3000),
+    ORIGIN: Joi.string().required().description("Allowed origin"),
     JWT_SECRET: Joi.string().required().description("JWT secret key"),
+    JWT_BASE64_PUBLIC_KEY: Joi.string().required().description("Base64 encoded public key"),
+    JWT_BASE64_PRIVATE_KEY: Joi.string().required().description("Base64 encoded private key"),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number()
       .default(30)
       .description("minutes after which access tokens expire"),
@@ -43,8 +46,11 @@ if (error) {
 export default {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
+  origin: envVars.ORIGIN,
   jwt: {
     secret: envVars.JWT_SECRET,
+    publicKey: Buffer.from(envVars.JWT_BASE64_PUBLIC_KEY || "", "base64").toString(),
+    privateKey: Buffer.from(envVars.JWT_BASE64_PRIVATE_KEY || "", "base64").toString(),
     accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES,
     refreshExpirationDays: envVars.JWT_REFRESH_EXPIRATION_DAYS,
     resetPasswordExpirationMinutes: envVars.JWT_RESET_PASSWORD_EXPIRATION_MINUTES,

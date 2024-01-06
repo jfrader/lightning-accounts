@@ -11,50 +11,72 @@ datasource db {
 }
 
 model User {
-  id              Int      @id @default(autoincrement())
-  email           String   @unique
-  name            String?
-  password        String
-  role            Role     @default(USER)
-  isEmailVerified Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  Token           Token[]
-  wallet          Wallet?
+  id                  Int          @id @default(autoincrement())
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  email               String       @unique
+  name                String
+  password            String
+  role                Role         @default(USER)
+  isEmailVerified     Boolean      @default(false)
+  Token               Token[]
+  wallet              Wallet?
+  payRequestsCreated  PayRequest[] @relation(name: "creator")
+  payRequestsReceived PayRequest[] @relation(name: "receiver")
 }
 
 model Token {
   id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   token       String
   type        TokenType
   expires     DateTime
   blacklisted Boolean
-  createdAt   DateTime  @default(now())
   user        User      @relation(fields: [userId], references: [id])
   userId      Int
 }
 
 model Wallet {
   id            Int           @id @default(autoincrement())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   user          User          @relation(fields: [userId], references: [id])
   userId        Int           @unique
-  createdAt     DateTime      @default(now())
   balanceInSats Int
   disabled      Boolean
   transactions  Transaction[]
 }
 
+model PayRequest {
+  id           Int           @id @default(autoincrement())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  receiver     User          @relation(name: "receiver", fields: [receiverId], references: [id])
+  receiverId   Int
+  creator      User          @relation(name: "creator", fields: [creatorId], references: [id])
+  creatorId    Int
+  amountInSats Int
+  description  String
+  meta         Json?
+  paid         Boolean
+  transactions Transaction[]
+}
+
 model Transaction {
   id             Int             @id @default(autoincrement())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   wallet         Wallet          @relation(fields: [walletId], references: [id])
   walletId       Int
-  valueInSats    Int
-  createdAt      DateTime        @default(now())
+  amountInSats   Int
   type           TransactionType
   description    String?
   walletImpacted Boolean
-  invoiceSettled Boolean
+  invoiceSettled Boolean?
   invoice        Json?
+  payRequest     PayRequest?     @relation(fields: [payRequestId], references: [id])
+  payRequestId   Int?
 }
 
 enum TransactionType {
@@ -67,6 +89,7 @@ enum TransactionType {
 enum Role {
   USER
   ADMIN
+  APPLICATION
 }
 
 enum TokenType {

@@ -46,8 +46,6 @@ export default router
  *     summary: Create a user
  *     description: Only admins can create other users.
  *     tags: [Users]
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -97,8 +95,6 @@ export default router
  *     summary: Get all users
  *     description: Only admins can retrieve all users.
  *     tags: [Users]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: name
@@ -166,8 +162,6 @@ export default router
  *     summary: Get a user
  *     description: Logged in users can fetch only their own user information. Only admins can fetch other users.
  *     tags: [Users]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -193,8 +187,6 @@ export default router
  *     summary: Update a user
  *     description: Logged in users can only update their own information. Only admins can update other users.
  *     tags: [Users]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -244,8 +236,6 @@ export default router
  *     summary: Delete a user
  *     description: Logged in users can delete only themselves. Only admins can delete other users.
  *     tags: [Users]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id

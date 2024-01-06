@@ -3,6 +3,10 @@ import httpStatus from "http-status"
 import prisma from "../client"
 import ApiError from "../utils/ApiError"
 import { encryptPassword } from "../utils/encryption"
+import { UserWithWallet } from "../types/user"
+
+export const USER_DEFAULT_FIELDS = ["id", "email", "name", "role"]
+export const USER_PRIVATE_FIELDS = ["password", "isEmailVerified", "createdAt", "updatedAt"]
 
 /**
  * Create a user
@@ -12,9 +16,9 @@ import { encryptPassword } from "../utils/encryption"
 const createUser = async (
   email: string,
   password: string,
-  name?: string,
+  name: string,
   role: Role = Role.USER
-): Promise<User> => {
+) => {
   if (await getUserByEmail(email)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken")
   }
@@ -47,18 +51,9 @@ const queryUsers = async <Key extends keyof User>(
     sortBy?: string
     sortType?: "asc" | "desc"
   },
-  keys: Key[] = [
-    "id",
-    "email",
-    "name",
-    "password",
-    "role",
-    "isEmailVerified",
-    "createdAt",
-    "updatedAt",
-  ] as Key[]
+  keys: Key[] = USER_DEFAULT_FIELDS as Key[]
 ): Promise<Pick<User, Key>[]> => {
-  const page = options.page ?? 1
+  const page = options.page ?? 0
   const limit = options.limit ?? 10
   const sortBy = options.sortBy
   const sortType = options.sortType ?? "desc"
@@ -69,6 +64,7 @@ const queryUsers = async <Key extends keyof User>(
     take: limit,
     orderBy: sortBy ? { [sortBy]: sortType } : undefined,
   })
+
   return users as Pick<User, Key>[]
 }
 
@@ -78,44 +74,33 @@ const queryUsers = async <Key extends keyof User>(
  * @param {Array<Key>} keys
  * @returns {Promise<Pick<User, Key> | null>}
  */
-const getUserById = async <Key extends keyof User>(
+const getUserById = async <Key extends keyof UserWithWallet>(
   id: number,
-  keys: Key[] = [
-    "id",
-    "email",
-    "name",
-    "password",
-    "role",
-    "isEmailVerified",
-    "createdAt",
-    "updatedAt",
-  ] as Key[]
-): Promise<Pick<User, Key> | null> => {
-  return prisma.user.findUnique({
-    where: { id },
-    select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
-  }) as Promise<Pick<User, Key> | null>
-}
-
-/**
- * Get user and their wallet by id
- * @param {ObjectId} id
- * @param {Array<Key>} keys
- * @returns {Promise<Prisma.UserGetPayload<{ include: { wallet: true } }>>}
- */
-const getUserWithWallet = async (
-  id: number
-): Promise<Prisma.UserGetPayload<{ include: { wallet: true } }>> => {
+  keys: Key[] = USER_DEFAULT_FIELDS as Key[]
+): Promise<Pick<UserWithWallet, Key> | null> => {
   const user = await prisma.user.findUnique({
     where: { id },
-    include: { wallet: true },
+    select: { ...keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}) },
   })
 
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
 
-  return user
+  return user as Promise<Pick<UserWithWallet, Key> | null>
+}
+
+/**
+ * Get user and their wallet by id
+ * @param {ObjectId} id
+ * @param {Array<Key>} keys
+ * @returns {Promise<Pick<User, Key> | null>}
+ */
+const getUserWithWallet = async <Key extends keyof UserWithWallet>(
+  id: number,
+  keys: Key[] = USER_DEFAULT_FIELDS as Key[]
+): Promise<Pick<UserWithWallet, Key> | null> => {
+  return getUserById(id, [...keys, "wallet"])
 }
 
 /**
@@ -126,16 +111,7 @@ const getUserWithWallet = async (
  */
 const getUserByEmail = async <Key extends keyof User>(
   email: string,
-  keys: Key[] = [
-    "id",
-    "email",
-    "name",
-    "password",
-    "role",
-    "isEmailVerified",
-    "createdAt",
-    "updatedAt",
-  ] as Key[]
+  keys: Key[] = USER_DEFAULT_FIELDS as Key[]
 ): Promise<Pick<User, Key> | null> => {
   return prisma.user.findUnique({
     where: { email },
@@ -172,9 +148,9 @@ const updateUserById = async <Key extends keyof User>(
 /**
  * Delete user by id
  * @param {ObjectId} userId
- * @returns {Promise<User>}
+ * @returns {Promise<UserWithWallet>}
  */
-const deleteUserById = async (userId: number): Promise<User> => {
+const deleteUserById = async (userId: number): Promise<UserWithWallet> => {
   const user = await getUserById(userId)
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")

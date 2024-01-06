@@ -22,3 +22,10 @@ build
 
 # Dist
 dist/*
+
+# Keys
+jwt.key
+jwt.key.pub
+
+# Applications
+applications.json

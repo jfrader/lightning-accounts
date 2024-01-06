@@ -1,11 +1,13 @@
 import prisma from "../../client"
-import { Strategy as JwtStrategy, ExtractJwt, VerifyCallback } from "passport-jwt"
+import { Strategy as JwtStrategy, VerifyCallback } from "passport-jwt"
 import config from "../config"
 import { TokenType } from "@prisma/client"
+import { cookieExtractor } from "../../utils/authCookie"
+import logger from "../logger"
 
 const jwtOptions = {
-  secretOrKey: config.jwt.secret,
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  secretOrKey: config.jwt.publicKey,
+  jwtFromRequest: cookieExtractor,
 }
 
 const jwtVerify: VerifyCallback = async (payload, done) => {
@@ -18,6 +20,7 @@ const jwtVerify: VerifyCallback = async (payload, done) => {
         id: true,
         email: true,
         name: true,
+        role: true,
       },
       where: { id: payload.sub },
     })
@@ -26,6 +29,7 @@ const jwtVerify: VerifyCallback = async (payload, done) => {
     }
     done(null, user)
   } catch (error) {
+    logger.error(error)
     done(error, false)
   }
 }

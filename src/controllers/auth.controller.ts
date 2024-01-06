@@ -3,30 +3,42 @@ import catchAsync from "../utils/catchAsync"
 import { authService, userService, tokenService, emailService } from "../services"
 import exclude from "../utils/exclude"
 import { User } from "@prisma/client"
+import authCookie, { cookieExtractor } from "../utils/authCookie"
+import { JwtCookie } from "../types/tokens"
 
 const register = catchAsync(async (req, res) => {
-  const { email, password } = req.body
-  const user = await userService.createUser(email, password)
+  const { email, password, name } = req.body
+  const user = await userService.createUser(email, password, name)
   const userWithoutPassword = exclude(user, ["password", "createdAt", "updatedAt"])
   const tokens = await tokenService.generateAuthTokens(user)
-  res.status(httpStatus.CREATED).send({ user: userWithoutPassword, tokens })
+
+  authCookie(tokens, res).status(httpStatus.CREATED).send({ user: userWithoutPassword })
 })
 
 const login = catchAsync(async (req, res) => {
   const { email, password } = req.body
   const user = await authService.loginUserWithEmailAndPassword(email, password)
   const tokens = await tokenService.generateAuthTokens(user)
-  res.send({ user, tokens })
+  authCookie(tokens, res).send({ user })
 })
 
 const logout = catchAsync(async (req, res) => {
-  await authService.logout(req.body.refreshToken)
+  const token = cookieExtractor(req, JwtCookie.refresh)
+  await authService.logout(token)
+  res.clearCookie(JwtCookie.access)
+  res.clearCookie(JwtCookie.refresh)
   res.status(httpStatus.NO_CONTENT).send()
 })
 
 const refreshTokens = catchAsync(async (req, res) => {
-  const tokens = await authService.refreshAuth(req.body.refreshToken)
-  res.send({ ...tokens })
+  const token = cookieExtractor(req, JwtCookie.refresh)
+  try {
+    const tokens = await authService.refreshAuth(token)
+    authCookie(tokens, res).status(httpStatus.NO_CONTENT).send()
+  } catch (e) {
+    res.clearCookie(JwtCookie.refresh)
+    throw e
+  }
 })
 
 const forgotPassword = catchAsync(async (req, res) => {

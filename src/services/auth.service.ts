@@ -2,7 +2,7 @@ import httpStatus from "http-status"
 import tokenService from "./token.service"
 import userService from "./user.service"
 import ApiError from "../utils/ApiError"
-import { TokenType, User } from "@prisma/client"
+import { Role, TokenType, User } from "@prisma/client"
 import prisma from "../client"
 import { encryptPassword, isPasswordMatch } from "../utils/encryption"
 import { AuthTokensResponse } from "../types/response"
@@ -31,6 +31,11 @@ const loginUserWithEmailAndPassword = async (
   if (!user || !(await isPasswordMatch(password, user.password as string))) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password")
   }
+
+  if (user.role === Role.APPLICATION) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Applications can't use email and password login")
+  }
+
   return exclude(user, ["password"])
 }
 
@@ -83,7 +88,7 @@ const resetPassword = async (resetPasswordToken: string, newPassword: string): P
     )
     const user = await userService.getUserById(resetPasswordTokenData.userId)
     if (!user) {
-      throw new Error()
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found")
     }
     const encryptedPassword = await encryptPassword(newPassword)
     await userService.updateUserById(user.id, { password: encryptedPassword })
