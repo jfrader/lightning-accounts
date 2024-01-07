@@ -1,6 +1,6 @@
 # Lightning Accounts
 
-Lightning Accounts is a Nodejs server that allows users to register and deposit/withdraw satoshis using the Bitcoin Lightning Network.
+Nodejs server that allows users to register and deposit/withdraw satoshis using the Bitcoin Lightning Network.
 
 ## Quick Start
 
