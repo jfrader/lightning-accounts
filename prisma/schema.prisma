@@ -50,7 +50,7 @@ model Wallet {
   user          User          @relation(fields: [userId], references: [id])
   userId        Int           @unique
   balanceInSats Int
-  disabled      Boolean
+  disabled      Boolean       @default(false)
   transactions  Transaction[]
 }
 
@@ -63,9 +63,9 @@ model PayRequest {
   creator      User          @relation(name: "creator", fields: [creatorId], references: [id])
   creatorId    Int
   amountInSats Int
-  description  String
+  description  String        @default("")
   meta         Json?
-  paid         Boolean
+  paid         Boolean       @default(false)
   transactions Transaction[]
 }
 
@@ -78,7 +78,7 @@ model Transaction {
   amountInSats   Int
   type           TransactionType
   description    String?
-  walletImpacted Boolean
+  walletImpacted Boolean         @default(false)
   invoiceSettled Boolean?
   invoice        Json?
   payRequest     PayRequest?     @relation(fields: [payRequestId], references: [id])

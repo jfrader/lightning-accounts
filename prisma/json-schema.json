@@ -142,7 +142,8 @@
           "type": "integer"
         },
         "disabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         },
         "transactions": {
           "type": "array",
@@ -154,8 +155,7 @@
       "required": [
         "updatedAt",
         "userId",
-        "balanceInSats",
-        "disabled"
+        "balanceInSats"
       ]
     },
     "PayRequest": {
@@ -182,7 +182,8 @@
           "type": "integer"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "default": ""
         },
         "meta": {
           "type": [
@@ -195,7 +196,8 @@
           ]
         },
         "paid": {
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         },
         "transactions": {
           "type": "array",
@@ -208,9 +210,7 @@
         "updatedAt",
         "receiverId",
         "creatorId",
-        "amountInSats",
-        "description",
-        "paid"
+        "amountInSats"
       ]
     },
     "Transaction": {
@@ -249,7 +249,8 @@
           ]
         },
         "walletImpacted": {
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         },
         "invoiceSettled": {
           "type": [
@@ -282,8 +283,7 @@
         "updatedAt",
         "walletId",
         "amountInSats",
-        "type",
-        "walletImpacted"
+        "type"
       ]
     }
   },
