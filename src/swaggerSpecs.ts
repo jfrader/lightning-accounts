@@ -3,7 +3,7 @@ import swaggerDefinition from "./docs/swaggerDef"
 
 const specs = swaggerJSDoc({
   swaggerDefinition,
-  apis: ["src/docs/*.yml", "src/routes/v1/*.ts"],
+  apis: ["dist/swagger.yml", "src/routes/v1/*.ts"],
 })
 
 export default specs

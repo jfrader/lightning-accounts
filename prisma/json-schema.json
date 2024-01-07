@@ -1,0 +1,308 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "email": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "default": "USER",
+          "enum": [
+            "USER",
+            "ADMIN",
+            "APPLICATION"
+          ]
+        },
+        "isEmailVerified": {
+          "type": "boolean",
+          "default": false
+        },
+        "Token": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Token"
+          }
+        },
+        "wallet": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Wallet"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "payRequestsCreated": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PayRequest"
+          }
+        },
+        "payRequestsReceived": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PayRequest"
+          }
+        }
+      },
+      "required": [
+        "updatedAt",
+        "email",
+        "name",
+        "password"
+      ]
+    },
+    "Token": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "token": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "ACCESS",
+            "REFRESH",
+            "IDENTITY",
+            "RESET_PASSWORD",
+            "VERIFY_EMAIL",
+            "APPLICATION"
+          ]
+        },
+        "expires": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "blacklisted": {
+          "type": "boolean"
+        },
+        "user": {
+          "$ref": "#/definitions/User"
+        }
+      },
+      "required": [
+        "updatedAt",
+        "token",
+        "type",
+        "expires",
+        "blacklisted",
+        "userId"
+      ]
+    },
+    "Wallet": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "user": {
+          "$ref": "#/definitions/User"
+        },
+        "balanceInSats": {
+          "type": "integer"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "transactions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Transaction"
+          }
+        }
+      },
+      "required": [
+        "updatedAt",
+        "userId",
+        "balanceInSats",
+        "disabled"
+      ]
+    },
+    "PayRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "receiver": {
+          "$ref": "#/definitions/User"
+        },
+        "creator": {
+          "$ref": "#/definitions/User"
+        },
+        "amountInSats": {
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "meta": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "paid": {
+          "type": "boolean"
+        },
+        "transactions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Transaction"
+          }
+        }
+      },
+      "required": [
+        "updatedAt",
+        "receiverId",
+        "creatorId",
+        "amountInSats",
+        "description",
+        "paid"
+      ]
+    },
+    "Transaction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "wallet": {
+          "$ref": "#/definitions/Wallet"
+        },
+        "amountInSats": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "SEND",
+            "RECEIVE",
+            "WITHDRAW",
+            "DEPOSIT"
+          ]
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "walletImpacted": {
+          "type": "boolean"
+        },
+        "invoiceSettled": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "invoice": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "payRequest": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PayRequest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "updatedAt",
+        "walletId",
+        "amountInSats",
+        "type",
+        "walletImpacted"
+      ]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "user": {
+      "$ref": "#/definitions/User"
+    },
+    "token": {
+      "$ref": "#/definitions/Token"
+    },
+    "wallet": {
+      "$ref": "#/definitions/Wallet"
+    },
+    "payRequest": {
+      "$ref": "#/definitions/PayRequest"
+    },
+    "transaction": {
+      "$ref": "#/definitions/Transaction"
+    }
+  }
+}

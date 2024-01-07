@@ -1,81 +1,5 @@
 components:
   schemas:
-    User:
-      type: object
-      required:
-        - id
-        - email
-        - name
-        - role
-      properties:
-        id:
-          type: number
-        email:
-          type: string
-          format: email
-        name:
-          type: string
-        role:
-          type: string
-          enum: [USER, ADMIN]
-      example:
-        id: 2
-        email: fake@example.com
-        name: fake name
-        role: USER
-
-    Wallet:
-      type: object
-      required:
-        - id
-        - userId
-        - balanceInSats
-        - disabled
-      properties:
-        id:
-          type: number
-        userId:
-          type: number
-        balanceInSats:
-          type: number
-        disabled:
-          type: boolean
-      example:
-        id: 2
-        userId: 1
-        balanceInSats: 8000
-        disabled: false
-
-    Me:
-      allOf:
-        - $ref: "#/components/schemas/User"
-        - type: object
-          properties:
-            wallet:
-              $ref: "#/components/schemas/Wallet"
-          example:
-            id: 5ebac534954b54139806c112
-            email: fake@example.com
-            name: fake name
-            role: USER
-            wallet:
-              id: 2
-              userId: 1
-              balanceInSats: 8000
-              disabled: false
-
-    Token:
-      type: object
-      properties:
-        token:
-          type: string
-        expires:
-          type: string
-          format: date-time
-      example:
-        token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZWJhYzUzNDk1NGI1NDEzOTgwNmMxMTIiLCJpYXQiOjE1ODkyOTg0ODQsImV4cCI6MTU4OTMwMDI4NH0.m1U63blB0MLej_WfB7yC2FTMnCziif9X8yzwDEfJXAg
-        expires: 2020-05-12T16:18:04.793Z
-
     AuthTokens:
       type: object
       properties:
@@ -131,9 +55,3 @@ components:
           example:
             code: 404
             message: Not found
-
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT

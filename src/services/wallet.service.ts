@@ -4,6 +4,7 @@ import { Prisma, TransactionType, Transaction, Wallet } from "@prisma/client"
 import prisma from "../client"
 import { SubscribeToInvoiceInvoiceUpdatedEvent } from "lightning"
 import lightningService from "./lightning.service"
+import userService from "./user.service"
 
 /**
  * Get wallet by user id
@@ -78,7 +79,7 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
       const pendingTransaction = await tx.transaction.create({
         data: {
           type: TransactionType.DEPOSIT,
-          valueInSats: sats,
+          amountInSats: sats,
           walletImpacted: false,
           walletId: wallet.id,
           invoiceSettled: false,
@@ -94,10 +95,14 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
   )
 }
 
-const getTransaction = async (txId: number) => {
-  const transaction = await prisma.transaction.findUnique({ where: { id: txId } })
+const getTransaction = async (txId: number, userId?: number) => {
+  const walletId = userId ? (await userService.getUserWithWallet(userId))?.id : undefined
+  const transaction = await prisma.transaction.findUnique({ where: { id: txId, walletId } })
 
   if (!transaction) {
+    if (userId) {
+      throw new ApiError(httpStatus.FORBIDDEN, "This transaction is not from this user")
+    }
     throw new ApiError(httpStatus.NOT_FOUND, "Transaction not found")
   }
 

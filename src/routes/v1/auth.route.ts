@@ -41,7 +41,7 @@ export default router
  *         content:
  *           application/json:
  *             schema:
- *                $ref: '#/components/schemas/Me'
+ *                $ref: '#/components/schemas/User'
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
  *       "403":
