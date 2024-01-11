@@ -1,4 +1,4 @@
-import { User, Role, Prisma } from "@prisma/client"
+import { User, Role, Prisma, Wallet } from "@prisma/client"
 import httpStatus from "http-status"
 import prisma from "../client"
 import ApiError from "../utils/ApiError"
@@ -159,6 +159,28 @@ const deleteUserById = async (userId: number): Promise<UserWithWallet> => {
   return user
 }
 
+/**
+ * Get user wallet
+ * @param {ObjectId} userId
+ * @returns {Promise<Wallet>}
+ */
+const getUserWallet = async (userId: number): Promise<Wallet> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { wallet: true },
+  })
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+  }
+
+  if (!user.wallet) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Wallet not found")
+  }
+
+  return user.wallet
+}
+
 export default {
   createUser,
   queryUsers,
@@ -167,4 +189,5 @@ export default {
   updateUserById,
   deleteUserById,
   getUserWithWallet,
+  getUserWallet,
 }

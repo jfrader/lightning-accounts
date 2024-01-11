@@ -47,7 +47,7 @@ const saveToken = async (
   type: TokenType,
   blacklisted = false
 ): Promise<Token> => {
-  const createdToken = prisma.token.create({
+  const createdToken = await prisma.token.create({
     data: {
       token,
       userId: userId,
@@ -56,6 +56,7 @@ const saveToken = async (
       blacklisted,
     },
   })
+
   return createdToken
 }
 
@@ -66,7 +67,7 @@ const saveToken = async (
  * @returns {Promise<Token>}
  */
 const verifyToken = async (token: string, type: TokenType): Promise<Token> => {
-  const payload = jwt.verify(token, config.jwt.publicKey)
+  const payload = jwt.verify(token, config.jwt.publicKey, { algorithms: ["RS256"] })
   const userId = Number(payload.sub)
   const tokenData = await prisma.token.findFirst({
     where: { token, type, userId, blacklisted: false },

@@ -35,10 +35,16 @@ const deleteUser = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send()
 })
 
+const getUserWallet = catchAsync(async (req, res) => {
+  const wallet = await userService.getUserWallet(req.params.userId)
+  res.send(wallet)
+})
+
 export default {
   createUser,
   getUsers,
   getUser,
   updateUser,
   deleteUser,
+  getUserWallet,
 }

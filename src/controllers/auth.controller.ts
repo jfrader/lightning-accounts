@@ -27,6 +27,7 @@ const logout = catchAsync(async (req, res) => {
   await authService.logout(token)
   res.clearCookie(JwtCookie.access)
   res.clearCookie(JwtCookie.refresh)
+  res.clearCookie(JwtCookie.identity)
   res.status(httpStatus.NO_CONTENT).send()
 })
 
@@ -37,6 +38,8 @@ const refreshTokens = catchAsync(async (req, res) => {
     authCookie(tokens, res).status(httpStatus.NO_CONTENT).send()
   } catch (e) {
     res.clearCookie(JwtCookie.refresh)
+    res.clearCookie(JwtCookie.access)
+    res.clearCookie(JwtCookie.identity)
     throw e
   }
 })
@@ -66,8 +69,15 @@ const verifyEmail = catchAsync(async (req, res) => {
 
 const getMe = catchAsync(async (req, res) => {
   const user = req.user as User
-  const userWithWallet = await userService.getUserWithWallet(user.id)
-  res.send(userWithWallet)
+  try {
+    const userWithWallet = await userService.getUserWithWallet(user.id)
+    res.send(userWithWallet)
+  } catch (e) {
+    res.clearCookie(JwtCookie.refresh)
+    res.clearCookie(JwtCookie.access)
+    res.clearCookie(JwtCookie.identity)
+    throw e
+  }
 })
 
 export default {

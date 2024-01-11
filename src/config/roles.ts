@@ -10,8 +10,16 @@ export enum UserPermission {
 }
 
 const allRoles = {
-  [Role.APPLICATION]: [UserPermission.users_read],
-  [Role.USER]: [UserPermission.wallet_invoice, UserPermission.wallet_pay],
+  [Role.APPLICATION]: [
+    UserPermission.users_read,
+    UserPermission.wallet_invoice,
+    UserPermission.wallet_pay_user,
+  ],
+  [Role.USER]: [
+    UserPermission.wallet_invoice,
+    UserPermission.wallet_pay,
+    UserPermission.wallet_pay_user,
+  ],
   [Role.ADMIN]: [
     UserPermission.wallet_invoice,
     UserPermission.wallet_pay,

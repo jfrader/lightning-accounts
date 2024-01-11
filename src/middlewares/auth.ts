@@ -8,7 +8,7 @@ import { JwtCookie } from "../types/tokens"
 
 const verifyCallback =
   (
-    req: any,
+    req: Request,
     resolve: (value?: unknown) => void,
     reject: (reason?: unknown) => void,
     requiredRights: UserPermission[]
@@ -24,7 +24,7 @@ const verifyCallback =
       const hasRequiredRights = requiredRights.every((requiredRight) =>
         userRights.includes(requiredRight)
       )
-      if (!hasRequiredRights && req.params.userId !== user.id) {
+      if (!hasRequiredRights && req.params.userId !== String(user.id)) {
         return reject(new ApiError(httpStatus.FORBIDDEN, "Forbidden"))
       }
     }
