@@ -34,65 +34,55 @@ const _impactDeposit = async (
   invoice: SubscribeToInvoiceInvoiceUpdatedEvent,
   walletTransaction: Transaction
 ) => {
-  return prisma.$transaction(
-    async (tx) => {
-      if (walletTransaction.walletImpacted || !invoice.is_confirmed) {
-        throw new ApiError(
-          httpStatus.INTERNAL_SERVER_ERROR,
-          "Wallet already has this funds impacted or invoice is not confirmed"
-        )
-      }
-
-      const wallet = await tx.wallet.findUnique({
-        where: { id: walletTransaction.walletId },
-      })
-
-      if (!wallet) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Wallet not found")
-      }
-
-      await tx.wallet.update({
-        where: { id: wallet.id },
-        data: { balanceInSats: wallet.balanceInSats + invoice.tokens },
-      })
-
-      await tx.transaction.update({
-        where: { id: walletTransaction.id },
-        data: { walletImpacted: true, invoiceSettled: invoice.is_confirmed, invoice },
-      })
-    },
-    {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+  return prisma.$transaction(async (tx) => {
+    if (walletTransaction.walletImpacted || !invoice.is_confirmed) {
+      throw new ApiError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        "Wallet already has this funds impacted or invoice is not confirmed"
+      )
     }
-  )
+
+    const wallet = await tx.wallet.findUnique({
+      where: { id: walletTransaction.walletId },
+    })
+
+    if (!wallet) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Wallet not found")
+    }
+
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: { balanceInSats: wallet.balanceInSats + invoice.tokens },
+    })
+
+    await tx.transaction.update({
+      where: { id: walletTransaction.id },
+      data: { walletImpacted: true, invoiceSettled: invoice.is_confirmed, invoice },
+    })
+  })
 }
 
 const createDepositInvoice = async (userId: number, sats: number): Promise<Transaction> => {
   const wallet = await getUserWallet(userId)
 
-  return prisma.$transaction(
-    async (tx) => {
-      const invoice = await lightningService.createInvoice(sats, (settledInvoice) => {
-        _impactDeposit(settledInvoice, pendingTransaction)
-      })
+  return prisma.$transaction(async (tx) => {
+    const invoice = await lightningService.createInvoice(sats, (settledInvoice) => {
+      _impactDeposit(settledInvoice, pendingTransaction)
+    })
 
-      const pendingTransaction = await tx.transaction.create({
-        data: {
-          type: TransactionType.DEPOSIT,
-          amountInSats: sats,
-          walletImpacted: false,
-          walletId: wallet.id,
-          invoiceSettled: false,
-          invoice,
-        },
-      })
+    const pendingTransaction = await tx.transaction.create({
+      data: {
+        type: TransactionType.DEPOSIT,
+        amountInSats: sats,
+        walletImpacted: false,
+        walletId: wallet.id,
+        invoiceSettled: false,
+        invoice,
+      },
+    })
 
-      return pendingTransaction
-    },
-    {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-    }
-  )
+    return pendingTransaction
+  })
 }
 
 const getTransaction = async (txId: number, userId?: number) => {
@@ -118,61 +108,56 @@ const payUser = async ({
   receiverId: number
   amountInSats: number
 }) => {
-  return await prisma.$transaction(
-    async (tx) => {
-      const payerWallet = await getUserWallet(payerId)
+  return prisma.$transaction(async (tx) => {
+    const payerWallet = await getUserWallet(payerId)
 
-      if (payerWallet.balanceInSats < amountInSats) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
-      }
-
-      const payeeWallet = await getUserWallet(receiverId)
-
-      await tx.wallet.update({
-        where: { id: payerWallet.id },
-        data: {
-          balanceInSats: {
-            decrement: amountInSats,
-          },
-        },
-        select: { id: true },
-      })
-
-      await tx.wallet.update({
-        where: { id: payeeWallet.id },
-        data: {
-          balanceInSats: {
-            increment: amountInSats,
-          },
-        },
-        select: { id: true },
-      })
-
-      await tx.transaction.create({
-        data: {
-          walletImpacted: true,
-          invoiceSettled: true,
-          amountInSats: amountInSats,
-          type: TransactionType.RECEIVE,
-          wallet: { connect: { id: payeeWallet.id } },
-        },
-        select: { id: true },
-      })
-
-      return tx.transaction.create({
-        data: {
-          walletImpacted: true,
-          invoiceSettled: true,
-          amountInSats,
-          type: TransactionType.SEND,
-          wallet: { connect: { id: payerWallet.id } },
-        },
-      })
-    },
-    {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    if (payerWallet.balanceInSats < amountInSats) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
     }
-  )
+
+    const payeeWallet = await getUserWallet(receiverId)
+
+    await tx.wallet.update({
+      where: { id: payerWallet.id },
+      data: {
+        balanceInSats: {
+          decrement: amountInSats,
+        },
+      },
+      select: { id: true },
+    })
+
+    await tx.wallet.update({
+      where: { id: payeeWallet.id },
+      data: {
+        balanceInSats: {
+          increment: amountInSats,
+        },
+      },
+      select: { id: true },
+    })
+
+    await tx.transaction.create({
+      data: {
+        walletImpacted: true,
+        invoiceSettled: true,
+        amountInSats: amountInSats,
+        type: TransactionType.RECEIVE,
+        wallet: { connect: { id: payeeWallet.id } },
+      },
+      select: { id: true },
+    })
+
+    return tx.transaction.create({
+      data: {
+        walletImpacted: true,
+        invoiceSettled: true,
+        amountInSats,
+        type: TransactionType.SEND,
+        wallet: { connect: { id: payerWallet.id } },
+      },
+    })
+  })
 }
 
 const withdrawToInvoice = async (userId: number, invoice: string) => {
