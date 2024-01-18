@@ -237,10 +237,10 @@ router
   )
 
 router
-  .route("/pay-request/multiple")
+  .route("/pay-requests")
   /**
    * @swagger
-   * /wallet/pay-request/multiple:
+   * /wallet/pay-requests:
    *   post:
    *     summary: Create multiple payment requests
    *     description: Create multiple pay requests that another user can pay from their balance
@@ -292,7 +292,7 @@ router
   )
   /**
    * @swagger
-   * /wallet/pay-request/multiple:
+   * /wallet/pay-requests:
    *   get:
    *     summary: Get multiple pay requests
    *     description: Get multiple pay requests

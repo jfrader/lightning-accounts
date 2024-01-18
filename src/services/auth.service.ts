@@ -70,7 +70,6 @@ const refreshAuth = async (refreshToken: string): Promise<AuthTokensResponse> =>
     await prisma.token.delete({ where: { id: refreshTokenData.id } })
     return tokenService.generateAuthTokens({ id: userId })
   } catch (error) {
-    console.error(error)
     throw new ApiError(httpStatus.FORBIDDEN, "Please authenticate")
   }
 }
