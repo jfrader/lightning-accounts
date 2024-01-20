@@ -5,6 +5,7 @@ import { UserPermission, roleRights } from "../config/roles"
 import { NextFunction, Request, Response } from "express"
 import { User } from "@prisma/client"
 import { JwtCookie } from "../types/tokens"
+import logger from "../config/logger"
 
 const verifyCallback =
   (
@@ -15,6 +16,7 @@ const verifyCallback =
   ) =>
   async (err: unknown, user: User | false, info: unknown) => {
     if (err || info || !user) {
+      logger.debug("Failed to authorize: " + JSON.stringify(info))
       return reject(new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate"))
     }
     req.user = user
