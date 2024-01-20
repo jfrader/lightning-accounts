@@ -16,7 +16,7 @@ const verifyCallback =
   ) =>
   async (err: unknown, user: User | false, info: unknown) => {
     if (err || info || !user) {
-      logger.debug("Failed to authorize: " + JSON.stringify(info))
+      logger.debug("Failed to authorize: " + JSON.stringify({ err, info }))
       return reject(new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate"))
     }
     req.user = user
