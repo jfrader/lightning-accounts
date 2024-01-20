@@ -12,6 +12,7 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
       expires: access.expires,
       domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
+      signed: secure,
       secure,
     })
     .cookie(JwtCookie.refresh, refresh?.token, {
@@ -19,12 +20,14 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
       expires: refresh?.expires,
       domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
+      signed: secure,
       secure,
     })
     .cookie(JwtCookie.identity, identity?.token, {
       expires: identity?.expires,
       domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
+      signed: secure,
       secure,
     })
 }
