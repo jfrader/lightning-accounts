@@ -10,17 +10,20 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
     .cookie(JwtCookie.access, access.token, {
       httpOnly: true,
       expires: access.expires,
+      domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
       secure,
     })
     .cookie(JwtCookie.refresh, refresh?.token, {
       httpOnly: true,
       expires: refresh?.expires,
+      domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
       secure,
     })
     .cookie(JwtCookie.identity, identity?.token, {
       expires: identity?.expires,
+      domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
       secure,
     })
