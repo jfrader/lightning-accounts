@@ -16,9 +16,8 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "scripts": {
-    "start": "yarn build && pm2 start ecosystem.config.json --no-daemon",
+    "start": "yarn swagger:specs && cross-env NODE_ENV=development nodemon src/index.ts",
     "start:e2e": "yarn build && dotenv -e .env.e2e -- nodemon src/index.ts",
-    "dev": "yarn swagger:specs && cross-env NODE_ENV=development nodemon src/index.ts",
     "test": "docker-compose -f docker-compose.only-db-test.yml up -d && yarn db:push && jest -i --colors --verbose --detectOpenHandles && docker-compose -f docker-compose.only-db-test.yml down",
     "test:watch": "docker-compose -f docker-compose.only-db-test.yml up -d && yarn db:push && jest -i --watchAll && docker-compose -f docker-compose.only-db-test.yml down",
     "lint": "eslint .",
@@ -34,12 +33,7 @@
     "db:e2e:push": "dotenv -e .env.e2e -- prisma db push",
     "db:e2e:studio": "dotenv -e .env.e2e -- prisma studio",
     "db:e2e:migrate": "dotenv -e .env.e2e -- prisma migrate dev",
-    "db:e2e:seed": "dotenv -e .env.e2e -- yarn db:e2e:push --force-reset && dotenv -e .env.e2e -- prisma db seed -- --environment e2e",
-    "docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up",
-    "docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
-    "docker:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml up",
-    "docker:dev-db:start": "docker-compose -f docker-compose.only-db-dev.yml up -d",
-    "docker:dev-db:stop": "docker-compose -f docker-compose.only-db-dev.yml down",
+    "db:e2e:seed": "dotenv -e .env.e2e -- yarn db:e2e:push --force-reset && dotenv -e .env.e2e -- prisma db seed",
     "prepare": "husky install",
     "build": "yarn swagger:generate && rimraf build && tsc -p tsconfig.json",
     "prepublishOnly": "yarn swagger:generate"

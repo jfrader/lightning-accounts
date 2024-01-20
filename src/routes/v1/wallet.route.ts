@@ -4,6 +4,7 @@ import validate from "../../middlewares/validate"
 import { UserPermission } from "../../config/roles"
 import walletValidation from "../../validations/wallet.validation"
 import walletController from "../../controllers/wallet.controller"
+import { lndConnected } from "../../middlewares/lnd"
 
 const router = express.Router()
 
@@ -50,6 +51,7 @@ router
    */
   .post(
     auth(UserPermission.wallet_invoice),
+    lndConnected,
     validate(walletValidation.createDeposit),
     walletController.createDeposit
   )
@@ -78,9 +80,12 @@ router
    *                 type: integer
    *               userId:
    *                 type: integer
+   *               description:
+   *                 type: string
    *             example:
    *               amountInSats: 100
    *               userId: 5
+   *               description: Transaction Description
    *     responses:
    *       "201":
    *         description: Created

@@ -103,10 +103,12 @@ const payUser = async ({
   payerId,
   receiverId,
   amountInSats,
+  description,
 }: {
   payerId: number
   receiverId: number
   amountInSats: number
+  description?: string
 }) => {
   return prisma.$transaction(async (tx) => {
     const payerWallet = await getUserWallet(payerId)
@@ -142,6 +144,7 @@ const payUser = async ({
         walletImpacted: true,
         invoiceSettled: true,
         amountInSats: amountInSats,
+        description,
         type: TransactionType.RECEIVE,
         wallet: { connect: { id: payeeWallet.id } },
       },
@@ -153,6 +156,7 @@ const payUser = async ({
         walletImpacted: true,
         invoiceSettled: true,
         amountInSats,
+        description,
         type: TransactionType.SEND,
         wallet: { connect: { id: payerWallet.id } },
       },
@@ -266,6 +270,10 @@ const payRequest = async ({ payerId, payRequestId }: { payerId: number; payReque
         throw new ApiError(httpStatus.NOT_FOUND, "Pay request not found")
       }
 
+      if (pr.paid) {
+        throw new ApiError(httpStatus.FOUND, "Pay request already paid")
+      }
+
       const payerWallet = await getUserWallet(payerId)
 
       if (payerWallet.balanceInSats < pr.amountInSats) {
@@ -337,7 +345,10 @@ const getPayRequest = async (id: PayRequest["id"]) => {
 const getPayRequests = async (ids: Array<PayRequest["id"]>) => {
   return prisma.payRequest.findMany({
     where: { OR: ids.map((id) => ({ id })) },
-    include: { receiver: true, creator: true },
+    include: {
+      creator: { select: { id: true, name: true, email: true } },
+      receiver: { select: { id: true, name: true, email: true } },
+    },
   })
 }
 

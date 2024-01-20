@@ -1,0 +1,16 @@
+[Unit]
+Description=Lightning Accounts API Server
+Documentation=https://github.com/jfrader/lightning-accounts.git
+After=network.target
+
+[Service]
+Environment=NODE_PORT=2999
+Environment=NODE_ORIGIN=*
+Environment=NODE_DEBUG_LEVEL=debug
+Type=simple
+User=web
+ExecStart=/usr/bin/node /home/www/lightning-accounts/bin/lightning-accounts-server
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -7,8 +7,8 @@ dotenv.config({ path: path.join(process.cwd(), ".env") })
 const envVarsSchema = Joi.object()
   .keys({
     NODE_ENV: Joi.string().valid("production", "development", "test").required(),
-    PORT: Joi.number().default(3000),
-    ORIGIN: Joi.string().required().description("Allowed origin"),
+    NODE_PORT: Joi.number().default(3000),
+    NODE_ORIGIN: Joi.string().required().description("Allowed origin"),
     JWT_SECRET: Joi.string().required().description("JWT secret key"),
     JWT_BASE64_PUBLIC_KEY: Joi.string().required().description("Base64 encoded public key"),
     JWT_BASE64_PRIVATE_KEY: Joi.string().required().description("Base64 encoded private key"),
@@ -45,8 +45,8 @@ if (error) {
 
 export default {
   env: envVars.NODE_ENV,
-  port: envVars.PORT,
-  origin: envVars.ORIGIN,
+  port: envVars.NODE_PORT,
+  origin: envVars.NODE_ORIGIN,
   jwt: {
     secret: envVars.JWT_SECRET,
     publicKey: Buffer.from(envVars.JWT_BASE64_PUBLIC_KEY || "", "base64").toString(),

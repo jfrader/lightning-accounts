@@ -4,6 +4,8 @@ import httpStatus from "http-status"
 import config from "../config/config"
 import logger from "../config/logger"
 
+let connected = false
+
 const { lnd } = lightning.authenticatedLndGrpc({
   cert: config.lightning.lndConfig.cert,
   macaroon: config.lightning.lndConfig.macaroon,
@@ -14,9 +16,10 @@ const init = () =>
   new Promise<lightning.GetWalletInfoResult>((resolve, reject) => {
     lightning.getWalletInfo({ lnd }, (err, result) => {
       if (err) {
+        connected = false
         return reject(err)
       }
-
+      connected = true
       resolve(result)
     })
   })
@@ -57,8 +60,14 @@ const createInvoice = async (
 ): Promise<lightning.CreateInvoiceResult> => {
   return new Promise((resolve, reject) => {
     lightning.createInvoice({ lnd, tokens: sats }, (error, result) => {
-      if (error) {
-        reject(error)
+      if (error || !result) {
+        reject(
+          error ||
+            new ApiError(
+              httpStatus.SERVICE_UNAVAILABLE,
+              "Deposits are temporarily unavailable, please try again later"
+            )
+        )
       }
 
       lightning
@@ -83,6 +92,8 @@ const decodeInvoice = async (invoice: string) => {
 }
 
 export default {
+  init,
+  connected,
   payInvoice,
   createInvoice,
   decodeInvoice,

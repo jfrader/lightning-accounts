@@ -111,7 +111,7 @@ The environment variables can be found and modified in the `.env` file. They com
 
 ```bash
 # Port number
-PORT=3000
+NODE_PORT=3000
 
 # URL of the PostgreSQL database
 DATABASE_URL=postgresql://postgres:secret@localhost:5432/mydb?schema=public

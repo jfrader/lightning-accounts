@@ -61,12 +61,9 @@ async function main() {
   } = parseArgs({ options } as any)
 
   switch (environment) {
-    case "e2e":
-      await defaultCase()
-      await e2eCase()
-      break
     default:
       await defaultCase()
+      await e2eCase()
       break
   }
 }

@@ -112,8 +112,14 @@ const payUser = catchAsync(async (req, res) => {
 
   const receiverId = req.body.userId
   const amountInSats = req.body.amountInSats
+  const description = req.body.description
 
-  const tx = await walletService.payUser({ payerId: user.id, receiverId, amountInSats })
+  const tx = await walletService.payUser({
+    payerId: user.id,
+    receiverId,
+    amountInSats,
+    description,
+  })
   res.send(tx)
 })
 

@@ -52,6 +52,7 @@ const payUser = {
   body: Joi.object().keys({
     amountInSats: Joi.number().required(),
     userId: Joi.number().required(),
+    description: Joi.string(),
   }),
 }
 

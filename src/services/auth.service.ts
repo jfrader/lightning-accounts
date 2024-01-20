@@ -29,6 +29,7 @@ const loginUserWithEmailAndPassword = async (
     "updatedAt",
   ])
   if (!user || !(await isPasswordMatch(password, user.password as string))) {
+    console.error({ user, email, password })
     throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password")
   }
 
