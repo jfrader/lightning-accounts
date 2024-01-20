@@ -5,6 +5,7 @@ import prisma from "../client"
 import { SubscribeToInvoiceInvoiceUpdatedEvent } from "lightning"
 import lightningService from "./lightning.service"
 import userService from "./user.service"
+import logger from "../config/logger"
 
 /**
  * Get wallet by user id
@@ -67,7 +68,7 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
 
   return prisma.$transaction(async (tx) => {
     const invoice = await lightningService.createInvoice(sats, (settledInvoice) => {
-      _impactDeposit(settledInvoice, pendingTransaction)
+      _impactDeposit(settledInvoice, pendingTransaction).catch((e) => logger.error(e.message))
     })
 
     const pendingTransaction = await tx.transaction.create({
