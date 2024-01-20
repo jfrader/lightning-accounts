@@ -1,6 +1,6 @@
 {
   "name": "lightning-accounts",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/index.js",
@@ -16,8 +16,8 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "scripts": {
-    "start": "yarn swagger:specs && cross-env NODE_ENV=development nodemon src/index.ts",
-    "start:e2e": "yarn build && dotenv -e .env.e2e -- nodemon src/index.ts",
+    "start": "yarn swagger:specs && cross-env NODE_ENV=development nodemon bin/lightning-accounts-server",
+    "start:e2e": "yarn build && dotenv -e .env.e2e -- nodemon bin/lightning-accounts-server",
     "test": "docker-compose -f docker-compose.only-db-test.yml up -d && yarn db:push && jest -i --colors --verbose --detectOpenHandles && docker-compose -f docker-compose.only-db-test.yml down",
     "test:watch": "docker-compose -f docker-compose.only-db-test.yml up -d && yarn db:push && jest -i --watchAll && docker-compose -f docker-compose.only-db-test.yml down",
     "lint": "eslint .",
