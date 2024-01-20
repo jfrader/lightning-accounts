@@ -10,6 +10,9 @@ const envVarsSchema = Joi.object()
     NODE_PORT: Joi.number().default(3000),
     NODE_ORIGIN: Joi.string().required().description("Allowed origin"),
     NODE_DOMAIN: Joi.string().description("The domain for cookie like '.example.com'"),
+    NODE_DEBUG_LEVEL: Joi.string().description(
+      "Debug level (trace, debug, info, warning, error, fatal)"
+    ),
     JWT_SECRET: Joi.string().required().description("JWT secret key"),
     JWT_BASE64_PUBLIC_KEY: Joi.string().required().description("Base64 encoded public key"),
     JWT_BASE64_PRIVATE_KEY: Joi.string().required().description("Base64 encoded private key"),
@@ -49,6 +52,7 @@ export default {
   port: envVars.NODE_PORT,
   origin: envVars.NODE_ORIGIN,
   domain: envVars.NODE_DOMAIN,
+  debug_level: envVars.NODE_DEBUG_LEVEL,
   jwt: {
     secret: envVars.JWT_SECRET,
     publicKey: Buffer.from(envVars.JWT_BASE64_PUBLIC_KEY || "", "base64").toString(),

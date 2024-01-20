@@ -9,7 +9,7 @@ const enumerateErrorFormat = winston.format((info) => {
 })
 
 const logger = winston.createLogger({
-  level: config.env === "development" ? "debug" : "info",
+  level: config.debug_level || "info",
   format: winston.format.combine(
     enumerateErrorFormat(),
     config.env === "development" ? winston.format.colorize() : winston.format.uncolorize(),
