@@ -44,7 +44,7 @@ app.use(xss())
 // gzip compression
 app.use(compression())
 
-app.use(cookieParser())
+app.use(cookieParser(config.jwt.secret))
 
 // enable cors
 app.use(cors(CORS_OPTS))
