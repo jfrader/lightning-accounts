@@ -73,6 +73,7 @@ const createInvoice = async (
       lightning
         .subscribeToInvoice({ lnd, id: result.id })
         .on("invoice_updated", (invoice: lightning.SubscribeToInvoiceInvoiceUpdatedEvent) => {
+          logger.debug(JSON.stringify(invoice))
           if (invoice.is_confirmed) {
             onConfirmed(invoice)
           }

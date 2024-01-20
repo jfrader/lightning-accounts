@@ -16,7 +16,7 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "scripts": {
-    "start": "yarn swagger:specs && cross-env NODE_ENV=development nodemon bin/lightning-accounts-server",
+    "start": "yarn swagger:specs && yarn build && cross-env NODE_ENV=development nodemon bin/lightning-accounts-server",
     "start:e2e": "yarn build && dotenv -e .env.e2e -- nodemon bin/lightning-accounts-server",
     "test": "docker-compose -f docker-compose.only-db-test.yml up -d && yarn db:push && jest -i --colors --verbose --detectOpenHandles && docker-compose -f docker-compose.only-db-test.yml down",
     "test:watch": "docker-compose -f docker-compose.only-db-test.yml up -d && yarn db:push && jest -i --watchAll && docker-compose -f docker-compose.only-db-test.yml down",
