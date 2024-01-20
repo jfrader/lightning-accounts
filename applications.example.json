@@ -1,9 +1,9 @@
 {
   "applications": [
     {
-      "name": "test",
-      "email": "changeme@change.com",
-      "remoteAddress": "127.0.0.1"
+      "name": "never",
+      "email": "never@never.never",
+      "remoteAddress": "never.local"
     }
   ]
 }
