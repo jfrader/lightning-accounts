@@ -60,6 +60,7 @@ const createInvoice = async (
 ): Promise<lightning.CreateInvoiceResult> => {
   return new Promise((resolve, reject) => {
     lightning.createInvoice({ lnd, tokens: sats }, (error, result) => {
+      logger.debug(JSON.stringify(result))
       if (error || !result) {
         reject(
           error ||
