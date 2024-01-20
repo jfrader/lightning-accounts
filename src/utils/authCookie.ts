@@ -27,7 +27,6 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
       expires: identity?.expires,
       domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
-      signed: secure,
       secure,
     })
 }
