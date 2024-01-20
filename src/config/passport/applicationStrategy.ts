@@ -1,5 +1,4 @@
 import { Strategy as CookieStrategy } from "passport-cookie"
-import config from "../config"
 import * as appsJson from "../../../applications.json"
 import { isPasswordMatch } from "../../utils/encryption"
 import { userService } from "../../services"
@@ -11,7 +10,7 @@ export const APPLICATION_STRATEGY_COOKIE = "Lightning-Application-Token"
 
 const options = {
   cookieName: APPLICATION_STRATEGY_COOKIE,
-  signed: config.env === "production",
+  signed: false,
   passReqToCallback: true,
 }
 
