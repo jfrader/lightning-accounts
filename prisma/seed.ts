@@ -4,17 +4,22 @@ import { encryptPassword } from "../src/utils/encryption"
 
 const options = {
   environment: { type: "string" },
+  appEmail: { type: "string" },
+  appPassword: { type: "string" },
 }
 
 const prisma = new PrismaClient()
 
-const defaultCase = async () => {
+const defaultCase = async (email: string, password: string) => {
   const alice = await prisma.user.upsert({
     where: { email: "admin@trucoshi.com" },
-    update: {},
+    update: {
+      password: await encryptPassword(password),
+      email: email,
+    },
     create: {
-      password: await encryptPassword("trucoshi123aaklsjdlaksdjlkas2ll2j2mmmcjkj1n2n3nn123"),
-      email: "admin@trucoshi.com",
+      password: await encryptPassword(password),
+      email: email,
       name: "Trucoshi",
       role: "APPLICATION",
       wallet: {
@@ -57,12 +62,15 @@ const e2eCase = async () => {
 
 async function main() {
   const {
-    values: { environment },
+    values: { environment, appEmail, appPassword },
   } = parseArgs({ options } as any)
 
   switch (environment) {
     default:
-      await defaultCase()
+      await defaultCase(
+        (appEmail as string) || "admin@trucoshi.com",
+        (appPassword as string) || "trucoshi123aaklsjdlaksdjlkas2ll2j2mmmcjkj1n2n3nn123"
+      )
       await e2eCase()
       break
   }

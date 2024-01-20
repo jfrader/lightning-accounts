@@ -4,6 +4,16 @@
   "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/index.js",
+  "author": "Fran <jfrader.com>",
+  "license": "MIT",
+  "keywords": [
+    "bitcoin",
+    "lightning",
+    "satoshi",
+    "api",
+    "accounts",
+    "integration"
+  ],
   "files": [
     "node_modules/.prisma/client/*",
     "node_modules/form-data/*",
@@ -38,13 +48,6 @@
     "build": "yarn swagger:generate && rimraf build && tsc -p tsconfig.json",
     "prepublishOnly": "yarn swagger:generate"
   },
-  "keywords": [
-    "bitcoin",
-    "lightning",
-    "satoshi"
-  ],
-  "author": "Fran <jfrader.com>",
-  "license": "MIT",
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",
     "@jest/globals": "^29.3.1",
