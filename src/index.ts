@@ -37,5 +37,6 @@ export default () => {
     if (server) {
       server.close()
     }
+    process.exit()
   })
 }
