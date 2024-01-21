@@ -60,7 +60,6 @@ const createInvoice = async (
 ): Promise<lightning.CreateInvoiceResult> => {
   return new Promise((resolve, reject) => {
     lightning.createInvoice({ lnd, tokens: sats }, (error, result) => {
-      logger.debug(JSON.stringify({ error, result }))
       if (error || !result) {
         reject(
           error ||
@@ -74,7 +73,6 @@ const createInvoice = async (
       lightning
         .subscribeToInvoice({ lnd, id: result.id })
         .on("invoice_updated", (invoice: lightning.SubscribeToInvoiceInvoiceUpdatedEvent) => {
-          logger.debug(JSON.stringify(invoice))
           if (invoice.is_confirmed) {
             onConfirmed(invoice)
           }
