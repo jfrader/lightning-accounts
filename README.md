@@ -7,7 +7,7 @@ Nodejs server that allows users to register and deposit/withdraw satoshis using 
 Install the dependencies:
 
 ```bash
-yarn install
+yarn
 ```
 
 Set the environment variables:
@@ -38,26 +38,7 @@ cp .env.example .env
 Running locally:
 
 ```bash
-yarn dev
-```
-
-Running in production:
-
-```bash
 yarn start
-```
-
-Testing:
-
-```bash
-# run all tests
-yarn test
-
-# run all tests in watch mode
-yarn test:watch
-
-# run test coverage
-yarn coverage
 ```
 
 Database:
@@ -68,25 +49,6 @@ yarn db:push
 
 # start prisma studio
 yarn db:studio
-```
-
-Docker:
-
-```bash
-# run docker container in development mode
-yarn docker:dev
-
-# run docker container in production mode
-yarn docker:prod
-
-# run all tests in a docker container
-yarn docker:test
-
-# run docker container with PostgreSQL db
-yarn docker:dev-db:start
-
-# stop docker container with PostgreSQL db
-yarn docker:dev-db:stop
 ```
 
 Linting:
@@ -110,19 +72,29 @@ yarn prettier:fix
 The environment variables can be found and modified in the `.env` file. They come with these default values:
 
 ```bash
-# Port number
 NODE_PORT=3000
+NODE_ORIGIN="*"
+NODE_DOMAIN=
+NODE_DEBUG_LEVEL=info
 
-# URL of the PostgreSQL database
-DATABASE_URL=postgresql://postgres:secret@localhost:5432/mydb?schema=public
+# Postgres URL
+DATABASE_URL="postgresql://postgres:secret@localhost:5432/mydb?schema=public"
 
 # JWT
 # JWT secret key
 JWT_SECRET=thisisasamplesecret
+
+JWT_BASE64_PUBLIC_KEY="base64 encoded public key"
+JWT_BASE64_PRIVATE_KEY="base64 encoded private key"
+
 # Number of minutes after which an access token expires
 JWT_ACCESS_EXPIRATION_MINUTES=30
 # Number of days after which a refresh token expires
 JWT_REFRESH_EXPIRATION_DAYS=30
+# Number of minutes after which a reset password token expires
+JWT_RESET_PASSWORD_EXPIRATION_MINUTES=10
+# Number of minutes after which a verify email token expires
+JWT_VERIFY_EMAIL_EXPIRATION_MINUTES=10
 
 # SMTP configuration options for the email service
 # For testing, you can use a fake SMTP service like Ethereal: https://ethereal.email/create
@@ -132,7 +104,8 @@ SMTP_USERNAME=email-server-username
 SMTP_PASSWORD=email-server-password
 EMAIL_FROM=support@yourapp.com
 
-# LIGHTNING LND
+# LND Lightning daemon configuration
+# For testing, you can use a lightning simulator like Polar: https://lightningpolar.com/
 LND_CERT="base 64 encoded tls.cert"
 LND_ADMIN_MACAROON="base 64 encoded admin.macaroon"
 LND_SOCKET="127.0.0.1:10001"
@@ -292,6 +265,8 @@ If the user making the request does not have the required permissions to access 
 
 Import the logger from `src/config/logger.js`. It is using the [Winston](https://github.com/winstonjs/winston) logging library.
 
+Set the NODE_DEBUG_LEVEL environment variable
+
 Logging should be done according to the following severity levels (ascending order from most important to least important):
 
 ```javascript
@@ -305,48 +280,7 @@ logger.verbose("message") // level 4
 logger.debug("message") // level 5
 ```
 
-In development mode, log messages of all severity levels will be printed to the console.
-
-In production mode, only `info`, `warn`, and `error` logs will be printed to the console.\
-It is up to the server (or process manager) to actually read them from the console and store them in log files.\
-This app uses pm2 in production mode, which is already configured to store the logs in log files.
-
 Note: API request information (request url, response code, timestamp, etc.) are also automatically logged (using [morgan](https://github.com/expressjs/morgan)).
-
-## Linting
-
-Linting is done using [ESLint](https://eslint.org/) and [Prettier](https://prettier.io).
-
-In this app, ESLint is configured to follow the [Airbnb JavaScript style guide](https://github.com/airbnb/javascript/tree/master/packages/eslint-config-airbnb-base) with some modifications. It also extends [eslint-config-prettier](https://github.com/prettier/eslint-config-prettier) to turn off all rules that are unnecessary or might conflict with Prettier.
-
-To modify the ESLint configuration, update the `.eslintrc.json` file. To modify the Prettier configuration, update the `.prettierrc.json` file.
-
-To prevent a certain file or directory from being linted, add it to `.eslintignore` and `.prettierignore`.
-
-To maintain a consistent coding style across different IDEs, the project contains `.editorconfig`
-
-## Stack
-
-- **SQL database**: [PostgreSQL](https://www.postgresql.org) object data modeling using [Prisma](https://www.prisma.io) ORM
-- **Authentication and authorization**: using [passport](http://www.passportjs.org)
-- **Validation**: request data validation using [Joi](https://joi.dev)
-- **Logging**: using [winston](https://github.com/winstonjs/winston) and [morgan](https://github.com/expressjs/morgan)
-- `future` **Testing**: unit and integration tests using [Jest](https://jestjs.io)
-- **Error handling**: centralized error handling mechanism
-- **API documentation**: with [swagger-jsdoc](https://github.com/Surnet/swagger-jsdoc) and [swagger-ui-express](https://github.com/scottie1984/swagger-ui-express)
-- **Process management**: advanced production process management using [PM2](https://pm2.keymetrics.io)
-- **Dependency management**: with [Yarn](https://yarnpkg.com)
-- **Environment variables**: using [dotenv](https://github.com/motdotla/dotenv) and [cross-env](https://github.com/kentcdodds/cross-env#readme)
-- **Security**: set security HTTP headers using [helmet](https://helmetjs.github.io)
-- **Santizing**: sanitize request data against xss and query injection
-- **CORS**: Cross-Origin Resource-Sharing enabled using [cors](https://github.com/expressjs/cors)
-- **Compression**: gzip compression with [compression](https://github.com/expressjs/compression)
-- **Docker support**
-- **Code coverage**: using [coveralls](https://coveralls.io)
-- **Code quality**: with [Codacy](https://www.codacy.com)
-- **Git hooks**: with [Husky](https://github.com/typicode/husky) and [lint-staged](https://github.com/okonet/lint-staged)
-- **Linting**: with [ESLint](https://eslint.org) and [Prettier](https://prettier.io)
-- **Editor config**: consistent editor configuration using [EditorConfig](https://editorconfig.org)
 
 ## Inspirations
 
