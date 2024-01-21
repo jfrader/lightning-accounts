@@ -282,6 +282,10 @@ logger.debug("message") // level 5
 
 Note: API request information (request url, response code, timestamp, etc.) are also automatically logged (using [morgan](https://github.com/expressjs/morgan)).
 
+# Donations
+
+Donate Bitcoin at [jfrader.com](https://jfrader.com)
+
 ## Inspirations
 
 Based off this boilerplate https://github.com/antonio-lazaro/prisma-express-typescript-boilerplate
