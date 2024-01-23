@@ -57,6 +57,48 @@ router
   )
 
 router
+  .route("/withdraw")
+  /**
+   * @swagger
+   * /wallet/withdraw:
+   *   post:
+   *     summary: Pay a lightning invoice
+   *     description: Pay a lightning invoice with the user balance, and use the whole balance if it is a zero-value invoice
+   *     tags: [Wallets]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - invoice
+   *             properties:
+   *               invoice:
+   *                 type: string
+   *             example:
+   *               invoice: lnbc15u1p3xnhl2pp5jptserfk3zk4qy42tlucycrfwxhydvlemu9pqr93tuzlv9cc7g3sdqsvfhkcap3xyhx7un8cqzpgxqzjcsp5f8c52y2stc300gl6s4xswtjpc37hrnnr3c9wvtgjfuvqmpm35evq9qyyssqy4lgd8tj637qcjp05rdpxxykjenthxftej7a2zzmwrmrl70fyj9hvj0rewhzj7jfyuwkwcg9g2jpwtk3wkjtwnkdks84hsnu8xps5vsq4gj5hs
+   *     responses:
+   *       "201":
+   *         description: Created
+   *         content:
+   *           application/json:
+   *             schema:
+   *                $ref: '#/components/schemas/Transaction'
+   *       "401":
+   *         $ref: '#/components/responses/Unauthorized'
+   *       "403":
+   *         $ref: '#/components/responses/Forbidden'
+   *
+   */
+  .post(
+    auth(UserPermission.wallet_pay),
+    lndConnected,
+    validate(walletValidation.withdraw),
+    walletController.payWithdrawInvoice
+  )
+
+router
   .route("/pay")
   /**
    * @swagger

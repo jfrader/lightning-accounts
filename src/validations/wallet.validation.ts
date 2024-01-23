@@ -56,6 +56,12 @@ const payUser = {
   }),
 }
 
+const withdraw = {
+  body: Joi.object().keys({
+    invoice: Joi.string().required(),
+  }),
+}
+
 export default {
   payUser,
   payRequest,
@@ -65,4 +71,5 @@ export default {
   createPayRequests,
   createDeposit,
   getDeposit,
+  withdraw,
 }

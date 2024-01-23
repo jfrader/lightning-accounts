@@ -134,9 +134,21 @@ const payRequest = catchAsync(async (req, res) => {
   res.send(pr)
 })
 
+const payWithdrawInvoice = catchAsync(async (req, res) => {
+  const invoice = req.body.invoice
+  const user = req.user as User
+  if (!user.id) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Failed to pay the request, user not found")
+  }
+
+  const transaction = await walletService.payWithdrawInvoice(user.id, invoice)
+  res.send(transaction)
+})
+
 export default {
   payUser,
   payRequest,
+  payWithdrawInvoice,
   createPayRequests,
   createPayRequest,
   getPayRequest,

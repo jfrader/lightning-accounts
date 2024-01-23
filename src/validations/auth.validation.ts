@@ -5,7 +5,7 @@ const register = {
   body: Joi.object().keys({
     name: Joi.string().required(),
     email: Joi.string().required().email(),
-    password: Joi.string().required().custom(password),
+    password: password.password(),
   }),
 }
 
@@ -33,7 +33,7 @@ const resetPassword = {
     token: Joi.string().required(),
   }),
   body: Joi.object().keys({
-    password: Joi.string().required().custom(password),
+    password: password.password(),
   }),
 }
 

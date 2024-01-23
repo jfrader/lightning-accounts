@@ -35,12 +35,12 @@ init()
 
 /**
  * Pay a lightning invoice
- * @param {string} invoice
+ * @param {string} request
  * @returns {Promise}
  */
-const payInvoice = async (invoice: string) => {
+const payInvoice = async (request: string) => {
   return new Promise((resolve, reject) => {
-    lightning.pay({ lnd, request: invoice }, (error, result) => {
+    lightning.pay({ lnd, request }, (error, result) => {
       if (error) {
         reject(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to pay invoice"))
       }
@@ -88,7 +88,15 @@ const createInvoice = async (
  * @returns {Promise<DecodePaymentRequestResult>}
  */
 const decodeInvoice = async (invoice: string) => {
-  return lightning.decodePaymentRequest({ lnd, request: invoice })
+  return new Promise<lightning.DecodePaymentRequestResult>((resolve, reject) => {
+    lightning.decodePaymentRequest({ lnd, request: invoice }, (error, result) => {
+      if (error) {
+        return reject(error)
+      }
+
+      return resolve(result)
+    })
+  })
 }
 
 export default {

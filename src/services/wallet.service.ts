@@ -86,6 +86,47 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
   })
 }
 
+const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Transaction> => {
+  const wallet = await getUserWallet(userId)
+
+  const payment = await lightningService.decodeInvoice(invoice)
+
+  const balanceInSats = wallet.balanceInSats
+  const amountInSats = payment.tokens === 0 ? balanceInSats : payment.tokens
+
+  const feeReserve = Math.round(amountInSats / 100)
+
+  const total = amountInSats + feeReserve
+
+  if (balanceInSats < total) {
+    throw new Error(
+      "Not enough balance to pay the fee, try a lower amount or use a zero-value invoice to withdraw all available balance minus fee."
+    )
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const transaction = await tx.transaction.create({
+      data: {
+        amountInSats,
+        type: TransactionType.WITHDRAW,
+        invoice,
+        invoiceSettled: true,
+        walletImpacted: true,
+        wallet: { connect: { id: wallet.id } },
+      },
+    })
+
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: { balanceInSats: { decrement: total } },
+    })
+
+    await lightningService.payInvoice(invoice)
+
+    return transaction
+  })
+}
+
 const getTransaction = async (txId: number, userId?: number) => {
   const walletId = userId ? (await userService.getUserWithWallet(userId))?.id : undefined
   const transaction = await prisma.transaction.findUnique({ where: { id: txId, walletId } })
@@ -363,5 +404,6 @@ export default {
   getUserWallet,
   createDepositInvoice,
   withdrawToInvoice,
+  payWithdrawInvoice,
   getTransaction,
 }
