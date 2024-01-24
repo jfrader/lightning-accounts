@@ -13,9 +13,9 @@ const verifyCallback =
     reject: (reason?: unknown) => void,
     requiredRights: UserPermission[]
   ) =>
-  async (err: unknown, user: User | false, info: unknown) => {
+  async (err: any, user: User | false, info: unknown) => {
     if (err || info || !user) {
-      return reject(new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate"))
+      return reject(new ApiError(httpStatus.UNAUTHORIZED, err?.message || "Please authenticate"))
     }
     req.user = user
 

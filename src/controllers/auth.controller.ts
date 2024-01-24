@@ -24,10 +24,10 @@ const login = catchAsync(async (req, res) => {
 
 const logout = catchAsync(async (req, res) => {
   const token = cookieExtractor(req, JwtCookie.refresh)
-  await authService.logout(token)
   res.clearCookie(JwtCookie.access)
   res.clearCookie(JwtCookie.refresh)
   res.clearCookie(JwtCookie.identity)
+  await authService.logout(token)
   res.status(httpStatus.NO_CONTENT).send()
 })
 

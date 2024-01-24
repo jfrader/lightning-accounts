@@ -22,7 +22,7 @@ router.post("/verify-email", validate(authValidation.verifyEmail), authControlle
 
 export default router
 
-/**54
+/**
  * @swagger
  * tags:
  *   name: Auth
