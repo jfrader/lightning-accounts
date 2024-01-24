@@ -3,7 +3,7 @@ import catchAsync from "../utils/catchAsync"
 import { authService, userService, tokenService, emailService } from "../services"
 import exclude from "../utils/exclude"
 import { User } from "@prisma/client"
-import authCookie, { cookieExtractor } from "../utils/authCookie"
+import authCookie, { cookieExtractor, deauthCookieResponse } from "../utils/authCookie"
 import { JwtCookie } from "../types/tokens"
 
 const register = catchAsync(async (req, res) => {
@@ -25,9 +25,7 @@ const login = catchAsync(async (req, res) => {
 const logout = catchAsync(async (req, res) => {
   const token = cookieExtractor(req, JwtCookie.refresh)
   req.user = undefined
-  res.clearCookie(JwtCookie.access, { path: "/" })
-  res.clearCookie(JwtCookie.refresh, { path: "/" })
-  res.clearCookie(JwtCookie.identity, { path: "/" })
+  deauthCookieResponse(res)
   await authService.logout(token)
   res.status(httpStatus.NO_CONTENT).send()
 })
@@ -38,9 +36,7 @@ const refreshTokens = catchAsync(async (req, res) => {
     const tokens = await authService.refreshAuth(token)
     authCookie(tokens, res).status(httpStatus.NO_CONTENT).send()
   } catch (e) {
-    res.clearCookie(JwtCookie.refresh, { path: "/" })
-    res.clearCookie(JwtCookie.access, { path: "/" })
-    res.clearCookie(JwtCookie.identity, { path: "/" })
+    deauthCookieResponse(res)
     throw e
   }
 })
@@ -74,9 +70,7 @@ const getMe = catchAsync(async (req, res) => {
     const userWithWallet = await userService.getUserWithWallet(user.id)
     res.send(userWithWallet)
   } catch (e) {
-    res.clearCookie(JwtCookie.refresh, { path: "/" })
-    res.clearCookie(JwtCookie.access, { path: "/" })
-    res.clearCookie(JwtCookie.identity, { path: "/" })
+    deauthCookieResponse(res)
     throw e
   }
 })

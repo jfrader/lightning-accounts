@@ -31,6 +31,12 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
     })
 }
 
+export const deauthCookieResponse = (res: Response) => {
+  res.clearCookie(JwtCookie.access, { path: "/", domain: secure ? config.domain : undefined })
+  res.clearCookie(JwtCookie.refresh, { path: "/", domain: secure ? config.domain : undefined })
+  res.clearCookie(JwtCookie.identity, { path: "/", domain: secure ? config.domain : undefined })
+}
+
 export const cookieExtractor = function (req: Request, cookie = JwtCookie.access) {
   let token = null
   if (req && req.cookies) token = req.cookies[cookie]
