@@ -26,14 +26,10 @@ const login = catchAsync(async (req, res) => {
 const logout = catchAsync(async (req, res) => {
   const token = cookieExtractor(req, JwtCookie.refresh)
   req.user = undefined
-  res.clearCookie(JwtCookie.access)
-  res.clearCookie(JwtCookie.refresh)
-  res.clearCookie(JwtCookie.identity)
-  try {
-    await authService.logout(token)
-  } catch (e) {
-    logger.error(e)
-  }
+  res.clearCookie(JwtCookie.access, { path: "/" })
+  res.clearCookie(JwtCookie.refresh, { path: "/" })
+  res.clearCookie(JwtCookie.identity, { path: "/" })
+  await authService.logout(token)
   res.status(httpStatus.NO_CONTENT).send()
 })
 
@@ -43,9 +39,9 @@ const refreshTokens = catchAsync(async (req, res) => {
     const tokens = await authService.refreshAuth(token)
     authCookie(tokens, res).status(httpStatus.NO_CONTENT).send()
   } catch (e) {
-    res.clearCookie(JwtCookie.refresh)
-    res.clearCookie(JwtCookie.access)
-    res.clearCookie(JwtCookie.identity)
+    res.clearCookie(JwtCookie.refresh, { path: "/" })
+    res.clearCookie(JwtCookie.access, { path: "/" })
+    res.clearCookie(JwtCookie.identity, { path: "/" })
     throw e
   }
 })
@@ -79,9 +75,9 @@ const getMe = catchAsync(async (req, res) => {
     const userWithWallet = await userService.getUserWithWallet(user.id)
     res.send(userWithWallet)
   } catch (e) {
-    res.clearCookie(JwtCookie.refresh)
-    res.clearCookie(JwtCookie.access)
-    res.clearCookie(JwtCookie.identity)
+    res.clearCookie(JwtCookie.refresh, { path: "/" })
+    res.clearCookie(JwtCookie.access, { path: "/" })
+    res.clearCookie(JwtCookie.identity, { path: "/" })
     throw e
   }
 })
