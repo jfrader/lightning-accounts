@@ -5,6 +5,7 @@ import exclude from "../utils/exclude"
 import { User } from "@prisma/client"
 import authCookie, { cookieExtractor } from "../utils/authCookie"
 import { JwtCookie } from "../types/tokens"
+import logger from "../config/logger"
 
 const register = catchAsync(async (req, res) => {
   const { email, password, name } = req.body
@@ -24,10 +25,15 @@ const login = catchAsync(async (req, res) => {
 
 const logout = catchAsync(async (req, res) => {
   const token = cookieExtractor(req, JwtCookie.refresh)
+  req.user = undefined
   res.clearCookie(JwtCookie.access)
   res.clearCookie(JwtCookie.refresh)
   res.clearCookie(JwtCookie.identity)
-  await authService.logout(token)
+  try {
+    await authService.logout(token)
+  } catch (e) {
+    logger.error(e)
+  }
   res.status(httpStatus.NO_CONTENT).send()
 })
 
