@@ -5,7 +5,6 @@ import exclude from "../utils/exclude"
 import { User } from "@prisma/client"
 import authCookie, { cookieExtractor } from "../utils/authCookie"
 import { JwtCookie } from "../types/tokens"
-import logger from "../config/logger"
 
 const register = catchAsync(async (req, res) => {
   const { email, password, name } = req.body
