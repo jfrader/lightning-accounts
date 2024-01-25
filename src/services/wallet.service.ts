@@ -310,82 +310,77 @@ const createPayRequest = async ({
 }
 
 const payRequest = async ({ payerId, payRequestId }: { payerId: number; payRequestId: number }) => {
-  return await prisma.$transaction(
-    async (tx) => {
-      const pr = await prisma.payRequest.findUnique({
-        where: { id: payRequestId, receiverId: payerId },
-      })
+  return await prisma.$transaction(async (tx) => {
+    const pr = await prisma.payRequest.findUnique({
+      where: { id: payRequestId, receiverId: payerId },
+    })
 
-      if (!pr) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Pay request not found")
-      }
-
-      if (pr.paid) {
-        throw new ApiError(httpStatus.FOUND, "Pay request already paid")
-      }
-
-      const payerWallet = await getUserWallet(payerId)
-
-      if (payerWallet.balanceInSats < pr.amountInSats) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
-      }
-
-      const payeeWallet = await getUserWallet(pr?.creatorId)
-
-      await tx.wallet.update({
-        where: { id: payerWallet.id },
-        data: {
-          balanceInSats: {
-            decrement: pr.amountInSats,
-          },
-        },
-        select: { id: true },
-      })
-
-      await tx.wallet.update({
-        where: { id: payeeWallet.id },
-        data: {
-          balanceInSats: {
-            increment: pr.amountInSats,
-          },
-        },
-        select: { id: true },
-      })
-
-      await tx.payRequest.update({
-        where: { id: pr.id },
-        data: { paid: true },
-        select: { id: true },
-      })
-
-      await tx.transaction.create({
-        data: {
-          walletImpacted: true,
-          invoiceSettled: true,
-          amountInSats: pr.amountInSats,
-          type: TransactionType.SEND,
-          wallet: { connect: { id: payerWallet.id } },
-          payRequest: { connect: { id: pr.id } },
-        },
-        select: { id: true },
-      })
-
-      await tx.transaction.create({
-        data: {
-          walletImpacted: true,
-          invoiceSettled: true,
-          amountInSats: pr.amountInSats,
-          type: TransactionType.RECEIVE,
-          wallet: { connect: { id: payeeWallet.id } },
-          payRequest: { connect: { id: pr.id } },
-        },
-        select: { id: true },
-      })
-    },
-    {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    if (!pr) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Pay request not found")
     }
-  )
+
+    if (pr.paid) {
+      throw new ApiError(httpStatus.FOUND, "Pay request already paid")
+    }
+
+    const payerWallet = await getUserWallet(payerId)
+
+    if (payerWallet.balanceInSats < pr.amountInSats) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
+    }
+
+    const payeeWallet = await getUserWallet(pr?.creatorId)
+
+    await tx.wallet.update({
+      where: { id: payerWallet.id },
+      data: {
+        balanceInSats: {
+          decrement: pr.amountInSats,
+        },
+      },
+      select: { id: true },
+    })
+
+    await tx.wallet.update({
+      where: { id: payeeWallet.id },
+      data: {
+        balanceInSats: {
+          increment: pr.amountInSats,
+        },
+      },
+      select: { id: true },
+    })
+
+    await tx.payRequest.update({
+      where: { id: pr.id },
+      data: { paid: true },
+      select: { id: true },
+    })
+
+    await tx.transaction.create({
+      data: {
+        walletImpacted: true,
+        invoiceSettled: true,
+        amountInSats: pr.amountInSats,
+        type: TransactionType.SEND,
+        wallet: { connect: { id: payerWallet.id } },
+        payRequest: { connect: { id: pr.id } },
+      },
+      select: { id: true },
+    })
+
+    await tx.transaction.create({
+      data: {
+        walletImpacted: true,
+        invoiceSettled: true,
+        amountInSats: pr.amountInSats,
+        type: TransactionType.RECEIVE,
+        wallet: { connect: { id: payeeWallet.id } },
+        payRequest: { connect: { id: pr.id } },
+      },
+      select: { id: true },
+    })
+  })
 }
 
 const getPayRequest = async (id: PayRequest["id"]) => {
