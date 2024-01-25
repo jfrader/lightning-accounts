@@ -6,6 +6,7 @@ dotenv.config({ path: path.join(process.cwd(), ".env") })
 
 const envVarsSchema = Joi.object()
   .keys({
+    WALLET_LIMIT: Joi.string().description("Maximum allowed sats per wallet"),
     NODE_ENV: Joi.string().valid("production", "development", "test").required(),
     NODE_PORT: Joi.number().default(3000),
     NODE_ORIGIN: Joi.string().required().description("Allowed origin"),
@@ -53,6 +54,9 @@ export default {
   origin: envVars.NODE_ORIGIN,
   domain: envVars.NODE_DOMAIN,
   debug_level: envVars.NODE_DEBUG_LEVEL,
+  wallet: {
+    limit: envVars.WALLET_LIMIT,
+  },
   jwt: {
     secret: envVars.JWT_SECRET,
     publicKey: Buffer.from(envVars.JWT_BASE64_PUBLIC_KEY || "", "base64").toString(),

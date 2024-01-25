@@ -6,6 +6,7 @@ import { SubscribeToInvoiceInvoiceUpdatedEvent } from "lightning"
 import lightningService from "./lightning.service"
 import userService from "./user.service"
 import logger from "../config/logger"
+import config from "../config/config"
 
 /**
  * Get wallet by user id
@@ -65,6 +66,13 @@ const _impactDeposit = async (
 
 const createDepositInvoice = async (userId: number, sats: number): Promise<Transaction> => {
   const wallet = await getUserWallet(userId)
+
+  if (config.wallet.limit > 0 && wallet.balanceInSats + sats > config.wallet.limit) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Not allowed to deposit more than " + config.wallet.limit + " sats"
+    )
+  }
 
   return prisma.$transaction(async (tx) => {
     const invoice = await lightningService.createInvoice(sats, (settledInvoice) => {
@@ -381,7 +389,17 @@ const payRequest = async ({ payerId, payRequestId }: { payerId: number; payReque
 }
 
 const getPayRequest = async (id: PayRequest["id"]) => {
-  return prisma.payRequest.findUnique({ where: { id }, include: { receiver: true, creator: true } })
+  return prisma.payRequest.findUnique({
+    where: { id },
+    include: {
+      receiver: {
+        select: { id: true, email: true, name: true, role: true, isEmailVerified: true },
+      },
+      creator: {
+        select: { id: true, email: true, name: true, role: true, isEmailVerified: true },
+      },
+    },
+  })
 }
 
 const getPayRequests = async (ids: Array<PayRequest["id"]>) => {
