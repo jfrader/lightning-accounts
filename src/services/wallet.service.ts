@@ -100,14 +100,19 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
   const payment = await lightningService.decodeInvoice(invoice)
 
   const balanceInSats = wallet.balanceInSats
-  const amountInSats = payment.tokens === 0 ? balanceInSats : payment.tokens
+
+  const isZeroValue = payment.tokens === 0
+
+  const amountInSats = isZeroValue
+    ? balanceInSats - Math.round(balanceInSats / 100)
+    : payment.tokens
 
   const feeReserve = Math.round(amountInSats / 100)
-
   const total = amountInSats + feeReserve
 
   if (balanceInSats < total) {
-    throw new Error(
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
       "Not enough balance to pay the fee, try a lower amount or use a zero-value invoice to withdraw all available balance minus fee."
     )
   }
@@ -129,7 +134,7 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
       data: { balanceInSats: { decrement: total } },
     })
 
-    await lightningService.payInvoice(invoice)
+    await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
 
     return transaction
   })

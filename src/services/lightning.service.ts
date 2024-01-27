@@ -38,9 +38,9 @@ init()
  * @param {string} request
  * @returns {Promise}
  */
-const payInvoice = async (request: string) => {
+const payInvoice = async (request: string, tokens?: number) => {
   return new Promise((resolve, reject) => {
-    lightning.pay({ lnd, request }, (error, result) => {
+    lightning.pay({ lnd, request, tokens }, (error, result) => {
       if (error) {
         const [, message] = error
         reject(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice"))
