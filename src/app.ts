@@ -77,9 +77,9 @@ app.use(
     saveUninitialized: true,
     name: SessionCookie.sid,
     cookie: {
-      domain: secure ? config.domain : undefined,
-      signed: secure,
+      sameSite: secure ? "none" : "lax",
       secure,
+      httpOnly: true,
     },
   })
 )
