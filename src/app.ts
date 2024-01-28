@@ -76,19 +76,12 @@ app.use(
     resave: false,
     saveUninitialized: true,
     name: SessionCookie.sid,
+    proxy: secure,
     cookie: {
       sameSite: secure ? "none" : "lax",
       secure,
       httpOnly: true,
     },
-  })
-)
-
-console.error(
-  JSON.stringify({
-    sameSite: secure ? "none" : "lax",
-    secure,
-    httpOnly: true,
   })
 )
 
