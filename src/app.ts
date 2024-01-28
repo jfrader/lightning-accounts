@@ -23,6 +23,7 @@ import { SessionCookie } from "./types/tokens"
 const secure = config.env === "production"
 
 const app = express()
+app.set("trust proxy", 1)
 
 passport.serializeUser(function (user, done) {
   done(null, user)
