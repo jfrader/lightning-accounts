@@ -84,6 +84,14 @@ app.use(
   })
 )
 
+console.error(
+  JSON.stringify({
+    sameSite: secure ? "none" : "lax",
+    secure,
+    httpOnly: true,
+  })
+)
+
 // authentication
 app.use(passport.initialize())
 app.use(passport.session())
