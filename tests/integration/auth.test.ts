@@ -367,7 +367,8 @@ describe("Auth routes", () => {
         .expect(httpStatus.NO_CONTENT)
 
       const dbUser = (await prisma.user.findUnique({ where: { id: dbUserOne.id } })) as User
-      const isPasswordMatch = await bcrypt.compare("password2", dbUser.password)
+      const isPasswordMatch =
+        dbUser.password && (await bcrypt.compare("password2", dbUser.password))
       expect(isPasswordMatch).toBe(true)
 
       const dbResetPasswordTokenCount = await prisma.token.count({

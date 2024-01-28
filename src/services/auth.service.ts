@@ -27,6 +27,9 @@ const loginUserWithEmailAndPassword = async (
     "isEmailVerified",
     "createdAt",
     "updatedAt",
+    "twitter",
+    "twitterId",
+    "avatarUrl",
   ])
   if (!user || !(await isPasswordMatch(password, user.password as string))) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password")

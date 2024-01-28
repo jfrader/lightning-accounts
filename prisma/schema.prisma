@@ -20,9 +20,12 @@ model User {
   id                  Int          @id @default(autoincrement())
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
-  email               String       @unique
+  email               String?      @unique
+  password            String?
+  twitterId           String?      @unique
+  twitter             String?
+  avatarUrl           String?
   name                String
-  password            String
   role                Role         @default(USER)
   isEmailVerified     Boolean      @default(false)
   Token               Token[]

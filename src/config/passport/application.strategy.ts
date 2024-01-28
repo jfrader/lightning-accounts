@@ -18,12 +18,12 @@ const verify = async (req: Request, cookie: string, done: (e: unknown, u: any) =
   try {
     const [email, token] = cookie.split(":")
     const app = appsJson.applications.find((a) => a.email === email)
+
     if (!app) {
       throw new Error("Application not found")
     }
 
     if (req.socket.remoteAddress !== app.remoteAddress) {
-      console.log(req.socket.remoteAddress)
       throw new Error("Unknown host")
     }
 
@@ -35,7 +35,7 @@ const verify = async (req: Request, cookie: string, done: (e: unknown, u: any) =
       "role",
     ])
 
-    if (!user) {
+    if (!user || !user.password) {
       throw new Error("Application user not found")
     }
 

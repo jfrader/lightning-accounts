@@ -9,3 +9,7 @@ export const enum JwtCookie {
   refresh = "jwt:refresh",
   identity = "jwt:identity",
 }
+
+export const enum SessionCookie {
+  sid = "lightning-accounts:sid",
+}

@@ -10,9 +10,18 @@ const envVarsSchema = Joi.object()
     NODE_ENV: Joi.string().valid("production", "development", "test").required(),
     NODE_PORT: Joi.number().default(3000),
     NODE_ORIGIN: Joi.string().required().description("Allowed origin"),
-    NODE_DOMAIN: Joi.string().description("The domain for cookie like '.example.com'"),
+    NODE_DOMAIN: Joi.string()
+      .empty("")
+      .default("")
+      .description("The domain for cookie like '.example.com'"),
+    NODE_HOST: Joi.string().description("The host URL of the API for twitter.strategy"),
     NODE_DEBUG_LEVEL: Joi.string().description(
       "Debug level (trace, debug, info, warning, error, fatal)"
+    ),
+    TWITTER_CLIENT_ID: Joi.string().description("Twitter developer client ID"),
+    TWITTER_CLIENT_SECRET: Joi.string().description("Twitter developer client secret"),
+    TWITTER_CLIENT_TYPE: Joi.string().description(
+      "Twitter developer client type (confidential, private, public)"
     ),
     JWT_SECRET: Joi.string().required().description("JWT secret key"),
     JWT_BASE64_PUBLIC_KEY: Joi.string().required().description("Base64 encoded public key"),
@@ -52,8 +61,14 @@ export default {
   env: envVars.NODE_ENV,
   port: envVars.NODE_PORT,
   origin: envVars.NODE_ORIGIN,
+  host: envVars.NODE_HOST,
   domain: envVars.NODE_DOMAIN,
   debug_level: envVars.NODE_DEBUG_LEVEL,
+  twitter: {
+    clientID: envVars.TWITTER_CLIENT_ID,
+    clientSecret: envVars.TWITTER_CLIENT_SECRET,
+    clientType: envVars.TWITTER_CLIENT_TYPE,
+  },
   wallet: {
     limit: envVars.WALLET_LIMIT,
   },

@@ -393,10 +393,10 @@ const getPayRequest = async (id: PayRequest["id"]) => {
     where: { id },
     include: {
       receiver: {
-        select: { id: true, email: true, name: true, role: true, isEmailVerified: true },
+        select: { id: true, email: true, name: true, role: true },
       },
       creator: {
-        select: { id: true, email: true, name: true, role: true, isEmailVerified: true },
+        select: { id: true, email: true, name: true, role: true },
       },
     },
   })

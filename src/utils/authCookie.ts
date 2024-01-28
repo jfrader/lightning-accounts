@@ -1,7 +1,7 @@
 import { Response, Request } from "express"
 import { AuthTokensResponse } from "../types/response"
 import config from "../config/config"
-import { JwtCookie } from "../types/tokens"
+import { JwtCookie, SessionCookie } from "../types/tokens"
 
 const secure = config.env === "production"
 
@@ -32,6 +32,7 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
 }
 
 export const deauthCookieResponse = (res: Response) => {
+  res.clearCookie(SessionCookie.sid, { path: "/", domain: secure ? config.domain : "localhost" })
   res.clearCookie(JwtCookie.access, { path: "/", domain: secure ? config.domain : "localhost" })
   res.clearCookie(JwtCookie.refresh, { path: "/", domain: secure ? config.domain : "localhost" })
   res.clearCookie(JwtCookie.identity, { path: "/", domain: secure ? config.domain : "localhost" })

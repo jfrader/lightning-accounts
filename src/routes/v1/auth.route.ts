@@ -3,6 +3,7 @@ import validate from "../../middlewares/validate"
 import authValidation from "../../validations/auth.validation"
 import { authController } from "../../controllers"
 import auth from "../../middlewares/auth"
+import passport from "passport"
 
 const router = express.Router()
 
@@ -20,6 +21,26 @@ router.post("/reset-password", validate(authValidation.resetPassword), authContr
 router.post("/send-verification-email", auth(), authController.sendVerificationEmail)
 router.post("/verify-email", validate(authValidation.verifyEmail), authController.verifyEmail)
 
+router.get(
+  "/twitter",
+  passport.authenticate("twitter", {
+    scope: ["tweet.read", "users.read"],
+  })
+)
+
+router.get(
+  "/twitter/callback",
+  (req, res, next) => {
+    auth()(req, res, () => {
+      next()
+    })
+  },
+  (req, res, next) => {
+    passport.authenticate("twitter")(req, res, next)
+  },
+  authController.loginTwitter
+)
+
 export default router
 
 /**
@@ -34,6 +55,27 @@ export default router
  * /auth/me:
  *   get:
  *     summary: Get user's own profile
+ *     tags: [Auth]
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *                $ref: '#/components/schemas/User'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ *       "403":
+ *         $ref: '#/components/responses/Forbidden'
+ *       "404":
+ *         $ref: '#/components/responses/NotFound'
+ */
+
+/**
+ * @swagger
+ * /auth/twitter:
+ *   get:
+ *     summary: Get twitter auth
  *     tags: [Auth]
  *     responses:
  *       "200":

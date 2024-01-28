@@ -35,31 +35,37 @@ const verifyCallback =
 const auth =
   (...requiredRights: UserPermission[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
-    return new Promise((resolve, reject) => {
-      passport.authenticate(
-        "application",
-        { session: false },
-        verifyCallback(
-          req,
-          resolve,
-          () => {
-            passport.authenticate(
-              "jwt",
-              { session: false },
-              verifyCallback(req, resolve, reject, requiredRights)
-            )(req, res, next)
-          },
-          requiredRights
-        )
-      )(req, res, next)
-    })
-      .then(() => next())
-      .catch((err: ApiError) => {
-        if (err.statusCode === httpStatus.UNAUTHORIZED) {
-          res.clearCookie(JwtCookie.access)
-        }
-        next(err)
+    try {
+      await new Promise((resolve, reject) => {
+        passport.authenticate(
+          "application",
+          { session: false },
+          verifyCallback(req, resolve, reject, requiredRights)
+        )(req, res, next)
       })
+
+      return next()
+    } catch (e) {
+      // noop
+    }
+
+    try {
+      await new Promise((resolve, reject) => {
+        passport.authenticate(
+          "jwt",
+          { session: false },
+          verifyCallback(req, resolve, reject, requiredRights)
+        )(req, res, next)
+      })
+
+      return next()
+    } catch (err: any) {
+      if (err.statusCode === httpStatus.UNAUTHORIZED) {
+        res.clearCookie(JwtCookie.access)
+      }
+    }
+
+    next(new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate"))
   }
 
 export default auth

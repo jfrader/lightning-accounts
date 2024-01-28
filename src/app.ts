@@ -12,10 +12,25 @@ import { authLimiter } from "./middlewares/rateLimiter"
 import routes from "./routes/v1"
 import { errorConverter, errorHandler } from "./middlewares/error"
 import ApiError from "./utils/ApiError"
-import { jwtStrategy } from "./config/passport/jwtStrategy"
-import { applicationStrategy } from "./config/passport/applicationStrategy"
+import { jwtStrategy } from "./config/passport/jwt.strategy"
+import { applicationStrategy } from "./config/passport/application.strategy"
+import { twitterStrategy } from "./config/passport/twitter.strategy"
+import session from "express-session"
+import { User } from "@prisma/client"
+import path from "node:path"
+import { SessionCookie } from "./types/tokens"
+
+const secure = config.env === "production"
 
 const app = express()
+
+passport.serializeUser(function (user, done) {
+  done(null, user)
+})
+
+passport.deserializeUser<User>(function (user, done) {
+  done(null, user)
+})
 
 const CORS_OPTS: CorsOptions = {
   origin: config.origin ? config.origin.split(",") : "*",
@@ -50,10 +65,33 @@ app.use(cookieParser(config.jwt.secret))
 app.use(cors(CORS_OPTS))
 app.options("*", cors(CORS_OPTS))
 
-// jwt authentication
+app.get("/js/autoclose.js", (req, res) => {
+  res.sendFile("autoclose.js", { root: path.join("src", "static") })
+})
+
+app.use(
+  session({
+    secret: config.jwt.secret,
+    resave: false,
+    saveUninitialized: true,
+    name: SessionCookie.sid,
+    cookie: {
+      httpOnly: true,
+      domain: secure ? config.domain : undefined,
+      sameSite: secure ? "none" : "lax",
+      signed: secure,
+      secure,
+    },
+  })
+)
+
+// authentication
 app.use(passport.initialize())
+app.use(passport.session())
+
 passport.use("application", applicationStrategy)
 passport.use("jwt", jwtStrategy)
+passport.use("twitter", twitterStrategy)
 
 // limit repeated failed requests to auth endpoints
 if (config.env === "production") {

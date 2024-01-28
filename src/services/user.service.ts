@@ -4,8 +4,9 @@ import prisma from "../client"
 import ApiError from "../utils/ApiError"
 import { encryptPassword } from "../utils/encryption"
 import { UserWithWallet } from "../types/user"
+import { Profile } from "@superfaceai/passport-twitter-oauth2"
 
-export const USER_DEFAULT_FIELDS = ["id", "email", "name", "role"]
+export const USER_DEFAULT_FIELDS = ["id", "email", "name", "role", "twitter", "avatarUrl"]
 export const USER_PRIVATE_FIELDS = ["password", "isEmailVerified", "createdAt", "updatedAt"]
 
 /**
@@ -32,6 +33,51 @@ const createUser = async (
       wallet: { create: { balanceInSats: 0, disabled: false } },
     },
   })
+}
+
+/**
+ * Upsert a twitter user
+ * @returns {Promise<User>}
+ */
+const upsertTwitterUser = async (
+  { id, displayName, username, photos, name }: Profile,
+  currentUser?: User | null
+) => {
+  const user = await prisma.user.upsert({
+    where: currentUser ? { id: currentUser.id } : { twitterId: id },
+    create: {
+      twitterId: id,
+      twitter: username,
+      name: name?.givenName || displayName,
+      avatarUrl: photos ? photos[0].value || null : null,
+      role: Role.USER,
+      wallet: {
+        create: {
+          balanceInSats: 0,
+          disabled: false,
+        },
+      },
+    },
+    update: {
+      twitter: username,
+      twitterId: id,
+      avatarUrl: photos ? photos[0].value || null : null,
+    },
+    select: {
+      id: true,
+      email: true,
+      twitter: true,
+      avatarUrl: true,
+      name: true,
+      role: true,
+    },
+  })
+
+  if (!user) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to upsert user")
+  }
+
+  return user
 }
 
 /**
@@ -130,7 +176,7 @@ const updateUserById = async <Key extends keyof User>(
   updateBody: Prisma.UserUpdateInput,
   keys: Key[] = ["id", "email", "name", "role"] as Key[]
 ): Promise<Pick<User, Key> | null> => {
-  const user = await getUserById(userId, ["id", "email", "name"])
+  const user = await getUserById(userId, ["id", "email", "name", "twitter", "avatarUrl"])
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
@@ -183,6 +229,7 @@ const getUserWallet = async (userId: number): Promise<Wallet> => {
 
 export default {
   createUser,
+  upsertTwitterUser,
   queryUsers,
   getUserById,
   getUserByEmail,

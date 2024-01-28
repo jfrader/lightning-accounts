@@ -16,12 +16,36 @@
           "format": "date-time"
         },
         "email": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "password": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "twitterId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "twitter": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "avatarUrl": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
           "type": "string"
         },
         "role": {
@@ -68,9 +92,7 @@
       },
       "required": [
         "updatedAt",
-        "email",
-        "name",
-        "password"
+        "name"
       ]
     },
     "Token": {

@@ -6,6 +6,8 @@ import { User } from "@prisma/client"
 import authCookie, { cookieExtractor, deauthCookieResponse } from "../utils/authCookie"
 import { JwtCookie } from "../types/tokens"
 import logger from "../config/logger"
+import ApiError from "../utils/ApiError"
+import path from "path"
 
 const register = catchAsync(async (req, res) => {
   const { email, password, name } = req.body
@@ -21,6 +23,18 @@ const login = catchAsync(async (req, res) => {
   const user = await authService.loginUserWithEmailAndPassword(email, password)
   const tokens = await tokenService.generateAuthTokens(user)
   authCookie(tokens, res).send({ user })
+})
+
+const loginTwitter = catchAsync(async (req, res) => {
+  const user = req.user as User | void
+
+  if (!user) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate")
+  }
+
+  const tokens = await tokenService.generateAuthTokens(user)
+
+  authCookie(tokens, res).sendFile("callback.html", { root: path.join("src", "static") })
 })
 
 const logout = catchAsync(async (req, res) => {
@@ -41,6 +55,7 @@ const refreshTokens = catchAsync(async (req, res) => {
     const tokens = await authService.refreshAuth(token)
     authCookie(tokens, res).status(httpStatus.NO_CONTENT).send()
   } catch (e) {
+    req.user = undefined
     deauthCookieResponse(res)
     throw e
   }
@@ -59,7 +74,13 @@ const resetPassword = catchAsync(async (req, res) => {
 
 const sendVerificationEmail = catchAsync(async (req, res) => {
   const user = req.user as User
+
+  if (!user.email) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "User doesn't have an email setup")
+  }
+
   const verifyEmailToken = await tokenService.generateVerifyEmailToken(user)
+
   await emailService.sendVerificationEmail(user.email, verifyEmailToken)
   res.status(httpStatus.NO_CONTENT).send()
 })
@@ -83,6 +104,7 @@ const getMe = catchAsync(async (req, res) => {
 export default {
   register,
   login,
+  loginTwitter,
   logout,
   refreshTokens,
   forgotPassword,
