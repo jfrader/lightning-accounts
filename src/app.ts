@@ -84,7 +84,6 @@ app.use(
       domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
       secure,
-      path: "/",
     },
   })
 )
