@@ -78,9 +78,11 @@ app.use(
     name: SessionCookie.sid,
     proxy: secure,
     cookie: {
-      sameSite: secure ? "none" : "lax",
-      secure,
       httpOnly: true,
+      domain: secure ? config.domain : undefined,
+      sameSite: secure ? "none" : "lax",
+      signed: secure,
+      secure,
     },
   })
 )
