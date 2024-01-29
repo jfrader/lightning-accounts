@@ -24,7 +24,6 @@ const secure = config.env === "production"
 
 const app = express()
 app.set("trust proxy", 1)
-app.enable("trust proxy")
 
 passport.serializeUser(function (user, done) {
   done(null, user)
@@ -86,9 +85,10 @@ app.use(
   })
 )
 
+app.enable("trust proxy")
+
 // authentication
 app.use(passport.initialize())
-app.use(passport.session())
 
 passport.use("application", applicationStrategy)
 passport.use("jwt", jwtStrategy)
