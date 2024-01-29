@@ -81,7 +81,6 @@ app.use(
       httpOnly: true,
       domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
-      signed: secure,
       secure,
     },
   })
