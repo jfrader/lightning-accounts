@@ -67,7 +67,7 @@ app.use(cors(CORS_OPTS))
 app.options("*", cors(CORS_OPTS))
 
 app.get("/js/autoclose.js", (req, res) => {
-  res.sendFile("autoclose.js", { root: path.join("src", "static") })
+  res.sendFile("autoclose.js", { root: path.join(__dirname, "static") })
 })
 
 app.set("trust proxy", 1)

@@ -34,7 +34,9 @@ const loginTwitter = catchAsync(async (req, res) => {
 
   const tokens = await tokenService.generateAuthTokens(user)
 
-  authCookie(tokens, res).sendFile("callback.html", { root: path.join("src", "static") })
+  authCookie(tokens, res).sendFile("callback.html", {
+    root: path.join(__dirname, "..", "static"),
+  })
 })
 
 const logout = catchAsync(async (req, res) => {
