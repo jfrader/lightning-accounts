@@ -70,11 +70,11 @@ app.get("/js/autoclose.js", (req, res) => {
   res.sendFile("autoclose.js", { root: path.join("src", "static") })
 })
 
+app.set("trust proxy", 1)
+
 app.use(
   session({
     secret: config.jwt.secret,
-    resave: false,
-    saveUninitialized: true,
     name: SessionCookie.sid,
     proxy: secure,
     cookie: {
@@ -89,6 +89,7 @@ app.enable("trust proxy")
 
 // authentication
 app.use(passport.initialize())
+app.use(passport.session())
 
 passport.use("application", applicationStrategy)
 passport.use("jwt", jwtStrategy)
