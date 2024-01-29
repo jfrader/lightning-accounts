@@ -82,6 +82,7 @@ app.use(
       domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
       secure,
+      path: "/",
     },
   })
 )
@@ -98,7 +99,7 @@ passport.use("twitter", twitterStrategy)
 
 // limit repeated failed requests to auth endpoints
 if (config.env === "production") {
-  app.use("/v1/auth", authLimiter)
+  // app.use("/v1/auth", authLimiter)
 }
 
 // v1 api routes
