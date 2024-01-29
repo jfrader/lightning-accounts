@@ -24,6 +24,7 @@ const secure = config.env === "production"
 
 const app = express()
 app.set("trust proxy", 1)
+app.enable("trust proxy")
 
 passport.serializeUser(function (user, done) {
   done(null, user)
