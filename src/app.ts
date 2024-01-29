@@ -77,6 +77,8 @@ app.use(
     secret: config.jwt.secret,
     name: SessionCookie.sid,
     proxy: secure,
+    resave: false,
+    saveUninitialized: true,
     cookie: {
       httpOnly: true,
       domain: secure ? config.domain : undefined,
