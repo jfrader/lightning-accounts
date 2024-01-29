@@ -15,7 +15,7 @@ import ApiError from "./utils/ApiError"
 import { jwtStrategy } from "./config/passport/jwt.strategy"
 import { applicationStrategy } from "./config/passport/application.strategy"
 import { twitterStrategy } from "./config/passport/twitter.strategy"
-import session from "express-session"
+import session from "cookie-session"
 import { User } from "@prisma/client"
 import path from "node:path"
 import { SessionCookie } from "./types/tokens"
@@ -76,15 +76,11 @@ app.use(
   session({
     secret: config.jwt.secret,
     name: SessionCookie.sid,
-    proxy: secure,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      httpOnly: true,
-      domain: secure ? config.domain : undefined,
-      sameSite: secure ? "none" : "lax",
-      secure,
-    },
+    httpOnly: true,
+    domain: secure ? config.domain : undefined,
+    sameSite: secure ? "none" : "lax",
+    secure,
+    secureProxy: true,
   })
 )
 
