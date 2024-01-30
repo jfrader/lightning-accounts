@@ -55,6 +55,7 @@ const refreshTokens = catchAsync(async (req, res) => {
   const token = cookieExtractor(req, JwtCookie.refresh)
   try {
     const tokens = await authService.refreshAuth(token)
+    req.session.touch()
     authCookie(tokens, res).status(httpStatus.NO_CONTENT).send()
   } catch (e) {
     req.user = undefined

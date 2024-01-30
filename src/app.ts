@@ -81,6 +81,7 @@ app.use(
     saveUninitialized: true,
     cookie: {
       httpOnly: true,
+      maxAge: config.jwt.accessExpirationMinutes * 60 * 1000,
       domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
       secure,
@@ -100,7 +101,7 @@ passport.use("twitter", twitterStrategy)
 
 // limit repeated failed requests to auth endpoints
 if (config.env === "production") {
-  // app.use("/v1/auth", authLimiter)
+  app.use("/v1/auth", authLimiter)
 }
 
 // v1 api routes
