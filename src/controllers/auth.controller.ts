@@ -34,6 +34,10 @@ const loginTwitter = catchAsync(async (req, res) => {
 
   const tokens = await tokenService.generateAuthTokens(user)
 
+  req.session.destroy(() => {
+    logger.error("Failed to destroy session")
+  })
+
   authCookie(tokens, res).sendFile("callback.html", {
     root: path.join(__dirname, "..", "static"),
   })

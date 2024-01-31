@@ -78,7 +78,7 @@ app.use(
     name: SessionCookie.sid,
     proxy: secure,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
       httpOnly: true,
       maxAge: config.jwt.accessExpirationMinutes * 60 * 1000,
