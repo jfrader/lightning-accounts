@@ -1182,10 +1182,10 @@
   dependencies:
     "@sinonjs/commons" "^3.0.0"
 
-"@superfaceai/passport-twitter-oauth2@^1.2.3":
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/@superfaceai/passport-twitter-oauth2/-/passport-twitter-oauth2-1.2.3.tgz#ca870e7b03552c5893800626e3f60995e56c0c96"
-  integrity sha512-kbGptW8AM7l6jJKlgCaoWSHVVNgNgCZCTPO9IDo7Wg8vQqOu+tQhRmJERAdbqcB3B/doG7Nd90nvFuLDH1sFLA==
+"@superfaceai/passport-twitter-oauth2@1.2.4-beta.0":
+  version "1.2.4-beta.0"
+  resolved "https://registry.yarnpkg.com/@superfaceai/passport-twitter-oauth2/-/passport-twitter-oauth2-1.2.4-beta.0.tgz#cf636b4970a6b0837d78699c8b44478c05f6ece7"
+  integrity sha512-K8VYYU8a6VwTX5LYefjSbq27E4Vj+YKLQ3rCaEkCWKg4946OcXzT7hMrlF09OF36sWhLOKk5qjdmZgB7tAw2uw==
   dependencies:
     passport-oauth2 "^1.6.1"
   optionalDependencies:
@@ -5087,10 +5087,10 @@ node-releases@^2.0.14:
   resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-2.0.14.tgz#2ffb053bceb8b2be8495ece1ab6ce600c4461b0b"
   integrity sha512-y10wOWt8yZpqXmOgRo77WaHEmhYQYGNA6y421PKsKYWEK8aW+cqAphborZDhqfyKrbZEN92CN1X2KbafY2s7Yw==
 
-nodemailer@^6.8.0:
-  version "6.9.8"
-  resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-6.9.8.tgz#29601e80440f2af7aa62b32758fdac7c6b784143"
-  integrity sha512-cfrYUk16e67Ks051i4CntM9kshRYei1/o/Gi8K1d+R34OIs21xdFnW7Pt7EucmVKA0LKtqUGNcjMZ7ehjl49mQ==
+nodemailer@^6.9.9:
+  version "6.9.9"
+  resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-6.9.9.tgz#4549bfbf710cc6addec5064dd0f19874d24248d9"
+  integrity sha512-dexTll8zqQoVJEZPwQAKzxxtFn0qTnjdQTchoU6Re9BUUGBJiOy3YMn/0ShTW6J5M0dfQ1NeDeRTTl4oIWgQMA==
 
 nodemon@^3.0.3:
   version "3.0.3"

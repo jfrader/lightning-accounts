@@ -6,16 +6,19 @@ import { JwtCookie, SessionCookie } from "../types/tokens"
 const secure = config.env === "production"
 
 const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, res: Response) => {
-  return res
-    .cookie(JwtCookie.access, access.token, {
+  if (access) {
+    res.cookie(JwtCookie.access, access.token, {
       httpOnly: true,
-      expires: access.expires,
+      expires: access?.expires,
       domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
       signed: secure,
       secure,
     })
-    .cookie(JwtCookie.refresh, refresh?.token, {
+  }
+
+  if (refresh) {
+    res.cookie(JwtCookie.refresh, refresh.token, {
       httpOnly: true,
       expires: refresh?.expires,
       domain: secure ? config.domain : undefined,
@@ -23,12 +26,18 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
       signed: secure,
       secure,
     })
-    .cookie(JwtCookie.identity, identity?.token, {
-      expires: identity?.expires,
+  }
+
+  if (identity) {
+    res.cookie(JwtCookie.identity, identity.token, {
+      expires: identity.expires,
       domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
       secure,
     })
+  }
+
+  return res
 }
 
 export const deauthCookieResponse = (res: Response) => {

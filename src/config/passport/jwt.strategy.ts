@@ -4,6 +4,7 @@ import config from "../config"
 import { TokenType } from "@prisma/client"
 import { cookieExtractor } from "../../utils/authCookie"
 import logger from "../logger"
+import { SessionUser } from "../../types/user"
 
 const jwtOptions = {
   secretOrKey: config.jwt.publicKey,
@@ -15,12 +16,14 @@ const jwtVerify: VerifyCallback = async (payload, done) => {
     if (payload.type !== TokenType.ACCESS) {
       throw new Error("Invalid token type")
     }
-    const user = await prisma.user.findUnique({
+    const user: SessionUser | null = await prisma.user.findUnique({
       select: {
         id: true,
         email: true,
+        twitter: true,
         name: true,
         role: true,
+        avatarUrl: true,
       },
       where: { id: payload.sub },
     })

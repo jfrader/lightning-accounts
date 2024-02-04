@@ -109,6 +109,20 @@ const generateAuthTokens = async (user: { id: number }): Promise<AuthTokensRespo
   }
 }
 
+const generateIdentityToken = async (user: {
+  id: number
+}): Promise<Pick<AuthTokensResponse, "identity">> => {
+  const accessTokenExpires = moment().add(config.jwt.accessExpirationMinutes, "minutes")
+  const identityToken = generateToken(user.id, accessTokenExpires, TokenType.IDENTITY)
+
+  return {
+    identity: {
+      token: identityToken,
+      expires: accessTokenExpires.toDate(),
+    },
+  }
+}
+
 /**
  * Generate reset password token
  * @param {string} email
@@ -142,6 +156,7 @@ export default {
   saveToken,
   verifyToken,
   generateAuthTokens,
+  generateIdentityToken,
   generateResetPasswordToken,
   generateVerifyEmailToken,
 }

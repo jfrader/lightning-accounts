@@ -1,6 +1,6 @@
 {
   "name": "lightning-accounts",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/index.js",
@@ -87,7 +87,7 @@
   "dependencies": {
     "@openapi-contrib/json-schema-to-openapi-schema": "^3.0.1",
     "@prisma/client": "^5.7.1",
-    "@superfaceai/passport-twitter-oauth2": "^1.2.3",
+    "@superfaceai/passport-twitter-oauth2": "1.2.4-beta.0",
     "@types/bcryptjs": "^2.4.2",
     "@types/cookie-parser": "^1.4.6",
     "@types/express-session": "^1.17.10",
@@ -114,7 +114,7 @@
     "lightning": "^10.2.1",
     "moment": "^2.29.4",
     "morgan": "^1.10.0",
-    "nodemailer": "^6.8.0",
+    "nodemailer": "^6.9.9",
     "npm": "^10.4.0",
     "passport": "^0.7.0",
     "passport-cookie": "^1.0.9",

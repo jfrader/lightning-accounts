@@ -8,6 +8,7 @@ import { JwtCookie } from "../types/tokens"
 import logger from "../config/logger"
 import ApiError from "../utils/ApiError"
 import path from "path"
+import authCookieResponse from "../utils/authCookie"
 
 const register = catchAsync(async (req, res) => {
   const { email, password, name } = req.body
@@ -33,10 +34,6 @@ const loginTwitter = catchAsync(async (req, res) => {
   }
 
   const tokens = await tokenService.generateAuthTokens(user)
-
-  req.session.destroy(() => {
-    logger.error("Failed to destroy session")
-  })
 
   authCookie(tokens, res).sendFile("callback.html", {
     root: path.join(__dirname, "..", "static"),
@@ -101,7 +98,8 @@ const getMe = catchAsync(async (req, res) => {
   const user = req.user as User
   try {
     const userWithWallet = await userService.getUserWithWallet(user.id)
-    res.send(userWithWallet)
+    const tokens = await tokenService.generateIdentityToken(user)
+    authCookieResponse(tokens, res).send(userWithWallet)
   } catch (e) {
     deauthCookieResponse(res)
     throw e
