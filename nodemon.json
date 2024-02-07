@@ -1,5 +1,5 @@
 {
-  "watch": ["src"],
+  "watch": ["src", ".env", ".env.e2e"],
   "ext": ".ts,.js",
   "ignore": [],
   "exec": "yarn build && node ./bin/lightning-accounts-server"

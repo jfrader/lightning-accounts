@@ -5,6 +5,7 @@ import { userService } from "../../services"
 import { Request } from "express"
 import logger from "../logger"
 import exclude from "../../utils/exclude"
+import config from "../config"
 
 export const APPLICATION_STRATEGY_COOKIE = "Lightning-Application-Token"
 
@@ -23,8 +24,11 @@ const verify = async (req: Request, cookie: string, done: (e: unknown, u: any) =
       throw new Error("Application not found")
     }
 
-    if (req.socket.remoteAddress !== app.remoteAddress) {
-      throw new Error("Unknown host")
+    if (
+      req.socket.remoteAddress !== app.remoteAddress &&
+      req.socket.remoteAddress !== config.application.address
+    ) {
+      throw new Error("Unknown application host " + req.socket.remoteAddress)
     }
 
     const user = await userService.getUserByEmail(email, [

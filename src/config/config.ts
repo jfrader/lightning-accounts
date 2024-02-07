@@ -18,6 +18,11 @@ const envVarsSchema = Joi.object()
     NODE_DEBUG_LEVEL: Joi.string().description(
       "Debug level (trace, debug, info, warning, error, fatal)"
     ),
+    APPLICATION_ADDRESS: Joi.string()
+      .optional()
+      .description(
+        "Address that will be accepted for applications to login, bypassing applications.json config"
+      ),
     TWITTER_CLIENT_ID: Joi.string().description("Twitter developer client ID"),
     TWITTER_CLIENT_SECRET: Joi.string().description("Twitter developer client secret"),
     TWITTER_CLIENT_TYPE: Joi.string().description(
@@ -64,6 +69,9 @@ export default {
   host: envVars.NODE_HOST,
   domain: envVars.NODE_DOMAIN,
   debug_level: envVars.NODE_DEBUG_LEVEL,
+  application: {
+    address: envVars.APPLICATION_ADDRESS,
+  },
   twitter: {
     clientID: envVars.TWITTER_CLIENT_ID,
     clientSecret: envVars.TWITTER_CLIENT_SECRET,

@@ -28,8 +28,6 @@
   "scripts": {
     "start": "yarn swagger:specs && nodemon",
     "start:e2e": "yarn build && dotenv -e .env.e2e -- nodemon",
-    "test": "docker-compose -f docker-compose.only-db-test.yml up -d && yarn db:push && jest -i --colors --verbose --detectOpenHandles && docker-compose -f docker-compose.only-db-test.yml down",
-    "test:watch": "docker-compose -f docker-compose.only-db-test.yml up -d && yarn db:push && jest -i --watchAll && docker-compose -f docker-compose.only-db-test.yml down",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prettier": "prettier --check **/*.ts",
@@ -87,7 +85,7 @@
   "dependencies": {
     "@openapi-contrib/json-schema-to-openapi-schema": "^3.0.1",
     "@prisma/client": "^5.7.1",
-    "@superfaceai/passport-twitter-oauth2": "1.2.4-beta.0",
+    "@superfaceai/passport-twitter-oauth2": "1.2.4",
     "@types/bcryptjs": "^2.4.2",
     "@types/cookie-parser": "^1.4.6",
     "@types/express-session": "^1.17.10",

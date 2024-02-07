@@ -6,8 +6,15 @@ import { encryptPassword } from "../utils/encryption"
 import { UserWithWallet } from "../types/user"
 import { Profile } from "@superfaceai/passport-twitter-oauth2"
 
-export const USER_DEFAULT_FIELDS = ["id", "email", "name", "role", "twitter", "avatarUrl"]
-export const USER_PRIVATE_FIELDS = ["password", "isEmailVerified", "createdAt", "updatedAt"]
+export const USER_DEFAULT_FIELDS = ["id", "name", "role", "avatarUrl"]
+export const USER_PRIVATE_FIELDS = [
+  "email",
+  "twitter",
+  "password",
+  "isEmailVerified",
+  "createdAt",
+  "updatedAt",
+]
 
 /**
  * Create a user
@@ -144,7 +151,7 @@ const getUserById = async <Key extends keyof UserWithWallet>(
  */
 const getUserWithWallet = async <Key extends keyof UserWithWallet>(
   id: number,
-  keys: Key[] = USER_DEFAULT_FIELDS as Key[]
+  keys: Key[] = USER_PRIVATE_FIELDS as Key[]
 ): Promise<Pick<UserWithWallet, Key> | null> => {
   return getUserById(id, [...keys, "wallet"])
 }

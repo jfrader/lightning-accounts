@@ -1182,10 +1182,10 @@
   dependencies:
     "@sinonjs/commons" "^3.0.0"
 
-"@superfaceai/passport-twitter-oauth2@1.2.4-beta.0":
-  version "1.2.4-beta.0"
-  resolved "https://registry.yarnpkg.com/@superfaceai/passport-twitter-oauth2/-/passport-twitter-oauth2-1.2.4-beta.0.tgz#cf636b4970a6b0837d78699c8b44478c05f6ece7"
-  integrity sha512-K8VYYU8a6VwTX5LYefjSbq27E4Vj+YKLQ3rCaEkCWKg4946OcXzT7hMrlF09OF36sWhLOKk5qjdmZgB7tAw2uw==
+"@superfaceai/passport-twitter-oauth2@1.2.4":
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/@superfaceai/passport-twitter-oauth2/-/passport-twitter-oauth2-1.2.4.tgz#c3343bccd5730a36752714a6b1f1e4405ffb704a"
+  integrity sha512-f2P4X1HqBHJuAnQefINpgJvMGLHx+nT9APbfJzN/CCBcazvP9NOD9IiENHMZMXEgfcHU40V3KwKiIZTBH5Q4Wg==
   dependencies:
     passport-oauth2 "^1.6.1"
   optionalDependencies:
