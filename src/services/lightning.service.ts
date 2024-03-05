@@ -43,7 +43,9 @@ const payInvoice = async (request: string, tokens?: number) => {
     lightning.pay({ lnd, request, tokens }, (error, result) => {
       if (error) {
         const [, message] = error
-        reject(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice"))
+        return reject(
+          new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice")
+        )
       }
       resolve(result)
     })
