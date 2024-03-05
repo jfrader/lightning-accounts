@@ -151,7 +151,7 @@ const getUserById = async <Key extends keyof UserWithWallet>(
  */
 const getUserWithWallet = async <Key extends keyof UserWithWallet>(
   id: number,
-  keys: Key[] = USER_PRIVATE_FIELDS as Key[]
+  keys: Key[] = [...USER_DEFAULT_FIELDS, ...USER_PRIVATE_FIELDS] as Key[]
 ): Promise<Pick<UserWithWallet, Key> | null> => {
   return getUserById(id, [...keys, "wallet"])
 }
