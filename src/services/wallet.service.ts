@@ -223,23 +223,18 @@ const withdrawToInvoice = async (userId: number, invoice: string) => {
   const wallet = await getUserWallet(userId)
   const { tokens } = await lightningService.decodeInvoice(invoice)
 
-  const updated = await prisma.$transaction(
-    async (tx) => {
-      if (wallet.balanceInSats - tokens < 0) {
-        throw new ApiError(httpStatus.FORBIDDEN, "Insufficient balance")
-      }
-
-      await lightningService.payInvoice(invoice)
-
-      await tx.wallet.update({
-        where: { id: wallet.id },
-        data: { balanceInSats: wallet.balanceInSats - tokens },
-      })
-    },
-    {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+  const updated = await prisma.$transaction(async (tx) => {
+    if (wallet.balanceInSats - tokens < 0) {
+      throw new ApiError(httpStatus.FORBIDDEN, "Insufficient balance")
     }
-  )
+
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: { balanceInSats: wallet.balanceInSats - tokens },
+    })
+
+    await lightningService.payInvoice(invoice)
+  })
 
   return updated
 }
