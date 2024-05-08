@@ -11,13 +11,19 @@ import config from "../config/config"
 /**
  * Get wallet by user id
  * @param {number} userId
+ * @param {boolean} throwOnDisabled
  * @returns {Promise<Wallet>}
  */
-const getUserWallet = async (userId: number): Promise<Omit<Wallet, "createdAt" | "updatedAt">> => {
+const getUserWallet = async (
+  userId: number,
+  throwOnDisabled = false
+): Promise<Omit<Wallet, "createdAt" | "updatedAt">> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
-      wallet: { select: { id: true, userId: true, balanceInSats: true, disabled: true } },
+      wallet: {
+        select: { id: true, userId: true, balanceInSats: true, disabled: true, busy: true },
+      },
     },
   })
 
@@ -27,6 +33,10 @@ const getUserWallet = async (userId: number): Promise<Omit<Wallet, "createdAt" |
 
   if (!user.wallet) {
     throw new ApiError(httpStatus.NOT_FOUND, "Wallet not found")
+  }
+
+  if (throwOnDisabled && (user.wallet.disabled || user.wallet.busy)) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Request forbidden")
   }
 
   return user.wallet
@@ -64,17 +74,21 @@ const _impactDeposit = async (
   })
 }
 
+const _setWalletBusy = async (walletId: number, busy: boolean) => {
+  return prisma.wallet.update({ where: { id: walletId }, data: { busy } })
+}
+
 const createDepositInvoice = async (userId: number, sats: number): Promise<Transaction> => {
-  const wallet = await getUserWallet(userId)
-
-  if (config.wallet.limit > 0 && wallet.balanceInSats + sats > config.wallet.limit) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Not allowed to deposit more than " + config.wallet.limit + " sats"
-    )
-  }
-
   return prisma.$transaction(async (tx) => {
+    const wallet = await getUserWallet(userId, true)
+
+    if (config.wallet.limit > 0 && wallet.balanceInSats + sats > config.wallet.limit) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Not allowed to deposit more than " + config.wallet.limit + " sats"
+      )
+    }
+
     const invoice = await lightningService.createInvoice(sats, (settledInvoice) => {
       _impactDeposit(settledInvoice, pendingTransaction).catch((e) => logger.error(e.message))
     })
@@ -95,7 +109,9 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
 }
 
 const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Transaction> => {
-  const wallet = await getUserWallet(userId)
+  const wallet = await getUserWallet(userId, true)
+
+  await _setWalletBusy(wallet.id, true)
 
   const payment = await lightningService.decodeInvoice(invoice)
 
@@ -136,6 +152,8 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
 
     await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
 
+    await _setWalletBusy(wallet.id, false)
+
     return transaction
   })
 }
@@ -166,13 +184,13 @@ const payUser = async ({
   description?: string
 }) => {
   return prisma.$transaction(async (tx) => {
-    const payerWallet = await getUserWallet(payerId)
+    const payerWallet = await getUserWallet(payerId, true)
 
     if (payerWallet.balanceInSats < amountInSats) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
     }
 
-    const payeeWallet = await getUserWallet(receiverId)
+    const payeeWallet = await getUserWallet(receiverId, true)
 
     await tx.wallet.update({
       where: { id: payerWallet.id },
@@ -217,26 +235,6 @@ const payUser = async ({
       },
     })
   })
-}
-
-const withdrawToInvoice = async (userId: number, invoice: string) => {
-  const wallet = await getUserWallet(userId)
-  const { tokens } = await lightningService.decodeInvoice(invoice)
-
-  const updated = await prisma.$transaction(async (tx) => {
-    if (wallet.balanceInSats - tokens < 0) {
-      throw new ApiError(httpStatus.FORBIDDEN, "Insufficient balance")
-    }
-
-    await tx.wallet.update({
-      where: { id: wallet.id },
-      data: { balanceInSats: wallet.balanceInSats - tokens },
-    })
-
-    await lightningService.payInvoice(invoice)
-  })
-
-  return updated
 }
 
 const createPayRequests = async ({
@@ -323,13 +321,13 @@ const payRequest = async ({ payerId, payRequestId }: { payerId: number; payReque
       throw new ApiError(httpStatus.FOUND, "Pay request already paid")
     }
 
-    const payerWallet = await getUserWallet(payerId)
+    const payerWallet = await getUserWallet(payerId, true)
 
     if (payerWallet.balanceInSats < pr.amountInSats) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
     }
 
-    const payeeWallet = await getUserWallet(pr?.creatorId)
+    const payeeWallet = await getUserWallet(pr?.creatorId, true)
 
     await tx.wallet.update({
       where: { id: payerWallet.id },
@@ -416,7 +414,6 @@ export default {
   payRequest,
   getUserWallet,
   createDepositInvoice,
-  withdrawToInvoice,
   payWithdrawInvoice,
   getTransaction,
 }

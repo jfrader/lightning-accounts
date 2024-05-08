@@ -70,7 +70,7 @@ app.get("/js/autoclose.js", (req, res) => {
   res.sendFile("autoclose.js", { root: path.join(__dirname, "static") })
 })
 
-app.set("trust proxy", 1)
+// app.set("trust proxy", 1)
 
 app.use(
   session({

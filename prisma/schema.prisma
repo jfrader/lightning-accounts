@@ -54,6 +54,7 @@ model Wallet {
   userId        Int           @unique
   balanceInSats Int
   disabled      Boolean       @default(false)
+  busy          Boolean       @default(false)
   transactions  Transaction[]
 }
 
