@@ -4,6 +4,8 @@ import httpStatus from "http-status"
 import config from "../config/config"
 import logger from "../config/logger"
 
+const LND_TIMEOUT = 60 * 1000
+
 let connected = false
 
 const { lnd } = lightning.authenticatedLndGrpc({
@@ -62,9 +64,14 @@ const createInvoice = async (
   onConfirmed: (invoice: lightning.SubscribeToInvoiceInvoiceUpdatedEvent) => void
 ): Promise<lightning.CreateInvoiceResult> => {
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new ApiError(httpStatus.REQUEST_TIMEOUT, "Invoice creation timed out"))
+    }, LND_TIMEOUT)
+
     lightning.createInvoice({ lnd, tokens: sats }, (error, result) => {
       if (error || !result) {
-        reject(
+        clearTimeout(timeout)
+        return reject(
           error ||
             new ApiError(
               httpStatus.SERVICE_UNAVAILABLE,
@@ -80,6 +87,8 @@ const createInvoice = async (
             onConfirmed(invoice)
           }
         })
+
+      clearTimeout(timeout)
       resolve(result)
     })
   })

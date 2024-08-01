@@ -1,0 +1,21 @@
+services:
+  postgres:
+    restart: unless-stopped
+    extends:
+      file: docker-compose.base.yml
+      service: postgres
+    volumes:
+      - data:/var/lib/postgresql/data
+  lightning-accounts:
+    restart: unless-stopped
+    command: ["yarn", "start:prod:migrate"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    extends:
+      file: docker-compose.base.yml
+      service: lightning-accounts
+
+volumes:
+  data:
+  node_modules:
+

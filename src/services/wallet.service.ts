@@ -159,7 +159,18 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
 }
 
 const getTransaction = async (txId: number, userId?: number) => {
+  console.log({ txId, userId })
+
   const walletId = userId ? (await userService.getUserWithWallet(userId))?.id : undefined
+
+  if (!walletId) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Wallet not found")
+  }
+
+  const transactions = await prisma.wallet.findMany({ where: { id: walletId } })
+
+  console.log(transactions)
+
   const transaction = await prisma.transaction.findUnique({ where: { id: txId, walletId } })
 
   if (!transaction) {

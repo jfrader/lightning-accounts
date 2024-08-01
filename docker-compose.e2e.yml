@@ -1,0 +1,17 @@
+services:
+  postgres:
+    extends:
+      file: docker-compose.base.yml
+      service: postgres
+  lightning-accounts:
+    command: ["yarn", "start:e2e"]
+    env_file:
+      - path: ./.env.test
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    extends:
+      file: docker-compose.base.yml
+      service: lightning-accounts
+
+volumes:
+  node_modules:
