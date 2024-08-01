@@ -28,7 +28,7 @@
   "scripts": {
     "build": "yarn swagger:generate && rimraf build && tsc -p tsconfig.json && cp -R src/static build/src/",
     "start": "nodemon",
-    "start:e2e": "prisma db push --force-reset && yarn db:e2e:seed && dotenv -e .env.e2e -- nodemon",
+    "start:e2e": "prisma db push --force-reset && yarn db:e2e:seed && dotenv -e .env.test -- nodemon",
     "start:migrate": "prisma migrate deploy && yarn start",
     "start:prod": "node bin/lightning-accounts-server",
     "start:prod:migrate": "prisma migrate deploy && yarn start:prod",
