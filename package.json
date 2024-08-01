@@ -28,8 +28,8 @@
   "scripts": {
     "build": "yarn swagger:generate && rimraf build && tsc -p tsconfig.json && cp -R src/static build/src/",
     "start": "nodemon",
-    "start:e2e": "prisma db push --force-reset && yarn db:e2e:seed && dotenv -e .env.test -- nodemon",
-    "start:migrate": "prisma migrate deploy && yarn start",
+    "start:e2e": "dotenv -e .env.test -- prisma db push --force-reset && dotenv -e .env.test -- prisma db seed && dotenv -e .env.test -- nodemon",
+    "start:migrate": "prisma db push && ,prisma migrate deploy && yarn start",
     "start:prod": "node bin/lightning-accounts-server",
     "start:prod:migrate": "prisma migrate deploy && yarn start:prod",
     "docker": "docker compose --env-file .env up --build",

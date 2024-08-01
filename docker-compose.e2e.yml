@@ -1,14 +1,19 @@
 services:
-  postgres:
+  postgres_test:
     extends:
       file: docker-compose.base.yml
       service: postgres
   lightning-accounts:
     command: ["yarn", "start:e2e"]
+    depends_on:
+      postgres_test:
+        condition: service_healthy
     env_file:
       - path: ./.env.test
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    environment:
+      DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres_test:5432/${NODE_DB_NAME}?schema=public"
     extends:
       file: docker-compose.base.yml
       service: lightning-accounts

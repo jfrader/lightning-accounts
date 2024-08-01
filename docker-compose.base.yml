@@ -21,9 +21,6 @@ services:
       - node_modules:/opt/app/node_modules
     ports:
       - "${NODE_PORT}:${NODE_PORT}"
-    depends_on:
-      postgres:
-        condition: service_healthy
     env_file:
       - path: ./.env
     extra_hosts:

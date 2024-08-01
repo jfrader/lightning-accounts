@@ -9,6 +9,9 @@ services:
   lightning-accounts:
     restart: unless-stopped
     command: ["yarn", "start:prod:migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
     extends:
