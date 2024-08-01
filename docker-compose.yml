@@ -3,8 +3,6 @@ services:
     extends:
       file: docker-compose.base.yml
       service: postgres
-    ports:
-      - 5431:5432
   lightning-accounts:
     extends:
       file: docker-compose.base.yml
