@@ -1,15 +1,17 @@
+name: "lightning-accounts-${NODE_ENV:-development}"
+
 services:
   postgres:
     extends:
       file: docker-compose.base.yml
       service: postgres
-  lightning-accounts:
+  server:
     depends_on:
       postgres:
         condition: service_healthy
     extends:
       file: docker-compose.base.yml
-      service: lightning-accounts
+      service: server
 
 volumes:
   node_modules:
