@@ -1,0 +1,8 @@
+networks:
+  lightningaccountsnet:
+    name: lightningaccountsnet
+    driver: bridge
+    attachable: true
+    ipam:
+      config:
+        - subnet: 10.29.0.0/24

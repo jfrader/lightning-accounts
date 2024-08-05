@@ -17,8 +17,8 @@ services:
       args:
         PORT: ${NODE_PORT}
     command: ["yarn", "start"]
-    volumes:
-      - node_modules:/opt/app/node_modules
+    expose:
+      - "${NODE_PORT}"
     ports:
       - "${NODE_PORT}:${NODE_PORT}"
     env_file:

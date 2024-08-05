@@ -1,24 +1,34 @@
 name: "lightning-accounts-${NODE_ENV:-test}"
 
+include:
+  - path: docker-compose.networks.yml
+  - path: docker-compose.lightning.yml
+
 services:
-  postgres_test:
+  postgres_ln_test:
     extends:
       file: docker-compose.base.yml
       service: postgres
+    networks:
+      lightningaccountsnet:
+        ipv4_address: 10.29.0.11
   server:
+    networks:
+      lightningaccountsnet:
+        ipv4_address: 10.29.0.10
+    volumes:
+      - ./src:/opt/app/src
     command: ["yarn", "start:e2e"]
     depends_on:
-      postgres_test:
+      postgres_ln_test:
         condition: service_healthy
     env_file:
       - path: ./.env.test
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres_test:5432/${NODE_DB_NAME}?schema=public"
+      APPLICATION_ADDRESS: "::ffff:10.29.0.1"
+      DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres_ln_test:5432/${NODE_DB_NAME}?schema=public"
     extends:
       file: docker-compose.base.yml
       service: server
-
-volumes:
-  node_modules:
