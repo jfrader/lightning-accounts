@@ -33,9 +33,4 @@ jwt.key.pub
 applications.json
 
 # Docker
-volumes/postgres
-volumes/bitcoind/backend1/regtest/*.log
-volumes/lnd/alice/logs
-volumes/lnd/carol/logs
-volumes/lnd/dave/logs
-volumes/c-lightning/bob/lightningd/regtest/*.log.*
+volumes
