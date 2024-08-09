@@ -10,7 +10,7 @@ services:
       - ./volumes/postgres/data:/var/lib/postgresql/data
   server:
     restart: always
-    command: ["yarn", "start:prod:migrate"]
+    command: ["yarn", "start:prod"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -19,4 +19,6 @@ services:
     extends:
       file: docker-compose.base.yml
       service: server
-
+    environment:
+      LND_SOCKET: "host.docker.internal:10001"
+      DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres:5432/${NODE_DB_NAME}?schema=public"
