@@ -23,5 +23,4 @@ services:
       file: docker-compose.base.yml
       service: server
     environment:
-      LND_SOCKET: "host.docker.internal:10001"
       DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres:5432/${NODE_DB_NAME}?schema=public"
