@@ -5,6 +5,9 @@ include:
 
 services:
   postgres:
+    networks:
+      lightningaccountsnet:
+        ipv4_address: 10.30.0.11
     restart: always
     extends:
       file: docker-compose.base.yml
@@ -12,6 +15,9 @@ services:
     volumes:
       - ./volumes/postgres/data:/var/lib/postgresql/data
   server:
+    networks:
+      lightningaccountsnet:
+        ipv4_address: 10.30.0.10
     restart: always
     command: ["yarn", "start:prod"]
     depends_on:
@@ -23,4 +29,5 @@ services:
       file: docker-compose.base.yml
       service: server
     environment:
+      APPLICATION_ADDRESS: "::ffff:10.30.0.1"
       DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres:5432/${NODE_DB_NAME}?schema=public"
