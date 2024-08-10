@@ -29,7 +29,7 @@
     "build": "yarn swagger:generate && rimraf build && tsc -p tsconfig.json && cp -R src/static build/src/",
     "start": "nodemon",
     "start:e2e": "dotenv -e .env.test -- prisma db push --force-reset && dotenv -e .env.test -- prisma db seed && dotenv -e .env.test -- nodemon",
-    "start:migrate": "prisma db push && yarn start",
+    "start:migrate": "prisma db push && prisma db seed && yarn start",
     "start:prod": "node bin/lightning-accounts-server",
     "start:prod:migrate": "prisma migrate deploy && yarn start:prod",
     "lightning:payinvoice": "sudo docker compose exec -i --user lnd carol lncli -n regtest payinvoice",
