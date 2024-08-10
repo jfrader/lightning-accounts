@@ -1,5 +1,8 @@
 name: "lightning-accounts-${NODE_ENV:-production}"
 
+include:
+  - path: docker-compose.networks.yml
+
 services:
   postgres:
     restart: always
