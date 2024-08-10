@@ -14,7 +14,6 @@ services:
       - ./src:/opt/app/src
     command: ["yarn", "start:migrate"]
     environment:
-      LND_SOCKET: "host.docker.internal:10001"
       APPLICATION_ADDRESS: "::ffff:10.29.0.1"
       DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres_ln:5432/${NODE_DB_NAME}?schema=public"
     extra_hosts:
