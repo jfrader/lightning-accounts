@@ -7,17 +7,14 @@ services:
   postgres:
     networks:
       lightningaccountsnet:
-        ipv4_address: 10.30.0.11
+        ipv4_address: 10.29.0.41
     extends:
       file: docker-compose.prod.yml
       service: postgres
   server:
     networks:
       lightningaccountsnet:
-        ipv4_address: 10.30.0.10
+        ipv4_address: 10.29.0.40
     extends:
       file: docker-compose.prod.yml
       service: server
-    environment:
-      APPLICATION_ADDRESS: "::ffff:10.30.0.1"
-      DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres:5432/${NODE_DB_NAME}?schema=public"
