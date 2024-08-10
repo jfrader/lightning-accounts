@@ -2,7 +2,6 @@ name: "lightning-accounts-${NODE_ENV:-development}"
 
 include:
   - path: docker-compose.networks.yml
-  - path: docker-compose.lightning.yml
 
 services:
   postgres_ln:
