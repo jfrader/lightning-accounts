@@ -35,7 +35,7 @@
     "lightning:payinvoice": "sudo docker compose exec -i --user lnd carol lncli -n regtest payinvoice",
     "docker": "docker compose --env-file .env up --build --abort-on-container-exit",
     "docker:exec": "docker compose exec -i server yarn",
-    "docker:prod": "docker compose -f docker-compose.prod.yml --env-file .env up --build --abort-on-container-exit",
+    "docker:prod": "docker compose -f docker-compose.prod.yml --env-file .env up --build",
     "docker:test": "docker compose -f docker-compose.e2e.yml --env-file .env.test up --build --abort-on-container-exit",
     "swagger:specs": "yarn prisma generate && cross-env NODE_ENV=development ts-node scripts/prismaToSwagger.ts && cross-env NODE_ENV=development ts-node scripts/swaggerToJson.ts",
     "swagger:client": "yarn swagger:specs && yarn swagger-typescript-api -p ./dist/swagger.json -o ./dist -n index.ts --axios",
