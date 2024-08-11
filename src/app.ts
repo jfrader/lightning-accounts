@@ -89,6 +89,8 @@ app.use(
   })
 )
 
+console.log({ sameSite: secure ? "none" : "lax" })
+
 app.enable("trust proxy")
 
 // authentication
