@@ -5,6 +5,7 @@ include:
 
 services:
   postgres:
+    hostname: postgres_ln_prod
     restart: always
     extends:
       file: docker-compose.base.yml
@@ -24,4 +25,4 @@ services:
       service: server
     environment:
       APPLICATION_ADDRESS: "::ffff:10.29.0.1"
-      DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres:5432/${NODE_DB_NAME}?schema=public"
+      DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres_ln_prod:5432/${NODE_DB_NAME}?schema=public"

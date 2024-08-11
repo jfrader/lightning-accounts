@@ -5,6 +5,7 @@ include:
 
 services:
   postgres:
+    hostname: postgres_ln_staging
     networks:
       lightningaccountsnet:
         ipv4_address: 10.29.0.41
@@ -18,3 +19,6 @@ services:
     extends:
       file: docker-compose.prod.yml
       service: server
+    environment:
+      APPLICATION_ADDRESS: "::ffff:10.29.0.1"
+      DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres_ln_staging:5432/${NODE_DB_NAME}?schema=public"
