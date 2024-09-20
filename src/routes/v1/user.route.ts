@@ -193,6 +193,9 @@ router
    *                 type: string
    *                 format: email
    *                 description: must be unique
+   *               currentPassword:
+   *                 type: string
+   *                 format: password
    *               password:
    *                 type: string
    *                 format: password

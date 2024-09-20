@@ -26,7 +26,14 @@ const getUser = catchAsync(async (req, res) => {
 })
 
 const updateUser = catchAsync(async (req, res) => {
-  const user = await userService.updateUserById(req.params.userId, req.body)
+  const { currentPassword, ...body } = req.body
+  const user = await userService.updateUserById(
+    req.params.userId,
+    body,
+    ["id", "email", "name", "role"],
+    true,
+    currentPassword
+  )
   res.send(user)
 })
 

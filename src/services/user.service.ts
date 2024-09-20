@@ -5,6 +5,7 @@ import ApiError from "../utils/ApiError"
 import { encryptPassword } from "../utils/encryption"
 import { UserWithWallet } from "../types/user"
 import { Profile } from "@superfaceai/passport-twitter-oauth2"
+import authService from "./auth.service"
 
 export const USER_DEFAULT_FIELDS = ["id", "name", "role", "avatarUrl"]
 export const USER_PRIVATE_FIELDS = [
@@ -181,15 +182,28 @@ const getUserByEmail = async <Key extends keyof User>(
 const updateUserById = async <Key extends keyof User>(
   userId: number,
   updateBody: Prisma.UserUpdateInput,
-  keys: Key[] = ["id", "email", "name", "role"] as Key[]
+  keys: Key[] = ["id", "email", "name", "role"] as Key[],
+  requirePassword: boolean,
+  password?: string
 ): Promise<Pick<User, Key> | null> => {
   const user = await getUserById(userId, ["id", "email", "name", "twitter", "avatarUrl"])
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
   if (updateBody.email && (await getUserByEmail(updateBody.email as string))) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken")
+    throw new ApiError(httpStatus.NOT_ACCEPTABLE, "Email already taken")
   }
+
+  if (requirePassword && user.email && (updateBody.email || updateBody.password)) {
+    if (!password) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Password not provided")
+    }
+    const isMatch = await authService.loginUserWithEmailAndPassword(user.email, password)
+    if (!isMatch) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Password doesn't match")
+    }
+  }
+
   const updatedUser = await prisma.user.update({
     where: { id: user.id },
     data: {

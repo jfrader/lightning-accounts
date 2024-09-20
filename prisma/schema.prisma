@@ -24,6 +24,7 @@ model User {
   password            String?
   twitterId           String?      @unique
   twitter             String?
+  nostrPubkey         String?      @unique
   avatarUrl           String?
   name                String
   role                Role         @default(USER)

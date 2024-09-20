@@ -30,6 +30,7 @@ const loginUserWithEmailAndPassword = async (
     "twitter",
     "twitterId",
     "avatarUrl",
+    "nostrPubkey",
   ])
   if (!user || !(await isPasswordMatch(password, user.password as string))) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password")
@@ -94,7 +95,12 @@ const resetPassword = async (resetPasswordToken: string, newPassword: string): P
       throw new ApiError(httpStatus.NOT_FOUND, "User not found")
     }
     const encryptedPassword = await encryptPassword(newPassword)
-    await userService.updateUserById(user.id, { password: encryptedPassword })
+    await userService.updateUserById(
+      user.id,
+      { password: encryptedPassword },
+      ["id", "email", "name", "role"],
+      false
+    )
     await prisma.token.deleteMany({ where: { userId: user.id, type: TokenType.RESET_PASSWORD } })
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Password reset failed")
@@ -115,7 +121,12 @@ const verifyEmail = async (verifyEmailToken: string): Promise<void> => {
     await prisma.token.deleteMany({
       where: { userId: verifyEmailTokenData.userId, type: TokenType.VERIFY_EMAIL },
     })
-    await userService.updateUserById(verifyEmailTokenData.userId, { isEmailVerified: true })
+    await userService.updateUserById(
+      verifyEmailTokenData.userId,
+      { isEmailVerified: true },
+      ["id", "email", "name", "role"],
+      false
+    )
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Email verification failed")
   }

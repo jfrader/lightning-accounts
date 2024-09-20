@@ -15,7 +15,7 @@ const twitterOptions: StrategyOptionsWithRequest = {
   clientID: config.twitter.clientID,
   clientSecret: config.twitter.clientSecret,
   clientType: config.twitter.clientType,
-  scope: ["tweet.read", "users.read"],
+  scope: ["tweet.read", "users.read", "offline.access"],
   passReqToCallback: true,
 }
 

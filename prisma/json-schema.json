@@ -39,6 +39,12 @@
             "null"
           ]
         },
+        "nostrPubkey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "avatarUrl": {
           "type": [
             "string",

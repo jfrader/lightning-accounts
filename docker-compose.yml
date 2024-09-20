@@ -16,8 +16,6 @@ services:
     environment:
       APPLICATION_ADDRESS: "::ffff:10.29.0.1"
       DATABASE_URL: "postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@postgres_ln:5432/${NODE_DB_NAME}?schema=public"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       postgres_ln:
         condition: service_healthy
