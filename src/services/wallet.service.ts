@@ -110,66 +110,67 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
 
 const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Transaction> => {
   const wallet = await getUserWallet(userId, true)
+  try {
+    await _setWalletBusy(wallet.id, true)
 
-  await _setWalletBusy(wallet.id, true)
+    const payment = await lightningService.decodeInvoice(invoice)
 
-  const payment = await lightningService.decodeInvoice(invoice)
+    const balanceInSats = wallet.balanceInSats
 
-  const balanceInSats = wallet.balanceInSats
+    const isZeroValue = payment.tokens === 0
 
-  const isZeroValue = payment.tokens === 0
+    const amountInSats = isZeroValue
+      ? balanceInSats - Math.round(balanceInSats / 100)
+      : payment.tokens
 
-  const amountInSats = isZeroValue
-    ? balanceInSats - Math.round(balanceInSats / 100)
-    : payment.tokens
+    const feeReserve = Math.round(amountInSats / 100)
+    const total = amountInSats + feeReserve
 
-  const feeReserve = Math.round(amountInSats / 100)
-  const total = amountInSats + feeReserve
+    if (balanceInSats < total) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Not enough balance to pay the fee, try a lower amount or use a zero-value invoice to withdraw all available balance minus fee."
+      )
+    }
 
-  if (balanceInSats < total) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Not enough balance to pay the fee, try a lower amount or use a zero-value invoice to withdraw all available balance minus fee."
-    )
-  }
+    return prisma.$transaction(
+      async (tx) => {
+        const transaction = await tx.transaction.create({
+          data: {
+            amountInSats,
+            type: TransactionType.WITHDRAW,
+            invoice,
+            invoiceSettled: true,
+            walletImpacted: true,
+            wallet: { connect: { id: wallet.id } },
+          },
+        })
 
-  return prisma.$transaction(async (tx) => {
-    const transaction = await tx.transaction.create({
-      data: {
-        amountInSats,
-        type: TransactionType.WITHDRAW,
-        invoice,
-        invoiceSettled: true,
-        walletImpacted: true,
-        wallet: { connect: { id: wallet.id } },
+        await tx.wallet.update({
+          where: { id: wallet.id },
+          data: { balanceInSats: { decrement: total } },
+        })
+
+        await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
+
+        await _setWalletBusy(wallet.id, false)
+
+        return transaction
       },
-    })
-
-    await tx.wallet.update({
-      where: { id: wallet.id },
-      data: { balanceInSats: { decrement: total } },
-    })
-
-    await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
-
+      { maxWait: 5000, timeout: 25000 }
+    )
+  } catch (e) {
     await _setWalletBusy(wallet.id, false)
-
-    return transaction
-  })
+    throw e
+  }
 }
 
 const getTransaction = async (txId: number, userId?: number) => {
-  console.log({ txId, userId })
-
   const walletId = userId ? (await userService.getUserWithWallet(userId))?.id : undefined
 
   if (!walletId) {
     throw new ApiError(httpStatus.NOT_FOUND, "Wallet not found")
   }
-
-  const transactions = await prisma.wallet.findMany({ where: { id: walletId } })
-
-  console.log(transactions)
 
   const transaction = await prisma.transaction.findUnique({ where: { id: txId, walletId } })
 
