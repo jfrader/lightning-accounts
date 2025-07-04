@@ -110,30 +110,31 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
 
 const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Transaction> => {
   const wallet = await getUserWallet(userId, true)
-  try {
-    await _setWalletBusy(wallet.id, true)
 
-    const payment = await lightningService.decodeInvoice(invoice)
+  await _setWalletBusy(wallet.id, true)
 
-    const balanceInSats = wallet.balanceInSats
+  const payment = await lightningService.decodeInvoice(invoice)
 
-    const isZeroValue = payment.tokens === 0
+  const balanceInSats = wallet.balanceInSats
 
-    const amountInSats = isZeroValue
-      ? balanceInSats - Math.round(balanceInSats / 100)
-      : payment.tokens
+  const isZeroValue = payment.tokens === 0
 
-    const feeReserve = Math.round(amountInSats / 100)
-    const total = amountInSats + feeReserve
+  const amountInSats = isZeroValue
+    ? balanceInSats - Math.round(balanceInSats / 100)
+    : payment.tokens
 
-    if (balanceInSats < total) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        "Not enough balance to pay the fee, try a lower amount or use a zero-value invoice to withdraw all available balance minus fee."
-      )
-    }
+  const feeReserve = Math.round(amountInSats / 100)
+  const total = amountInSats + feeReserve
 
-    return prisma.$transaction(
+  if (balanceInSats < total) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Not enough balance to pay the fee, try a lower amount or use a zero-value invoice to withdraw all available balance minus fee."
+    )
+  }
+
+  return prisma
+    .$transaction(
       async (tx) => {
         const transaction = await tx.transaction.create({
           data: {
@@ -153,22 +154,15 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
 
         await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
 
+        await _setWalletBusy(wallet.id, false)
+
         return transaction
       },
       { maxWait: 5000, timeout: 25000 }
     )
-  } catch (e: any) {
-    await _setWalletBusy(wallet.id, false)
-    if (e instanceof ApiError) {
-      throw e
-    }
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      e.message || "There was a problem paying the invoice"
-    )
-  } finally {
-    await _setWalletBusy(wallet.id, false)
-  }
+    .finally(async () => {
+      await _setWalletBusy(wallet.id, false)
+    })
 }
 
 const getTransaction = async (txId: number, userId?: number) => {
