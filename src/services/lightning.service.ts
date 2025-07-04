@@ -40,7 +40,7 @@ init()
  * @param {string} request
  * @returns {Promise}
  */
-const payInvoice = async (request: string, tokens?: number) => {
+const payInvoice = (request: string, tokens?: number) => {
   return new Promise((resolve, reject) => {
     lightning.pay({ lnd, request, tokens }, (error, result) => {
       if (error) {

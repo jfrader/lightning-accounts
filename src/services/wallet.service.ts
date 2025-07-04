@@ -151,11 +151,7 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
           data: { balanceInSats: { decrement: total } },
         })
 
-        try {
-          await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
-        } catch (e: any) {
-          throw new Error(e.message || "Failed to pay invoice")
-        }
+        await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
 
         return transaction
       },
