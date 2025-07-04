@@ -162,6 +162,7 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
       { maxWait: 5000, timeout: 25000 }
     )
   } catch (e: any) {
+    await _setWalletBusy(wallet.id, false)
     if (e instanceof ApiError) {
       throw e
     }
