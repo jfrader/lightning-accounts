@@ -157,8 +157,14 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
       },
       { maxWait: 5000, timeout: 25000 }
     )
-  } catch (e) {
-    throw e
+  } catch (e: any) {
+    if (e instanceof ApiError) {
+      throw e
+    }
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      e.message || "There was a problem paying the invoice"
+    )
   } finally {
     await _setWalletBusy(wallet.id, false)
   }
