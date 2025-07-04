@@ -41,7 +41,7 @@ init()
  * @returns {Promise}
  */
 const payInvoice = (request: string, id: string, tokens?: number) => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     lightning.pay({ lnd, request, tokens }, (error, result) => {
       if (error) {
         const [, message] = error
@@ -49,15 +49,17 @@ const payInvoice = (request: string, id: string, tokens?: number) => {
         return checkInvoice(id)
           .then((r) => {
             if (r.is_confirmed) {
-              return r
+              return resolve(r)
             }
 
             throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to check invoice payment")
           })
           .catch((e) => {
-            throw new ApiError(
-              httpStatus.INTERNAL_SERVER_ERROR,
-              e.message || message || "Failed to check invoice payment"
+            reject(
+              new ApiError(
+                httpStatus.INTERNAL_SERVER_ERROR,
+                e.message || message || "Failed to check invoice payment"
+              )
             )
           })
       }
