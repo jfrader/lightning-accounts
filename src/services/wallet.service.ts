@@ -153,15 +153,14 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
 
         await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
 
-        await _setWalletBusy(wallet.id, false)
-
         return transaction
       },
       { maxWait: 5000, timeout: 25000 }
     )
   } catch (e) {
-    await _setWalletBusy(wallet.id, false)
     throw e
+  } finally {
+    await _setWalletBusy(wallet.id, false)
   }
 }
 
