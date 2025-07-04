@@ -40,14 +40,26 @@ init()
  * @param {string} request
  * @returns {Promise}
  */
-const payInvoice = (request: string, tokens?: number) => {
-  return new Promise((resolve, reject) => {
+const payInvoice = (request: string, id: string, tokens?: number) => {
+  return new Promise((resolve) => {
     lightning.pay({ lnd, request, tokens }, (error, result) => {
       if (error) {
         const [, message] = error
-        return reject(
-          new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice")
-        )
+
+        return checkInvoice(id)
+          .then((r) => {
+            if (r.is_confirmed) {
+              return r
+            }
+
+            throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to check invoice payment")
+          })
+          .catch((e) => {
+            throw new ApiError(
+              httpStatus.INTERNAL_SERVER_ERROR,
+              e.message || message || "Failed to check invoice payment"
+            )
+          })
       }
       resolve(result)
     })
@@ -102,8 +114,30 @@ const createInvoice = async (
 const decodeInvoice = async (invoice: string) => {
   return new Promise<lightning.DecodePaymentRequestResult>((resolve, reject) => {
     lightning.decodePaymentRequest({ lnd, request: invoice }, (error, result) => {
-      if (error) {
-        return reject(error)
+      if (error || !result) {
+        return reject(
+          error ||
+            new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to decode payment request")
+        )
+      }
+
+      return resolve(result)
+    })
+  })
+}
+
+/**
+ * Check a lightning invoice
+ * @param {string} invoice
+ * @returns {Promise<DecodePaymentRequestResult>}
+ */
+const checkInvoice = async (invoiceId: string) => {
+  return new Promise<lightning.GetInvoiceResult>((resolve, reject) => {
+    lightning.getInvoice({ lnd, id: invoiceId }, (error, result) => {
+      if (error || !result) {
+        return reject(
+          error || new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to check invoice payment")
+        )
       }
 
       return resolve(result)
@@ -117,4 +151,5 @@ export default {
   payInvoice,
   createInvoice,
   decodeInvoice,
+  checkInvoice,
 }
