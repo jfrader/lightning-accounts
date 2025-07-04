@@ -135,33 +135,33 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
     )
   }
 
-  return prisma
-    .$transaction(async (tx) => {
-      const transaction = await tx.transaction.create({
-        data: {
-          amountInSats,
-          type: TransactionType.WITHDRAW,
-          invoice,
-          invoiceSettled: true,
-          walletImpacted: true,
-          wallet: { connect: { id: wallet.id } },
-        },
-      })
-
-      await tx.wallet.update({
-        where: { id: wallet.id },
-        data: { balanceInSats: { decrement: total } },
-      })
-
-      await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
-
-      await _setWalletBusy(wallet.id, false)
-
-      return transaction
-    }, PRISMA_TRANSACTION_OPTS)
-    .finally(async () => {
-      await _setWalletBusy(wallet.id, false)
+  const transactionTx = await prisma.$transaction(async (tx) => {
+    const transaction = await tx.transaction.create({
+      data: {
+        amountInSats,
+        type: TransactionType.WITHDRAW,
+        invoice,
+        invoiceSettled: true,
+        walletImpacted: true,
+        wallet: { connect: { id: wallet.id } },
+      },
     })
+
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: { balanceInSats: { decrement: total } },
+    })
+
+    await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
+
+    await _setWalletBusy(wallet.id, false)
+
+    return transaction
+  }, PRISMA_TRANSACTION_OPTS)
+
+  await _setWalletBusy(wallet.id, false)
+
+  return transactionTx
 }
 
 const getTransaction = async (txId: number, userId?: number) => {
