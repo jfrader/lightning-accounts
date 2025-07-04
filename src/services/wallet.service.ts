@@ -154,7 +154,7 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
 
         await lightningService.payInvoice(
           invoice,
-          payment.id,
+          (payment as any).payment_hash,
           isZeroValue ? amountInSats : undefined
         )
 
