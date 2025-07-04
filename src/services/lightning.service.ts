@@ -48,7 +48,6 @@ const payInvoice = (request: string, tokens?: number) => {
 
     lightning.pay({ lnd, request, tokens }, (error, result) => {
       if (error) {
-        console.log(error)
         clearTimeout(timeout)
         const [, message] = error
         return reject(
