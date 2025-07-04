@@ -40,14 +40,15 @@ init()
  * @param {string} request
  * @returns {Promise}
  */
-const payInvoice = (request: string, id: string, tokens?: number) => {
+const payInvoice = (request: string, tokens?: number) => {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
-      reject(new ApiError(httpStatus.REQUEST_TIMEOUT, "Invoice creation timed out"))
+      reject(new ApiError(httpStatus.REQUEST_TIMEOUT, "Withdrawal timed out"))
     }, LND_TIMEOUT)
 
     lightning.pay({ lnd, request, tokens }, (error, result) => {
       if (error) {
+        console.log(error)
         clearTimeout(timeout)
         const [, message] = error
         return reject(

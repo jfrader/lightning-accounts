@@ -153,11 +153,7 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
         data: { balanceInSats: { decrement: total } },
       })
 
-      await lightningService.payInvoice(
-        invoice,
-        (payment as any).payment_hash,
-        isZeroValue ? amountInSats : undefined
-      )
+      await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
 
       await _setWalletBusy(wallet.id, false)
 
