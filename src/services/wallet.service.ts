@@ -3,10 +3,12 @@ import ApiError from "../utils/ApiError"
 import { Prisma, TransactionType, Transaction, Wallet, PayRequest } from "@prisma/client"
 import prisma from "../client"
 import { SubscribeToInvoiceInvoiceUpdatedEvent } from "lightning"
-import lightningService from "./lightning.service"
+import lightningService, { LND_TIMEOUT } from "./lightning.service"
 import userService from "./user.service"
 import logger from "../config/logger"
 import config from "../config/config"
+
+const PRISMA_TRANSACTION_OPTS = { maxWait: 5000, timeout: LND_TIMEOUT + 2000 }
 
 /**
  * Get wallet by user id
@@ -71,7 +73,7 @@ const _impactDeposit = async (
       where: { id: walletTransaction.id },
       data: { walletImpacted: true, invoiceSettled: invoice.is_confirmed, invoice },
     })
-  })
+  }, PRISMA_TRANSACTION_OPTS)
 }
 
 const _setWalletBusy = async (walletId: number, busy: boolean) => {
@@ -105,7 +107,7 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
     })
 
     return pendingTransaction
-  })
+  }, PRISMA_TRANSACTION_OPTS)
 }
 
 const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Transaction> => {
@@ -134,36 +136,33 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
   }
 
   return prisma
-    .$transaction(
-      async (tx) => {
-        const transaction = await tx.transaction.create({
-          data: {
-            amountInSats,
-            type: TransactionType.WITHDRAW,
-            invoice,
-            invoiceSettled: true,
-            walletImpacted: true,
-            wallet: { connect: { id: wallet.id } },
-          },
-        })
-
-        await tx.wallet.update({
-          where: { id: wallet.id },
-          data: { balanceInSats: { decrement: total } },
-        })
-
-        await lightningService.payInvoice(
+    .$transaction(async (tx) => {
+      const transaction = await tx.transaction.create({
+        data: {
+          amountInSats,
+          type: TransactionType.WITHDRAW,
           invoice,
-          (payment as any).payment_hash,
-          isZeroValue ? amountInSats : undefined
-        )
+          invoiceSettled: true,
+          walletImpacted: true,
+          wallet: { connect: { id: wallet.id } },
+        },
+      })
 
-        await _setWalletBusy(wallet.id, false)
+      await tx.wallet.update({
+        where: { id: wallet.id },
+        data: { balanceInSats: { decrement: total } },
+      })
 
-        return transaction
-      },
-      { maxWait: 5000, timeout: 25000 }
-    )
+      await lightningService.payInvoice(
+        invoice,
+        (payment as any).payment_hash,
+        isZeroValue ? amountInSats : undefined
+      )
+
+      await _setWalletBusy(wallet.id, false)
+
+      return transaction
+    }, PRISMA_TRANSACTION_OPTS)
     .finally(async () => {
       await _setWalletBusy(wallet.id, false)
     })
@@ -250,7 +249,7 @@ const payUser = async ({
         wallet: { connect: { id: payerWallet.id } },
       },
     })
-  })
+  }, PRISMA_TRANSACTION_OPTS)
 }
 
 const createPayRequests = async ({
@@ -290,7 +289,7 @@ const createPayRequests = async ({
     }
 
     return prs
-  })
+  }, PRISMA_TRANSACTION_OPTS)
 }
 
 const createPayRequest = async ({
@@ -394,7 +393,7 @@ const payRequest = async ({ payerId, payRequestId }: { payerId: number; payReque
       },
       select: { id: true },
     })
-  })
+  }, PRISMA_TRANSACTION_OPTS)
 }
 
 const getPayRequest = async (id: PayRequest["id"]) => {

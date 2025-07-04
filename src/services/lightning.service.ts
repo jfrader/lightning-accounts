@@ -4,7 +4,7 @@ import httpStatus from "http-status"
 import config from "../config/config"
 import logger from "../config/logger"
 
-const LND_TIMEOUT = 60 * 1000
+export const LND_TIMEOUT = 60 * 1000
 
 let connected = false
 
@@ -42,27 +42,19 @@ init()
  */
 const payInvoice = (request: string, id: string, tokens?: number) => {
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new ApiError(httpStatus.REQUEST_TIMEOUT, "Invoice creation timed out"))
+    }, LND_TIMEOUT)
+
     lightning.pay({ lnd, request, tokens }, (error, result) => {
       if (error) {
+        clearTimeout(timeout)
         const [, message] = error
-
-        return checkInvoice(id)
-          .then((r) => {
-            if (r.is_confirmed) {
-              return resolve(r)
-            }
-
-            throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to check invoice payment")
-          })
-          .catch((e) => {
-            reject(
-              new ApiError(
-                httpStatus.INTERNAL_SERVER_ERROR,
-                e.message || message || "Failed to check invoice payment"
-              )
-            )
-          })
+        return reject(
+          new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice")
+        )
       }
+      clearTimeout(timeout)
       resolve(result)
     })
   })
