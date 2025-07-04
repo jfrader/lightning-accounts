@@ -154,14 +154,10 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
 
     await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
 
-    console.log({ transaction })
-
     return transaction
   }, PRISMA_TRANSACTION_OPTS)
 
   await _setWalletBusy(wallet.id, false)
-
-  console.log({ transactionTx })
 
   return transactionTx
 }
