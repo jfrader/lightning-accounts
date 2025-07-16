@@ -34,7 +34,7 @@ const verify = async (
     }
     done(null, user)
   } catch (error: any) {
-    logger.error(error)
+    logger.error("Twitter verify error", error)
     done(new Error(error?.message || "Failed to authenticate with twitter"), false)
   }
 }
