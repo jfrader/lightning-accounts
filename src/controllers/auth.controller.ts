@@ -35,6 +35,7 @@ const loginTwitter = catchAsync(async (req, res) => {
   }
 
   const tokens = await tokenService.generateAuthTokens(user)
+  logger.debug(`Generated tokens for user ${user.id}: ${JSON.stringify(tokens)}`)
   authCookieResponse(tokens, res)
 
   logger.info(`Twitter login successful for user: ${user.id}`)

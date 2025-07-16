@@ -39,10 +39,15 @@ const auth =
   (...requiredRights: UserPermission[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      logger.debug(
+        `Checking application strategy, session: ${req.sessionID}, cookies: ${JSON.stringify(
+          req.cookies
+        )}`
+      )
       await new Promise((resolve, reject) => {
         passport.authenticate(
           "application",
-          { session: true }, // Use session for Twitter callback
+          { session: false },
           verifyCallback(req, resolve, reject, requiredRights)
         )(req, res, next)
       })
@@ -53,6 +58,7 @@ const auth =
     }
 
     try {
+      logger.debug(`Checking JWT strategy, cookies: ${JSON.stringify(req.cookies)}`)
       await new Promise((resolve, reject) => {
         passport.authenticate(
           "jwt",

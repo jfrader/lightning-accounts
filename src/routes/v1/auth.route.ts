@@ -24,21 +24,18 @@ router.post("/send-verification-email", auth(), authController.sendVerificationE
 router.post("/verify-email", validate(authValidation.verifyEmail), authController.verifyEmail)
 
 router.get("/twitter", (req, res, next) => {
-  // Ensure session is initialized
-  req.session.save((err) => {
-    if (err) {
-      logger.error("Session save error:", err)
-      return next(err)
-    }
-    passport.authenticate("twitter", {
-      scope: ["tweet.read", "users.read", "offline.access"],
-    })(req, res, next)
-  })
+  logger.debug(`Initiating Twitter auth, session: ${req.sessionID}`)
+  passport.authenticate("twitter", {
+    scope: ["tweet.read", "users.read", "offline.access"],
+  })(req, res, next)
 })
 
 router.get(
   "/twitter/callback",
   (req, res, next) => {
+    logger.debug(
+      `Twitter callback, session: ${req.sessionID}, cookies: ${JSON.stringify(req.cookies)}`
+    )
     auth()(req, res, () => {
       next()
     })
@@ -46,7 +43,6 @@ router.get(
   (req, res, next) => {
     passport.authenticate("twitter", {
       failureRedirect: `${config.origin}/auth/twitter/failure`,
-      session: true, // Ensure session is used
     })(req, res, next)
   },
   authController.loginTwitter
