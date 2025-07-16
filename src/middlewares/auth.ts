@@ -5,6 +5,7 @@ import { UserPermission, roleRights } from "../config/roles"
 import { NextFunction, Request, Response } from "express"
 import { User } from "@prisma/client"
 import { JwtCookie } from "../types/tokens"
+import logger from "../config/logger"
 
 const verifyCallback =
   (
@@ -15,6 +16,7 @@ const verifyCallback =
   ) =>
   async (err: any, user: User | false, info: unknown) => {
     if (err || info || !user) {
+      logger.warn(`Auth middleware failed: ${err?.message || info || "No user"}`)
       return reject(new ApiError(httpStatus.UNAUTHORIZED, err?.message || "Please authenticate"))
     }
     req.user = user
@@ -25,6 +27,7 @@ const verifyCallback =
         userRights.includes(requiredRight)
       )
       if (!hasRequiredRights && req.params.userId !== String(user.id)) {
+        logger.warn(`Forbidden: User ${user.id} lacks required rights`)
         return reject(new ApiError(httpStatus.FORBIDDEN, "Forbidden"))
       }
     }
@@ -39,14 +42,14 @@ const auth =
       await new Promise((resolve, reject) => {
         passport.authenticate(
           "application",
-          { session: false },
+          { session: true }, // Use session for Twitter callback
           verifyCallback(req, resolve, reject, requiredRights)
         )(req, res, next)
       })
 
       return next()
     } catch (e) {
-      // noop
+      logger.debug("Application strategy failed, trying JWT")
     }
 
     try {
@@ -60,12 +63,13 @@ const auth =
 
       return next()
     } catch (err: any) {
+      logger.error(`Auth middleware error: ${err.message}`)
       if (err.statusCode === httpStatus.UNAUTHORIZED) {
         res.clearCookie(JwtCookie.access)
+        res.clearCookie(JwtCookie.refresh)
       }
+      next(new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate"))
     }
-
-    next(new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate"))
   }
 
 export default auth

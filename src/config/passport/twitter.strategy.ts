@@ -30,12 +30,13 @@ const verify = async (
     const user = await userService.upsertTwitterUser(profile, req.user as User | null)
 
     if (!user) {
+      logger.warn("Twitter user upsert failed")
       return done(null, false)
     }
     done(null, user)
   } catch (error: any) {
-    logger.error(error)
-    done(new Error(error?.message || "Failed to authenticate with twitter"), false)
+    logger.error("Twitter authentication error:", error)
+    done(new Error(error?.message || "Failed to authenticate with Twitter"), false)
   }
 }
 

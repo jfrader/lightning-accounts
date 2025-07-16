@@ -4,6 +4,8 @@ import authValidation from "../../validations/auth.validation"
 import { authController } from "../../controllers"
 import auth from "../../middlewares/auth"
 import passport from "passport"
+import config from "../../config/config"
+import logger from "../../config/logger"
 
 const router = express.Router()
 
@@ -21,12 +23,18 @@ router.post("/reset-password", validate(authValidation.resetPassword), authContr
 router.post("/send-verification-email", auth(), authController.sendVerificationEmail)
 router.post("/verify-email", validate(authValidation.verifyEmail), authController.verifyEmail)
 
-router.get(
-  "/twitter",
-  passport.authenticate("twitter", {
-    scope: ["tweet.read", "users.read"],
+router.get("/twitter", (req, res, next) => {
+  // Ensure session is initialized
+  req.session.save((err) => {
+    if (err) {
+      logger.error("Session save error:", err)
+      return next(err)
+    }
+    passport.authenticate("twitter", {
+      scope: ["tweet.read", "users.read", "offline.access"],
+    })(req, res, next)
   })
-)
+})
 
 router.get(
   "/twitter/callback",
@@ -36,7 +44,10 @@ router.get(
     })
   },
   (req, res, next) => {
-    passport.authenticate("twitter")(req, res, next)
+    passport.authenticate("twitter", {
+      failureRedirect: `${config.origin}/auth/twitter/failure`,
+      session: true, // Ensure session is used
+    })(req, res, next)
   },
   authController.loginTwitter
 )
