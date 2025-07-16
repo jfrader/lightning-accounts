@@ -5,7 +5,6 @@ import { UserPermission, roleRights } from "../config/roles"
 import { NextFunction, Request, Response } from "express"
 import { User } from "@prisma/client"
 import { JwtCookie } from "../types/tokens"
-import logger from "../config/logger"
 
 const verifyCallback =
   (
@@ -26,7 +25,6 @@ const verifyCallback =
         userRights.includes(requiredRight)
       )
       if (!hasRequiredRights && req.params.userId !== String(user.id)) {
-        logger.debug("verifyCallback forbidden")
         return reject(new ApiError(httpStatus.FORBIDDEN, "Forbidden"))
       }
     }
