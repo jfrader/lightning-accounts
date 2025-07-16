@@ -19,6 +19,7 @@ import session from "express-session"
 import { User } from "@prisma/client"
 import path from "node:path"
 import { SessionCookie } from "./types/tokens"
+import logger from "./config/logger"
 
 const secure = config.env === "production"
 
@@ -89,7 +90,9 @@ app.use(
   })
 )
 
-console.log({ sameSite: secure ? "none" : "lax" })
+logger.debug(
+  `Session config: domain=${config.domain}, sameSite=${secure ? "none" : "lax"}, secure=${secure}`
+)
 
 app.enable("trust proxy")
 

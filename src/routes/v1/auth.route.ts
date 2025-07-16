@@ -24,9 +24,12 @@ router.post("/send-verification-email", auth(), authController.sendVerificationE
 router.post("/verify-email", validate(authValidation.verifyEmail), authController.verifyEmail)
 
 router.get("/twitter", (req, res, next) => {
-  logger.debug(`Initiating Twitter auth, session: ${req.sessionID}`)
+  logger.debug(
+    `Initiating Twitter auth, session: ${req.sessionID}, cookies: ${JSON.stringify(req.cookies)}`
+  )
+  req.session.redirectUrl = `${config.origin}/auth/twitter/success`
   passport.authenticate("twitter", {
-    scope: ["tweet.read", "users.read", "offline.access"],
+    scope: ["tweet.read", "users.read"],
   })(req, res, next)
 })
 
@@ -34,13 +37,16 @@ router.get(
   "/twitter/callback",
   (req, res, next) => {
     logger.debug(
-      `Twitter callback, session: ${req.sessionID}, cookies: ${JSON.stringify(req.cookies)}`
+      `Twitter callback, session: ${req.sessionID}, cookies: ${JSON.stringify(
+        req.cookies
+      )}, query: ${JSON.stringify(req.query)}, protocol: ${req.protocol}, host: ${req.get(
+        "host"
+      )}, domain: ${config.domain}`
     )
-    auth()(req, res, () => {
-      next()
-    })
+    next()
   },
   (req, res, next) => {
+    logger.debug(`Before passport.authenticate, session: ${req.sessionID}`)
     passport.authenticate("twitter", {
       failureRedirect: `${config.origin}/auth/twitter/failure`,
     })(req, res, next)
