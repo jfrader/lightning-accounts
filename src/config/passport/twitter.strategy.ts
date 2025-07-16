@@ -27,7 +27,9 @@ const verify = async (
   done: (err: unknown, user: SessionUser | false) => void
 ) => {
   try {
+    logger.debug("Before upsert", { profile, requser: req.user })
     const user = await userService.upsertTwitterUser(profile, req.user as User | null)
+    logger.debug("After upsert", { user })
 
     if (!user) {
       return done(null, false)
