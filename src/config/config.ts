@@ -97,19 +97,6 @@ export default {
       socket: envVars.LND_SOCKET,
     },
   },
-  nostr: {
-    relays: process.env.NOSTR_RELAYS
-      ? process.env.NOSTR_RELAYS.split(",")
-      : [
-          "wss://relay.damus.io",
-          "wss://nostr-pub.wellorder.net",
-          "wss://nos.lol",
-          "wss://relay.geyser.fund",
-        ],
-    metadataCacheTTL: 24 * 60 * 60 * 1000,
-    relayTimeout: 5000,
-    relayRetries: 2,
-  },
   email: {
     smtp: {
       host: envVars.SMTP_HOST,

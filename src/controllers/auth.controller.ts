@@ -7,8 +7,8 @@ import authCookie, { cookieExtractor, deauthCookieResponse } from "../utils/auth
 import { JwtCookie } from "../types/tokens"
 import logger from "../config/logger"
 import ApiError from "../utils/ApiError"
+import path from "path"
 import authCookieResponse from "../utils/authCookie"
-import config from "../config/config"
 
 const register = catchAsync(async (req, res) => {
   const { email, password, name } = req.body
@@ -28,19 +28,16 @@ const login = catchAsync(async (req, res) => {
 
 const loginTwitter = catchAsync(async (req, res) => {
   const user = req.user as User | void
+
   if (!user) {
-    logger.error(
-      `Twitter authentication failed: No user found, query: ${JSON.stringify(
-        req.query
-      )}, session: ${req.sessionID}, cookies: ${JSON.stringify(req.cookies)}`
-    )
-    return res.redirect(`${config.origin}/auth/twitter/failure`)
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate")
   }
+
   const tokens = await tokenService.generateAuthTokens(user)
-  logger.debug(`Generated tokens for user ${user.id}: ${JSON.stringify(tokens)}`)
-  authCookieResponse(tokens, res)
-  logger.info(`Twitter login successful for user: ${user.id}`)
-  res.redirect(`${config.origin}/auth/twitter/success`)
+
+  authCookie(tokens, res).sendFile("callback.html", {
+    root: path.join(__dirname, "..", "static"),
+  })
 })
 
 const logout = catchAsync(async (req, res) => {

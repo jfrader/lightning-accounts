@@ -4,8 +4,6 @@ import authValidation from "../../validations/auth.validation"
 import { authController } from "../../controllers"
 import auth from "../../middlewares/auth"
 import passport from "passport"
-import config from "../../config/config"
-import logger from "../../config/logger"
 
 const router = express.Router()
 
@@ -23,33 +21,22 @@ router.post("/reset-password", validate(authValidation.resetPassword), authContr
 router.post("/send-verification-email", auth(), authController.sendVerificationEmail)
 router.post("/verify-email", validate(authValidation.verifyEmail), authController.verifyEmail)
 
-router.get("/twitter", (req, res, next) => {
-  logger.debug(
-    `Initiating Twitter auth, session: ${req.sessionID}, cookies: ${JSON.stringify(req.cookies)}`
-  )
-  req.session.redirectUrl = `${config.origin}/auth/twitter/success`
+router.get(
+  "/twitter",
   passport.authenticate("twitter", {
     scope: ["tweet.read", "users.read"],
-  })(req, res, next)
-})
+  })
+)
 
 router.get(
   "/twitter/callback",
   (req, res, next) => {
-    logger.debug(
-      `Twitter callback, session: ${req.sessionID}, cookies: ${JSON.stringify(
-        req.cookies
-      )}, query: ${JSON.stringify(req.query)}, protocol: ${req.protocol}, host: ${req.get(
-        "host"
-      )}, domain: ${config.domain}`
-    )
-    next()
+    auth()(req, res, () => {
+      next()
+    })
   },
   (req, res, next) => {
-    logger.debug(`Before passport.authenticate, session: ${req.sessionID}`)
-    passport.authenticate("twitter", {
-      failureRedirect: `${config.origin}/auth/twitter/failure`,
-    })(req, res, next)
+    passport.authenticate("twitter")(req, res, next)
   },
   authController.loginTwitter
 )
