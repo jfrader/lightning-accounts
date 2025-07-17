@@ -7,6 +7,7 @@ import prisma from "../client"
 import { encryptPassword, isPasswordMatch } from "../utils/encryption"
 import { AuthTokensResponse } from "../types/response"
 import exclude from "../utils/exclude"
+import logger from "../config/logger"
 
 /**
  * Login with username and password
@@ -74,6 +75,7 @@ const refreshAuth = async (refreshToken: string): Promise<AuthTokensResponse> =>
     await prisma.token.delete({ where: { id: refreshTokenData.id } })
     return tokenService.generateAuthTokens({ id: userId })
   } catch (error) {
+    logger.error("Refresh Auth Error", error)
     throw new ApiError(httpStatus.FORBIDDEN, "Please authenticate")
   }
 }
