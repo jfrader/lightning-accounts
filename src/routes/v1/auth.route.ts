@@ -24,7 +24,7 @@ router.post("/verify-email", validate(authValidation.verifyEmail), authControlle
 router.get(
   "/twitter",
   passport.authenticate("twitter", {
-    scope: ["tweet.read", "users.read"],
+    scope: ["tweet.read", "users.read", "offline.access"],
   })
 )
 
