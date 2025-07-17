@@ -47,6 +47,7 @@ const logout = catchAsync(async (req, res) => {
   } catch (e: any) {
     logger.error(e.message)
   }
+
   res.status(httpStatus.NO_CONTENT).send()
 })
 
