@@ -9,6 +9,7 @@ import logger from "../config/logger"
 import ApiError from "../utils/ApiError"
 import path from "path"
 import authCookieResponse from "../utils/authCookie"
+import config from "../config/config"
 
 const register = catchAsync(async (req, res) => {
   const { email, password, name } = req.body
@@ -35,9 +36,7 @@ const loginTwitter = catchAsync(async (req, res) => {
 
   const tokens = await tokenService.generateAuthTokens(user)
 
-  authCookie(tokens, res).sendFile("callback.html", {
-    root: path.join(__dirname, "..", "static"),
-  })
+  authCookie(tokens, res).redirect(config.origin)
 })
 
 const logout = catchAsync(async (req, res) => {
