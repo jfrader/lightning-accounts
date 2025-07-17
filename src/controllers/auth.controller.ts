@@ -7,7 +7,6 @@ import authCookie, { cookieExtractor, deauthCookieResponse } from "../utils/auth
 import { JwtCookie } from "../types/tokens"
 import logger from "../config/logger"
 import ApiError from "../utils/ApiError"
-import path from "path"
 import authCookieResponse from "../utils/authCookie"
 import config from "../config/config"
 
