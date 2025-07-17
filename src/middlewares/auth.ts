@@ -4,7 +4,6 @@ import ApiError from "../utils/ApiError"
 import { UserPermission, roleRights } from "../config/roles"
 import { NextFunction, Request, Response } from "express"
 import { User } from "@prisma/client"
-import { JwtCookie } from "../types/tokens"
 
 const verifyCallback =
   (
@@ -60,9 +59,7 @@ const auth =
 
       return next()
     } catch (err: any) {
-      if (err.statusCode === httpStatus.UNAUTHORIZED) {
-        res.clearCookie(JwtCookie.access)
-      }
+      // noop
     }
 
     next(new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate"))

@@ -52,15 +52,9 @@ const logout = catchAsync(async (req, res) => {
 
 const refreshTokens = catchAsync(async (req, res) => {
   const token = cookieExtractor(req, JwtCookie.refresh)
-  try {
-    const tokens = await authService.refreshAuth(token)
-    req.session.touch()
-    authCookie(tokens, res).status(httpStatus.NO_CONTENT).send()
-  } catch (e) {
-    req.user = undefined
-    deauthCookieResponse(res)
-    throw e
-  }
+  const tokens = await authService.refreshAuth(token)
+  req.session.touch()
+  authCookie(tokens, res).status(httpStatus.NO_CONTENT).send()
 })
 
 const forgotPassword = catchAsync(async (req, res) => {
@@ -94,14 +88,9 @@ const verifyEmail = catchAsync(async (req, res) => {
 
 const getMe = catchAsync(async (req, res) => {
   const user = req.user as User
-  try {
-    const userWithWallet = await userService.getUserWithWallet(user.id)
-    const tokens = await tokenService.generateIdentityToken(user)
-    authCookieResponse(tokens, res).send(userWithWallet)
-  } catch (e) {
-    deauthCookieResponse(res)
-    throw e
-  }
+  const userWithWallet = await userService.getUserWithWallet(user.id)
+  const tokens = await tokenService.generateIdentityToken(user)
+  authCookieResponse(tokens, res).send(userWithWallet)
 })
 
 export default {
