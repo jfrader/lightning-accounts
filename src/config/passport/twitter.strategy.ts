@@ -27,16 +27,14 @@ const verify = async (
   done: (err: unknown, user: SessionUser | false) => void
 ) => {
   try {
-    logger.debug("Before upsert", { profile, requser: req.user })
     const user = await userService.upsertTwitterUser(profile, req.user as User | null)
-    logger.debug("After upsert", { user })
 
     if (!user) {
       return done(null, false)
     }
     done(null, user)
   } catch (error: any) {
-    logger.error("Twitter verify error", error)
+    logger.error(error)
     done(new Error(error?.message || "Failed to authenticate with twitter"), false)
   }
 }

@@ -4,7 +4,6 @@ import authValidation from "../../validations/auth.validation"
 import { authController } from "../../controllers"
 import auth from "../../middlewares/auth"
 import passport from "passport"
-import logger from "../../config/logger"
 
 const router = express.Router()
 
@@ -33,18 +32,13 @@ router.get(
   "/twitter/callback",
   (req, res, next) => {
     auth()(req, res, () => {
-      logger.debug("Before next")
       next()
     })
   },
   (req, res, next) => {
-    logger.debug("Before authenticate")
     passport.authenticate("twitter")(req, res, next)
   },
-  (req, res, next) => {
-    logger.debug("Before login twitter")
-    authController.loginTwitter(req, res, next)
-  }
+  authController.loginTwitter
 )
 
 export default router
