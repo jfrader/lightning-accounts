@@ -9,6 +9,8 @@ services:
     extends:
       file: docker-compose.base.yml
       service: postgres
+    ports:
+      - 35432:5432
   server:
     volumes:
       - ./src:/opt/app/src
