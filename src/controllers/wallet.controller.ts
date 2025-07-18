@@ -3,6 +3,7 @@ import ApiError from "../utils/ApiError"
 import catchAsync from "../utils/catchAsync"
 import walletService from "../services/wallet.service"
 import { User } from "@prisma/client"
+import { lightningService } from "../services"
 
 const createDeposit = catchAsync(async (req, res) => {
   const { amountInSats } = req.body
@@ -145,6 +146,16 @@ const payWithdrawInvoice = catchAsync(async (req, res) => {
   res.send(transaction)
 })
 
+const getLatestBlockHash = catchAsync(async (req, res) => {
+  const user = req.user as User
+  if (!user.id) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Failed to retrieve block hash, user not found")
+  }
+
+  const { hash, height } = await lightningService.getLatestBlockHash()
+  res.status(httpStatus.OK).send({ hash, height })
+})
+
 export default {
   payUser,
   payRequest,
@@ -155,4 +166,5 @@ export default {
   getPayRequests,
   createDeposit,
   getDeposit,
+  getLatestBlockHash,
 }

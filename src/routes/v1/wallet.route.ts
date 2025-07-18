@@ -378,4 +378,43 @@ router
     walletController.getPayRequests
   )
 
+router
+  .route("/latest-bitcoin-block")
+  /**
+   * @swagger
+   * /wallet/latest-bitcoin-block:
+   *   get:
+   *     operationId: getLatestBitcoinBlock
+   *     summary: Get the latest Bitcoin block information
+   *     description: Retrieve the hash and height of the latest Bitcoin block from the LND node using the `getLatestBitcoinBlock` method.
+   *     tags: [Wallets]
+   *     responses:
+   *       "200":
+   *         description: OK
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 hash:
+   *                   type: string
+   *                   required: true
+   *                   description: The hash of the latest Bitcoin block
+   *                 height:
+   *                   type: number
+   *                   required: true
+   *                   description: The height of the latest Bitcoin block
+   *               example:
+   *                 hash: "000000000000000000076a914d8f6b4b6c5f7a3b2c9e4d5f6a7b8c9d0e1f2a3b4"
+   *                 height: 850123
+   *       "401":
+   *         $ref: '#/components/responses/Unauthorized'
+   *       "403":
+   *         $ref: '#/components/responses/Forbidden'
+   *       "503":
+   *         $ref: '#/components/responses/ServiceUnavailable'
+   *
+   */
+  .get(auth(UserPermission.users_read), lndConnected, walletController.getLatestBlockHash)
+
 export default router

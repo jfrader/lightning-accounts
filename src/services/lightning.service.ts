@@ -139,6 +139,33 @@ const checkInvoice = async (invoiceId: string) => {
   })
 }
 
+/**
+ * Get the latest Bitcoin block hash from the network
+ * @returns {Promise<string>} The latest block hash
+ */
+const getLatestBlockHash = async (): Promise<{ hash: string; height: number }> => {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(
+        new ApiError(httpStatus.REQUEST_TIMEOUT, "Failed to retrieve latest block hash: Timed out")
+      )
+    }, LND_TIMEOUT)
+
+    lightning.getWalletInfo({ lnd }, (error, result) => {
+      if (error || !result) {
+        clearTimeout(timeout)
+        return reject(
+          error ||
+            new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve latest block hash")
+        )
+      }
+
+      clearTimeout(timeout)
+      resolve({ hash: result.current_block_hash, height: result.current_block_height })
+    })
+  })
+}
+
 export default {
   init,
   connected,
@@ -146,4 +173,5 @@ export default {
   createInvoice,
   decodeInvoice,
   checkInvoice,
+  getLatestBlockHash,
 }
