@@ -67,6 +67,18 @@
           "type": "boolean",
           "default": false
         },
+        "payRequestsCreated": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PayRequest"
+          }
+        },
+        "payRequestsReceived": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PayRequest"
+          }
+        },
         "Token": {
           "type": "array",
           "items": {
@@ -82,18 +94,6 @@
               "type": "null"
             }
           ]
-        },
-        "payRequestsCreated": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PayRequest"
-          }
-        },
-        "payRequestsReceived": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PayRequest"
-          }
         }
       },
       "required": [
@@ -163,9 +163,6 @@
           "type": "string",
           "format": "date-time"
         },
-        "user": {
-          "$ref": "#/definitions/User"
-        },
         "balanceInSats": {
           "type": "integer"
         },
@@ -182,6 +179,9 @@
           "items": {
             "$ref": "#/definitions/Transaction"
           }
+        },
+        "user": {
+          "$ref": "#/definitions/User"
         }
       },
       "required": [
@@ -204,12 +204,6 @@
           "type": "string",
           "format": "date-time"
         },
-        "receiver": {
-          "$ref": "#/definitions/User"
-        },
-        "creator": {
-          "$ref": "#/definitions/User"
-        },
         "amountInSats": {
           "type": "integer"
         },
@@ -230,6 +224,12 @@
         "paid": {
           "type": "boolean",
           "default": false
+        },
+        "creator": {
+          "$ref": "#/definitions/User"
+        },
+        "receiver": {
+          "$ref": "#/definitions/User"
         },
         "transactions": {
           "type": "array",
@@ -258,9 +258,6 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
-        },
-        "wallet": {
-          "$ref": "#/definitions/Wallet"
         },
         "amountInSats": {
           "type": "integer"
@@ -309,6 +306,9 @@
               "type": "null"
             }
           ]
+        },
+        "wallet": {
+          "$ref": "#/definitions/Wallet"
         }
       },
       "required": [
