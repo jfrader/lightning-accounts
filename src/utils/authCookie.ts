@@ -41,10 +41,10 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
 }
 
 export const deauthCookieResponse = (res: Response) => {
-  res.clearCookie(SessionCookie.sid, { path: "/", domain: secure ? config.domain : "localhost" })
-  res.clearCookie(JwtCookie.access, { path: "/", domain: secure ? config.domain : "localhost" })
-  res.clearCookie(JwtCookie.refresh, { path: "/", domain: secure ? config.domain : "localhost" })
-  res.clearCookie(JwtCookie.identity, { path: "/", domain: secure ? config.domain : "localhost" })
+  res.clearCookie(SessionCookie.sid, { path: "/", domain: secure ? config.domain : undefined })
+  res.clearCookie(JwtCookie.access, { path: "/", domain: secure ? config.domain : undefined })
+  res.clearCookie(JwtCookie.refresh, { path: "/", domain: secure ? config.domain : undefined })
+  res.clearCookie(JwtCookie.identity, { path: "/", domain: secure ? config.domain : undefined })
 }
 
 export const cookieExtractor = function (req: Request, cookie = JwtCookie.access) {
