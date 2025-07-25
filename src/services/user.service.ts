@@ -194,6 +194,10 @@ const updateUserById = async <Key extends keyof User>(
     throw new ApiError(httpStatus.NOT_ACCEPTABLE, "Email already taken")
   }
 
+  if (updateBody.name && updateBody.name.toString().length > 16) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Name too long")
+  }
+
   if (requirePassword && user.email && (updateBody.email || updateBody.password)) {
     if (!password) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Password not provided")

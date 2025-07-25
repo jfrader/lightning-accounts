@@ -40,8 +40,8 @@ const loginTwitter = catchAsync(async (req, res) => {
 
 const logout = catchAsync(async (req, res) => {
   const token = cookieExtractor(req, JwtCookie.refresh)
-  req.user = undefined
   deauthCookieResponse(res)
+  req.user = undefined
   try {
     await authService.logout(token)
   } catch (e: any) {

@@ -1,6 +1,6 @@
 {
   "name": "lightning-accounts",
-  "version": "4.3.0",
+  "version": "4.3.1",
   "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/index.js",
