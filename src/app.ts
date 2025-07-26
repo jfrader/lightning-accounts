@@ -45,32 +45,19 @@ if (config.env !== "test") {
   app.use(morgan.errorHandler)
 }
 
-// set security HTTP headers
 app.use(helmet())
-
-// parse json request body
 app.use(express.json())
-
-// parse urlencoded request body
 app.use(express.urlencoded({ extended: true }))
-
-// sanitize request data
 app.use(xss())
-
-// gzip compression
 app.use(compression())
-
 app.use(cookieParser(config.jwt.secret))
-
-// enable cors
 app.use(cors(CORS_OPTS))
+
 app.options("*", cors(CORS_OPTS))
 
 app.get("/js/autoclose.js", (req, res) => {
   res.sendFile("autoclose.js", { root: path.join(__dirname, "static") })
 })
-
-// app.set("trust proxy", 1)
 
 app.use(
   session({
@@ -81,7 +68,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      maxAge: config.jwt.accessExpirationMinutes * 60 * 1000,
+      maxAge: config.jwt.refreshExpirationDays * 24 * 60 * 60 * 1000,
       domain: secure ? config.domain : undefined,
       sameSite: secure ? "none" : "lax",
       secure,
@@ -89,11 +76,8 @@ app.use(
   })
 )
 
-console.log({ sameSite: secure ? "none" : "lax" })
-
 app.enable("trust proxy")
 
-// authentication
 app.use(passport.initialize())
 app.use(passport.session())
 
@@ -101,23 +85,17 @@ passport.use("application", applicationStrategy)
 passport.use("jwt", jwtStrategy)
 passport.use("twitter", twitterStrategy)
 
-// limit repeated failed requests to auth endpoints
 if (config.env === "production") {
   app.use("/v1/auth", authLimiter)
 }
 
-// v1 api routes
 app.use("/v1", routes)
 
-// send back a 404 error for any unknown api request
-app.use((req, res, next) => {
+app.use((_req, _res, next) => {
   next(new ApiError(httpStatus.NOT_FOUND, "Not found"))
 })
 
-// convert error to ApiError, if needed
 app.use(errorConverter)
-
-// handle error
 app.use(errorHandler)
 
 export default app
