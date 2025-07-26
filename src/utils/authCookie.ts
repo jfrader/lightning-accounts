@@ -49,8 +49,11 @@ export const deauthCookieResponse = (res: Response) => {
 
 export const cookieExtractor = function (req: Request, cookie = JwtCookie.access) {
   let token = null
+  console.log("Cookies:", req.cookies)
+  console.log("Signed Cookies:", req.signedCookies)
   if (req && req.cookies) token = req.cookies[cookie]
   if (!token && req && req.signedCookies) token = req.signedCookies[cookie]
+  console.log("Extracted Token:", token)
   return token
 }
 
