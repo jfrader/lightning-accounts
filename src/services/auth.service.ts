@@ -76,6 +76,8 @@ const refreshAuth = async (refreshToken: string): Promise<AuthTokensResponse> =>
     return await tokenService.generateAuthTokens({ id: userId })
   } catch (error) {
     logger.error("Refresh Auth Error", error)
+    console.error(error)
+    console.log(error)
     throw new ApiError(httpStatus.FORBIDDEN, "Please authenticate")
   }
 }
