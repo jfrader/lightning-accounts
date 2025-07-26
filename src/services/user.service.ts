@@ -8,14 +8,7 @@ import { Profile } from "@superfaceai/passport-twitter-oauth2"
 import authService from "./auth.service"
 
 export const USER_DEFAULT_FIELDS = ["id", "name", "role", "avatarUrl"]
-export const USER_PRIVATE_FIELDS = [
-  "email",
-  "twitter",
-  "password",
-  "isEmailVerified",
-  "createdAt",
-  "updatedAt",
-]
+export const USER_PRIVATE_FIELDS = ["email", "twitter", "isEmailVerified", "createdAt", "updatedAt"]
 
 /**
  * Create a user
