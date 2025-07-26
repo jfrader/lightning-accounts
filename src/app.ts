@@ -19,6 +19,7 @@ import session from "express-session"
 import { User } from "@prisma/client"
 import path from "node:path"
 import { SessionCookie } from "./types/tokens"
+import { getCookieName } from "./utils/authCookie"
 
 const secure = config.env === "production"
 
@@ -62,7 +63,7 @@ app.get("/js/autoclose.js", (req, res) => {
 app.use(
   session({
     secret: config.jwt.secret,
-    name: SessionCookie.sid,
+    name: getCookieName(SessionCookie.sid),
     proxy: secure,
     resave: false,
     saveUninitialized: false,
