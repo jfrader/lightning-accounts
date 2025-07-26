@@ -73,7 +73,7 @@ const refreshAuth = async (refreshToken: string): Promise<AuthTokensResponse> =>
     const refreshTokenData = await tokenService.verifyToken(refreshToken, TokenType.REFRESH)
     const { userId } = refreshTokenData
     const newTokens = await tokenService.generateAuthTokens({ id: userId })
-    await prisma.token.delete({ where: { id: refreshTokenData.id } })
+    await prisma.token.deleteMany({ where: { expires: { lte: new Date() }, userId } })
     return newTokens
   } catch (error) {
     logger.error("Refresh Auth Error", error)
