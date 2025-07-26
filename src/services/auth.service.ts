@@ -72,9 +72,8 @@ const refreshAuth = async (refreshToken: string): Promise<AuthTokensResponse> =>
   try {
     const refreshTokenData = await tokenService.verifyToken(refreshToken, TokenType.REFRESH)
     const { userId } = refreshTokenData
-    const newTokens = await tokenService.generateAuthTokens({ id: userId })
     await prisma.token.deleteMany({ where: { expires: { lte: new Date() }, userId } })
-    return newTokens
+    return await tokenService.generateAuthTokens({ id: userId })
   } catch (error) {
     logger.error("Refresh Auth Error", error)
     throw new ApiError(httpStatus.FORBIDDEN, "Please authenticate")
