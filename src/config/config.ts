@@ -81,13 +81,14 @@ export default {
     limit: envVars.WALLET_LIMIT,
   },
   jwt: {
+    prefix: envVars.JWT_COOKIE_PREFIX || "",
     secret: envVars.JWT_SECRET,
     publicKey: Buffer.from(envVars.JWT_BASE64_PUBLIC_KEY || "", "base64").toString(),
     privateKey: Buffer.from(envVars.JWT_BASE64_PRIVATE_KEY || "", "base64").toString(),
-    accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES,
-    refreshExpirationDays: envVars.JWT_REFRESH_EXPIRATION_DAYS,
-    resetPasswordExpirationMinutes: envVars.JWT_RESET_PASSWORD_EXPIRATION_MINUTES,
-    verifyEmailExpirationMinutes: envVars.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES,
+    accessExpirationMinutes: Number(envVars.JWT_ACCESS_EXPIRATION_MINUTES),
+    refreshExpirationDays: Number(envVars.JWT_REFRESH_EXPIRATION_DAYS),
+    resetPasswordExpirationMinutes: Number(envVars.JWT_RESET_PASSWORD_EXPIRATION_MINUTES),
+    verifyEmailExpirationMinutes: Number(envVars.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES),
   },
   lightning: {
     driver: "lnd",

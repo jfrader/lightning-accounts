@@ -3,7 +3,11 @@ import catchAsync from "../utils/catchAsync"
 import { authService, userService, tokenService, emailService } from "../services"
 import exclude from "../utils/exclude"
 import { User } from "@prisma/client"
-import authCookie, { cookieExtractor, deauthCookieResponse } from "../utils/authCookie"
+import authCookie, {
+  cookieExtractor,
+  deauthCookieResponse,
+  getCookieName,
+} from "../utils/authCookie"
 import { JwtCookie } from "../types/tokens"
 import logger from "../config/logger"
 import ApiError from "../utils/ApiError"
@@ -39,7 +43,7 @@ const loginTwitter = catchAsync(async (req, res) => {
 })
 
 const logout = catchAsync(async (req, res) => {
-  const token = cookieExtractor(req, JwtCookie.refresh)
+  const token = cookieExtractor(req, getCookieName(JwtCookie.refresh))
   deauthCookieResponse(res)
   req.user = undefined
   try {
@@ -52,7 +56,7 @@ const logout = catchAsync(async (req, res) => {
 })
 
 const refreshTokens = catchAsync(async (req, res) => {
-  const token = cookieExtractor(req, JwtCookie.refresh)
+  const token = cookieExtractor(req, getCookieName(JwtCookie.refresh))
   const tokens = await authService.refreshAuth(token)
   req.session.touch()
   authCookie(tokens, res).status(httpStatus.NO_CONTENT).send()
