@@ -5,11 +5,11 @@ declare module "jsonwebtoken" {
 }
 
 export const enum JwtCookie {
-  access = "jwt:access",
-  refresh = "jwt:refresh",
-  identity = "jwt:identity",
+  access = "access",
+  refresh = "refresh",
+  identity = "identity",
 }
 
 export const enum SessionCookie {
-  sid = "lightning-accounts:sid",
+  sid = "sid",
 }
