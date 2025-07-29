@@ -14,11 +14,11 @@ const createDeposit = catchAsync(async (req, res) => {
   }
 
   const transaction = await walletService.createDepositInvoice(user.id, amountInSats)
-  res.status(httpStatus.CREATED).send(transaction)
+  res.status(httpStatus.CREATED).json(transaction)
 })
 
 const getDeposit = catchAsync(async (req, res) => {
-  const transactionId = req.params.transactionId
+  const transactionId = parseInt(req.params.transactionId)
   const user = req.user as User
 
   if (!user.id) {
@@ -26,7 +26,7 @@ const getDeposit = catchAsync(async (req, res) => {
   }
 
   const transaction = await walletService.getTransaction(transactionId, user.id)
-  res.send(transaction)
+  res.status(httpStatus.OK).json(transaction)
 })
 
 const createPayRequest = catchAsync(async (req, res) => {
@@ -53,7 +53,7 @@ const createPayRequest = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to create pay request")
   }
 
-  res.send(pr)
+  res.status(httpStatus.CREATED).json(pr)
 })
 
 const createPayRequests = catchAsync(async (req, res) => {
@@ -80,18 +80,18 @@ const createPayRequests = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to create pay requests")
   }
 
-  res.send(prs)
+  res.status(httpStatus.CREATED).json(prs)
 })
 
 const getPayRequest = catchAsync(async (req, res) => {
-  const id = req.params.payRequestId
+  const id = parseInt(req.params.payRequestId)
 
   if (!id) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Need to supply an id")
   }
 
   const pr = await walletService.getPayRequest(id)
-  res.send(pr)
+  res.status(httpStatus.OK).json(pr)
 })
 
 const getPayRequests = catchAsync(async (req, res) => {
@@ -102,7 +102,7 @@ const getPayRequests = catchAsync(async (req, res) => {
   }
 
   const pr = await walletService.getPayRequests(ids)
-  res.send(pr)
+  res.status(httpStatus.OK).json(pr)
 })
 
 const payUser = catchAsync(async (req, res) => {
@@ -121,18 +121,18 @@ const payUser = catchAsync(async (req, res) => {
     amountInSats,
     description,
   })
-  res.send(tx)
+  res.status(httpStatus.CREATED).json(tx)
 })
 
 const payRequest = catchAsync(async (req, res) => {
-  const id = req.params.payRequestId
+  const id = parseInt(req.params.payRequestId)
   const user = req.user as User
   if (!user.id) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Failed to pay the request, user not found")
   }
 
   const pr = await walletService.payRequest({ payerId: user.id, payRequestId: id })
-  res.send(pr)
+  res.status(httpStatus.OK).json(pr)
 })
 
 const payWithdrawInvoice = catchAsync(async (req, res) => {
@@ -143,7 +143,7 @@ const payWithdrawInvoice = catchAsync(async (req, res) => {
   }
 
   const transaction = await walletService.payWithdrawInvoice(user.id, invoice)
-  res.send(transaction)
+  res.status(httpStatus.OK).json({ ...transaction, status: "completed" })
 })
 
 const getLatestBlockHash = catchAsync(async (req, res) => {
@@ -153,7 +153,7 @@ const getLatestBlockHash = catchAsync(async (req, res) => {
   }
 
   const { hash, height } = await lightningService.getLatestBlockHash()
-  res.status(httpStatus.OK).send({ hash, height })
+  res.status(httpStatus.OK).json({ hash, height })
 })
 
 export default {

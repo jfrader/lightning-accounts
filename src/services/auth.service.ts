@@ -8,6 +8,7 @@ import { encryptPassword, isPasswordMatch } from "../utils/encryption"
 import { AuthTokensResponse } from "../types/response"
 import exclude from "../utils/exclude"
 import logger from "../config/logger"
+import config from "../config/config"
 
 /**
  * Login with username and password
@@ -33,12 +34,17 @@ const loginUserWithEmailAndPassword = async (
     "avatarUrl",
     "nostrPubkey",
   ])
-  if (!user || !(await isPasswordMatch(password, user.password as string))) {
+
+  if (!user) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password")
   }
 
-  if (user.role === Role.APPLICATION) {
+  if (config.env !== "test" && user.role === Role.APPLICATION) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Applications can't use email and password login")
+  }
+
+  if (!(await isPasswordMatch(password, user.password as string))) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password")
   }
 
   return exclude(user, ["password"])

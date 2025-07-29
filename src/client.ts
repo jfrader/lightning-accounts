@@ -11,6 +11,6 @@ declare const global: CustomNodeJsGlobal
 
 const prisma = global.prisma || new PrismaClient()
 
-if (config.env === "development") global.prisma = prisma
+if (["development", "test"].includes(config.env)) global.prisma = prisma
 
 export default prisma

@@ -24,7 +24,7 @@ const defaultCase = async (email: string, password: string) => {
       role: "APPLICATION",
       wallet: {
         create: {
-          balanceInSats: 0,
+          balanceInSats: 24000,
           disabled: false,
         },
       },
@@ -45,7 +45,7 @@ const player = async (i: number) =>
       role: "USER",
       wallet: {
         create: {
-          balanceInSats: 1000,
+          balanceInSats: 24000,
           disabled: false,
         },
       },

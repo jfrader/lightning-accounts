@@ -90,6 +90,10 @@ export default {
     resetPasswordExpirationMinutes: Number(envVars.JWT_RESET_PASSWORD_EXPIRATION_MINUTES),
     verifyEmailExpirationMinutes: Number(envVars.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES),
   },
+  lnurl: {
+    host: envVars.LNURL_HOST,
+    port: envVars.LNUR_PORT,
+  },
   lightning: {
     driver: "lnd",
     lndConfig: {

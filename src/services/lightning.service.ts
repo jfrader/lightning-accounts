@@ -7,16 +7,30 @@ import logger from "../config/logger"
 export const LND_TIMEOUT = 60 * 1000
 
 let connected = false
+let lnd: lightning.AuthenticatedLnd | null = null
 
-const { lnd } = lightning.authenticatedLndGrpc({
-  cert: config.lightning.lndConfig.cert,
-  macaroon: config.lightning.lndConfig.macaroon,
-  socket: config.lightning.lndConfig.socket,
-})
+try {
+  const { lnd: authenticatedLnd } = lightning.authenticatedLndGrpc({
+    cert: config.lightning.lndConfig.cert,
+    macaroon: config.lightning.lndConfig.macaroon,
+    socket: config.lightning.lndConfig.socket,
+  })
+  lnd = authenticatedLnd
+} catch (error) {
+  logger.error(
+    `Failed to initialize LND client: ${error instanceof Error ? error.message : "Unknown error"}`
+  )
+  throw error
+}
 
-const init = () =>
+const initLightning = () =>
   new Promise<lightning.GetWalletInfoResult>((resolve, reject) => {
+    if (!lnd) {
+      return reject(new ApiError(httpStatus.SERVICE_UNAVAILABLE, "LND client not initialized"))
+    }
+    logger.info("Getting lnd wallet info")
     lightning.getWalletInfo({ lnd }, (err, result) => {
+      logger.info("Got lnd wallet info " + (result?.version || "unknown"))
       if (err) {
         connected = false
         return reject(err)
@@ -26,35 +40,43 @@ const init = () =>
     })
   })
 
-init()
-  .then(() => {
-    logger.info("Connected to LND at " + config.lightning.lndConfig.socket)
-  })
-  .catch(([status, statusText, obj]) => {
-    logger.warn("Unable to connect to LND. Make sure you have configured the LND options in .env")
-    logger.error([obj.err.details, status, statusText].join(" - "))
-  })
+/**
+ * Close the LND client connection
+ * @returns {Promise<void>}
+ */
+const close = async (): Promise<void> => {
+  if (lnd) {
+    lnd = null
+    connected = false
+    logger.info("LND client connection closed")
+  }
+}
 
 /**
  * Pay a lightning invoice
  * @param {string} request
+ * @param {number} [tokens]
  * @returns {Promise}
  */
 const payInvoice = (request: string, tokens?: number) => {
   return new Promise((resolve, reject) => {
+    if (!lnd) {
+      return reject(new ApiError(httpStatus.SERVICE_UNAVAILABLE, "LND client not initialized"))
+    }
     const timeout = setTimeout(() => {
       reject(new ApiError(httpStatus.REQUEST_TIMEOUT, "Withdrawal timed out"))
     }, LND_TIMEOUT)
 
     lightning.pay({ lnd, request, tokens }, (error, result) => {
+      clearTimeout(timeout)
       if (error) {
-        clearTimeout(timeout)
-        const [, message] = error
+        const [, message, details] = error
+        logger.error(`Payment failed: ${message || "Unknown error"}`, { details })
         return reject(
           new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice")
         )
       }
-      clearTimeout(timeout)
+      logger.info("Payment successful", { payment: result })
       resolve(result)
     })
   })
@@ -62,51 +84,69 @@ const payInvoice = (request: string, tokens?: number) => {
 
 /**
  * Create a lightning invoice
- * @param {string} invoice
- * @returns {Promise}
+ * @param {number} sats
+ * @param {(invoice: lightning.SubscribeToInvoiceInvoiceUpdatedEvent) => void} onConfirmed
+ * @returns {Promise<lightning.CreateInvoiceResult>}
  */
 const createInvoice = async (
   sats: number,
   onConfirmed: (invoice: lightning.SubscribeToInvoiceInvoiceUpdatedEvent) => void
 ): Promise<lightning.CreateInvoiceResult> => {
   return new Promise((resolve, reject) => {
+    if (!lnd) {
+      return reject(new ApiError(httpStatus.SERVICE_UNAVAILABLE, "LND client not initialized"))
+    }
     const timeout = setTimeout(() => {
       reject(new ApiError(httpStatus.REQUEST_TIMEOUT, "Invoice creation timed out"))
     }, LND_TIMEOUT)
 
-    lightning.createInvoice({ lnd, tokens: sats }, (error, result) => {
-      if (error || !result) {
+    lightning.createInvoice(
+      { lnd, tokens: sats, is_including_private_channels: true },
+      (error, result) => {
+        if (error || !result) {
+          clearTimeout(timeout)
+          return reject(
+            error ||
+              new ApiError(
+                httpStatus.SERVICE_UNAVAILABLE,
+                "Deposits are temporarily unavailable, please try again later"
+              )
+          )
+        }
+
+        if (!lnd) {
+          return reject(new ApiError(httpStatus.SERVICE_UNAVAILABLE, "LND client not initialized"))
+        }
+
+        lightning
+          .subscribeToInvoice({ lnd, id: result.id })
+          .on("invoice_updated", (invoice: lightning.SubscribeToInvoiceInvoiceUpdatedEvent) => {
+            if (invoice.is_confirmed) {
+              logger.info(`Invoice confirmed: ${result.id}`)
+              onConfirmed(invoice)
+            }
+          })
+          .on("error", (err) => {
+            logger.error(`Invoice subscription error for ${result.id}: ${err}`)
+          })
+
         clearTimeout(timeout)
-        return reject(
-          error ||
-            new ApiError(
-              httpStatus.SERVICE_UNAVAILABLE,
-              "Deposits are temporarily unavailable, please try again later"
-            )
-        )
+        resolve(result)
       }
-
-      lightning
-        .subscribeToInvoice({ lnd, id: result.id })
-        .on("invoice_updated", (invoice: lightning.SubscribeToInvoiceInvoiceUpdatedEvent) => {
-          if (invoice.is_confirmed) {
-            onConfirmed(invoice)
-          }
-        })
-
-      clearTimeout(timeout)
-      resolve(result)
-    })
+    )
   })
 }
 
 /**
  * Decode a lightning invoice
  * @param {string} invoice
- * @returns {Promise<DecodePaymentRequestResult>}
+ * @returns {Promise<lightning.DecodePaymentRequestResult>}
  */
 const decodeInvoice = async (invoice: string) => {
   return new Promise<lightning.DecodePaymentRequestResult>((resolve, reject) => {
+    if (!lnd) {
+      return reject(new ApiError(httpStatus.SERVICE_UNAVAILABLE, "LND client not initialized"))
+    }
     lightning.decodePaymentRequest({ lnd, request: invoice }, (error, result) => {
       if (error || !result) {
         return reject(
@@ -114,37 +154,41 @@ const decodeInvoice = async (invoice: string) => {
             new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to decode payment request")
         )
       }
-
-      return resolve(result)
+      resolve(result)
     })
   })
 }
 
 /**
  * Check a lightning invoice
- * @param {string} invoice
- * @returns {Promise<DecodePaymentRequestResult>}
+ * @param {string} invoiceId
+ * @returns {Promise<lightning.GetInvoiceResult>}
  */
 const checkInvoice = async (invoiceId: string) => {
   return new Promise<lightning.GetInvoiceResult>((resolve, reject) => {
+    if (!lnd) {
+      return reject(new ApiError(httpStatus.SERVICE_UNAVAILABLE, "LND client not initialized"))
+    }
     lightning.getInvoice({ lnd, id: invoiceId }, (error, result) => {
       if (error || !result) {
         return reject(
           error || new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to check invoice payment")
         )
       }
-
-      return resolve(result)
+      resolve(result)
     })
   })
 }
 
 /**
  * Get the latest Bitcoin block hash from the network
- * @returns {Promise<string>} The latest block hash
+ * @returns {Promise<{ hash: string; height: number }>}
  */
 const getLatestBlockHash = async (): Promise<{ hash: string; height: number }> => {
   return new Promise((resolve, reject) => {
+    if (!lnd) {
+      return reject(new ApiError(httpStatus.SERVICE_UNAVAILABLE, "LND client not initialized"))
+    }
     const timeout = setTimeout(() => {
       reject(
         new ApiError(httpStatus.REQUEST_TIMEOUT, "Failed to retrieve latest block hash: Timed out")
@@ -159,7 +203,6 @@ const getLatestBlockHash = async (): Promise<{ hash: string; height: number }> =
             new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve latest block hash")
         )
       }
-
       clearTimeout(timeout)
       resolve({ hash: result.current_block_hash, height: result.current_block_height })
     })
@@ -167,11 +210,13 @@ const getLatestBlockHash = async (): Promise<{ hash: string; height: number }> =
 }
 
 export default {
-  init,
+  initLightning,
+  close,
   connected,
   payInvoice,
   createInvoice,
   decodeInvoice,
   checkInvoice,
   getLatestBlockHash,
+  lightningClient: lnd,
 }

@@ -415,6 +415,6 @@ router
    *         $ref: '#/components/responses/ServiceUnavailable'
    *
    */
-  .get(auth(UserPermission.users_read), lndConnected, walletController.getLatestBlockHash)
+  .get(auth(UserPermission.wallet_invoice), lndConnected, walletController.getLatestBlockHash)
 
 export default router

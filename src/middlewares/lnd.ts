@@ -6,7 +6,7 @@ import httpStatus from "http-status"
 export const lndConnected = (_req: Request, _res: Response, next: NextFunction) => {
   if (!lightningService.connected) {
     return lightningService
-      .init()
+      .initLightning()
       .then(() => next())
       .catch(() =>
         next(

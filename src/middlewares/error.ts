@@ -31,10 +31,10 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   const response = {
     code: statusCode,
     message,
-    ...(config.env === "development" && { stack: err.stack }),
+    ...(["development", "test"].includes(config.env) && { stack: err.stack }),
   }
 
-  if (config.env === "development") {
+  if (["development", "test"].includes(config.env)) {
     logger.error(err)
   }
 
