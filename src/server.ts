@@ -9,12 +9,17 @@ export const initializeApp = async () => {
   await prisma.$connect()
   logger.info("Connected to SQL Database")
 
+  const dryRun = config.wallet.reconcileDryRun
+  logger.info(`Starting reconciliation with dryRun=${dryRun}`)
+
   try {
     await lightningService.initLightning()
     logger.info("Connected to LND at " + config.lightning.lndConfig.socket)
 
-    await walletService.checkInconsistentTransactions().catch((error) => {
-      logger.error(`Failed to reconcile transactions on startup: ${error.message}`)
+    await walletService.checkInconsistentTransactions(dryRun).catch((error) => {
+      logger.error(
+        `Failed to reconcile transactions on startup (dryRun=${dryRun}): ${error.message}`
+      )
     })
   } catch (error) {
     if (Array.isArray(error) && error.length >= 3) {
@@ -27,5 +32,6 @@ export const initializeApp = async () => {
     }
   }
 
+  logger.info(`Server initialization completed (reconciliation dryRun=${dryRun})`)
   return app
 }

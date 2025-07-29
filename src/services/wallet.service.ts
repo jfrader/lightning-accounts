@@ -13,10 +13,13 @@ const PRISMA_TRANSACTION_OPTS = { maxWait: 10000, timeout: LND_TIMEOUT + 5000 }
 
 /**
  * Check for inconsistent transactions (walletImpacted !== invoiceSettled) and attempt to reconcile
+ * @param {boolean} dryRun - If true, log actions without applying changes (default: false)
  * @returns {Promise<void>}
  */
-const checkInconsistentTransactions = async (): Promise<void> => {
+const checkInconsistentTransactions = async (dryRun = false): Promise<void> => {
   try {
+    logger.info(`Starting reconciliation (dryRun=${dryRun})`)
+
     const inconsistentTransactions = await prisma.transaction.findMany({
       where: {
         OR: [
@@ -30,13 +33,12 @@ const checkInconsistentTransactions = async (): Promise<void> => {
     })
 
     if (inconsistentTransactions.length === 0) {
-      logger.info("No inconsistent transactions found on startup")
+      logger.info(`No inconsistent transactions found (dryRun=${dryRun})`)
       return
     }
 
     logger.warn(
-      `Found ${inconsistentTransactions.length} inconsistent transactions:`,
-      inconsistentTransactions
+      `Found ${inconsistentTransactions.length} inconsistent transactions (dryRun=${dryRun})`
     )
 
     // Retry utility for Lightning service calls
@@ -51,175 +53,226 @@ const checkInconsistentTransactions = async (): Promise<void> => {
     }
 
     for (const tx of inconsistentTransactions) {
-      const invoice = tx.invoice as { id: string; request: string } | null
+      logger.info(
+        `Processing transaction ${tx.id} for user ${tx.wallet.userId}: walletImpacted=${tx.walletImpacted}, invoiceSettled=${tx.invoiceSettled}`
+      )
 
+      const invoice = tx.invoice as { id: string; request: string } | null
       if (!invoice?.id || !invoice?.request) {
-        logger.error(`Transaction ${tx.id}: No valid invoice data, marking as failed`)
-        await prisma.transaction.update({
-          where: { id: tx.id },
-          data: { walletImpacted: false, invoiceSettled: false },
-        })
+        logger.error(`Transaction ${tx.id}: No valid invoice data`)
+        if (!dryRun) {
+          await prisma.transaction.update({
+            where: { id: tx.id },
+            data: { walletImpacted: false, invoiceSettled: false },
+          })
+        }
+        logger.info(
+          `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as failed due to invalid invoice data`
+        )
         continue
       }
 
       try {
         const invoiceStatus = await retry(() => lightningService.checkInvoice(invoice.id))
         logger.info(
-          `Transaction ${tx.id}: Invoice ID ${invoice.id}, is_confirmed=${invoiceStatus.is_confirmed}`
+          `Transaction ${tx.id}: Invoice ${invoice.id} status - confirmed=${invoiceStatus.is_confirmed}`
         )
 
         if (tx.type === TransactionType.DEPOSIT) {
           if (tx.walletImpacted && !tx.invoiceSettled) {
             if (invoiceStatus.is_confirmed) {
-              await prisma.transaction.update({
-                where: { id: tx.id },
-                data: { invoiceSettled: true },
-              })
-              logger.info(`Transaction ${tx.id}: Marked as invoiceSettled=true (deposit confirmed)`)
-            } else {
-              await prisma.$transaction(async (txPrisma) => {
-                const wallet = await txPrisma.wallet.findUnique({ where: { id: tx.walletId } })
-                if (!wallet) {
-                  throw new Error(`Wallet ${tx.walletId} not found`)
-                }
-                logger.info(
-                  `Transaction ${tx.id}: Reverting deposit, current balance: ${wallet.balanceInSats}, decrementing: ${tx.amountInSats}`
-                )
-                await txPrisma.transaction.update({
+              if (!dryRun) {
+                await prisma.transaction.update({
                   where: { id: tx.id },
-                  data: { walletImpacted: false },
+                  data: { invoiceSettled: true },
                 })
-                const updatedWallet = await txPrisma.wallet.update({
-                  where: { id: tx.walletId },
-                  data: { balanceInSats: { decrement: tx.amountInSats } },
-                })
+              }
+              logger.info(
+                `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as invoiceSettled=true (deposit confirmed)`
+              )
+            } else {
+              const wallet = await prisma.wallet.findUnique({ where: { id: tx.walletId } })
+              if (!wallet) {
+                logger.error(`Wallet ${tx.walletId} not found`)
+                continue
+              }
+              const currentBalance = wallet.balanceInSats
+              const newBalance = currentBalance - tx.amountInSats
+              if (!dryRun) {
+                await prisma.$transaction(async (txPrisma) => {
+                  await txPrisma.transaction.update({
+                    where: { id: tx.id },
+                    data: { walletImpacted: false },
+                  })
+                  await txPrisma.wallet.update({
+                    where: { id: tx.walletId },
+                    data: { balanceInSats: { decrement: tx.amountInSats } },
+                  })
+                }, PRISMA_TRANSACTION_OPTS)
                 logger.info(
-                  `Transaction ${tx.id}: Wallet balance after reversion: ${updatedWallet.balanceInSats}`
+                  `Transaction ${tx.id}: Reverted deposit, balance changed from ${currentBalance} to ${newBalance}`
                 )
-              }, PRISMA_TRANSACTION_OPTS)
-              logger.info(`Transaction ${tx.id}: Reverted wallet impact (deposit not confirmed)`)
+              } else {
+                logger.info(
+                  `[DRY RUN] Transaction ${tx.id}: Would revert deposit, changing balance from ${currentBalance} to ${newBalance}`
+                )
+              }
             }
           } else if (!tx.walletImpacted && tx.invoiceSettled) {
             if (invoiceStatus.is_confirmed) {
-              await prisma.$transaction(async (txPrisma) => {
-                const wallet = await txPrisma.wallet.findUnique({ where: { id: tx.walletId } })
-                if (!wallet) {
-                  throw new Error(`Wallet ${tx.walletId} not found`)
-                }
+              const wallet = await prisma.wallet.findUnique({ where: { id: tx.walletId } })
+              if (!wallet) {
+                logger.error(`Wallet ${tx.walletId} not found`)
+                continue
+              }
+              const currentBalance = wallet.balanceInSats
+              const newBalance = currentBalance + tx.amountInSats
+              if (!dryRun) {
+                await prisma.$transaction(async (txPrisma) => {
+                  await txPrisma.transaction.update({
+                    where: { id: tx.id },
+                    data: { walletImpacted: true },
+                  })
+                  await txPrisma.wallet.update({
+                    where: { id: tx.walletId },
+                    data: { balanceInSats: { increment: tx.amountInSats } },
+                  })
+                }, PRISMA_TRANSACTION_OPTS)
                 logger.info(
-                  `Transaction ${tx.id}: Applying deposit, current balance: ${wallet.balanceInSats}, incrementing: ${tx.amountInSats}`
+                  `Transaction ${tx.id}: Applied deposit, balance changed from ${currentBalance} to ${newBalance}`
                 )
-                await txPrisma.transaction.update({
-                  where: { id: tx.id },
-                  data: { walletImpacted: true },
-                })
-                const updatedWallet = await txPrisma.wallet.update({
-                  where: { id: tx.walletId },
-                  data: { balanceInSats: { increment: tx.amountInSats } },
-                })
+              } else {
                 logger.info(
-                  `Transaction ${tx.id}: Wallet balance after deposit: ${updatedWallet.balanceInSats}`
+                  `[DRY RUN] Transaction ${tx.id}: Would apply deposit, changing balance from ${currentBalance} to ${newBalance}`
                 )
-              }, PRISMA_TRANSACTION_OPTS)
-              logger.info(`Transaction ${tx.id}: Applied wallet impact (deposit settled)`)
+              }
             } else {
-              await prisma.transaction.update({
-                where: { id: tx.id },
-                data: { invoiceSettled: false },
-              })
+              if (!dryRun) {
+                await prisma.transaction.update({
+                  where: { id: tx.id },
+                  data: { invoiceSettled: false },
+                })
+              }
               logger.info(
-                `Transaction ${tx.id}: Marked as invoiceSettled=false (deposit not confirmed)`
+                `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as invoiceSettled=false (deposit not confirmed)`
               )
             }
           }
         } else if (tx.type === TransactionType.WITHDRAW) {
           if (tx.walletImpacted && !tx.invoiceSettled) {
             if (invoiceStatus.is_confirmed) {
-              await prisma.transaction.update({
-                where: { id: tx.id },
-                data: { invoiceSettled: true },
-              })
+              if (!dryRun) {
+                await prisma.transaction.update({
+                  where: { id: tx.id },
+                  data: { invoiceSettled: true },
+                })
+              }
               logger.info(
-                `Transaction ${tx.id}: Marked as invoiceSettled=true (withdrawal confirmed)`
+                `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as invoiceSettled=true (withdrawal confirmed)`
               )
             } else {
               const feeReserve = Math.round(tx.amountInSats / 20)
               const total = tx.amountInSats + feeReserve
-              await prisma.$transaction(async (txPrisma) => {
-                const wallet = await txPrisma.wallet.findUnique({ where: { id: tx.walletId } })
-                if (!wallet) {
-                  throw new Error(`Wallet ${tx.walletId} not found`)
-                }
+              const wallet = await prisma.wallet.findUnique({ where: { id: tx.walletId } })
+              if (!wallet) {
+                logger.error(`Wallet ${tx.walletId} not found`)
+                continue
+              }
+              const currentBalance = wallet.balanceInSats
+              const newBalance = currentBalance + total
+              if (!dryRun) {
+                await prisma.$transaction(async (txPrisma) => {
+                  await txPrisma.transaction.update({
+                    where: { id: tx.id },
+                    data: { walletImpacted: false, invoiceSettled: false },
+                  })
+                  await txPrisma.wallet.update({
+                    where: { id: tx.walletId },
+                    data: { balanceInSats: { increment: total } },
+                  })
+                }, PRISMA_TRANSACTION_OPTS)
                 logger.info(
-                  `Transaction ${tx.id}: Reverting withdrawal, current balance: ${wallet.balanceInSats}, incrementing: ${total}`
+                  `Transaction ${tx.id}: Reverted withdrawal, balance changed from ${currentBalance} to ${newBalance}`
                 )
-                await txPrisma.transaction.update({
-                  where: { id: tx.id },
-                  data: { walletImpacted: false, invoiceSettled: false },
-                })
-                const updatedWallet = await txPrisma.wallet.update({
-                  where: { id: tx.walletId },
-                  data: { balanceInSats: { increment: total } },
-                })
+              } else {
                 logger.info(
-                  `Transaction ${tx.id}: Wallet balance after reversion: ${updatedWallet.balanceInSats}`
+                  `[DRY RUN] Transaction ${tx.id}: Would revert withdrawal, increasing balance by ${total} to ${newBalance}`
                 )
-              }, PRISMA_TRANSACTION_OPTS)
-              logger.info(
-                `Transaction ${tx.id}: Reverted wallet deduction (withdrawal not confirmed)`
-              )
+              }
             }
           } else if (!tx.walletImpacted && tx.invoiceSettled) {
             if (invoiceStatus.is_confirmed) {
-              const feeReserve = Math.round(tx.amountInSats / 20) // 5% fee
+              const feeReserve = Math.round(tx.amountInSats / 20)
               const total = tx.amountInSats + feeReserve
-              await prisma.$transaction(async (txPrisma) => {
-                const wallet = await txPrisma.wallet.findUnique({ where: { id: tx.walletId } })
-                if (!wallet || wallet.balanceInSats < total) {
-                  logger.error(
-                    `Transaction ${tx.id}: Insufficient balance for deduction, current balance: ${wallet?.balanceInSats}, required: ${total}`
-                  )
-                  await txPrisma.transaction.update({
+              const wallet = await prisma.wallet.findUnique({ where: { id: tx.walletId } })
+              if (!wallet) {
+                logger.error(`Wallet ${tx.walletId} not found`)
+                continue
+              }
+              const currentBalance = wallet.balanceInSats
+              if (currentBalance < total) {
+                logger.error(
+                  `Transaction ${tx.id}: Insufficient balance for deducted withdrawal, current balance: ${currentBalance}, required: ${total}`
+                )
+                if (!dryRun) {
+                  await prisma.transaction.update({
                     where: { id: tx.id },
                     data: { invoiceSettled: false },
                   })
-                  return
                 }
                 logger.info(
-                  `Transaction ${tx.id}: Applying withdrawal, current balance: ${wallet.balanceInSats}, deducting: ${total}`
+                  `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as invoiceSettled=false due to insufficient balance`
                 )
-                await txPrisma.transaction.update({
-                  where: { id: tx.id },
-                  data: { walletImpacted: true },
-                })
-                const updatedWallet = await txPrisma.wallet.update({
-                  where: { id: tx.walletId },
-                  data: { balanceInSats: { decrement: total } },
-                })
-                logger.info(
-                  `Transaction ${tx.id}: Wallet balance after deduction: ${updatedWallet.balanceInSats}`
-                )
-              }, PRISMA_TRANSACTION_OPTS)
-              logger.info(`Transaction ${tx.id}: Applied wallet deduction (withdrawal settled)`)
+              } else {
+                const newBalance = currentBalance - total
+                if (!dryRun) {
+                  await prisma.$transaction(async (txPrisma) => {
+                    await txPrisma.transaction.update({
+                      where: { id: tx.id },
+                      data: { walletImpacted: true },
+                    })
+                    await txPrisma.wallet.update({
+                      where: { id: tx.walletId },
+                      data: { balanceInSats: { decrement: total } },
+                    })
+                  }, PRISMA_TRANSACTION_OPTS)
+                  logger.info(
+                    `Transaction ${tx.id}: Applied withdrawal, balance changed from ${currentBalance} to ${newBalance}`
+                  )
+                } else {
+                  logger.info(
+                    `[DRY RUN] Transaction ${tx.id}: Would apply withdrawal, decreasing balance by ${total} to ${newBalance}`
+                  )
+                }
+              }
             } else {
-              await prisma.transaction.update({
-                where: { id: tx.id },
-                data: { invoiceSettled: false },
-              })
+              if (!dryRun) {
+                await prisma.transaction.update({
+                  where: { id: tx.id },
+                  data: { invoiceSettled: false },
+                })
+              }
               logger.info(
-                `Transaction ${tx.id}: Marked as invoiceSettled=false (withdrawal not confirmed)`
+                `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as invoiceSettled=false (withdrawal not confirmed)`
               )
             }
           }
         }
       } catch (error: any) {
         logger.error(`Transaction ${tx.id}: Failed to reconcile - ${error.message}`)
-        await prisma.transaction.update({
-          where: { id: tx.id },
-          data: { walletImpacted: false, invoiceSettled: false },
-        })
+        if (!dryRun) {
+          await prisma.transaction.update({
+            where: { id: tx.id },
+            data: { walletImpacted: false, invoiceSettled: false },
+          })
+        }
+        logger.info(
+          `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as failed due to reconciliation error`
+        )
       }
     }
+
+    logger.info(`Reconciliation completed (dryRun=${dryRun})`)
   } catch (error: any) {
     logger.error(`Failed to check inconsistent transactions: ${error.message}`)
     throw error

@@ -154,7 +154,7 @@ describe("Transaction, Reconciliation, and Wallet Routes E2E Tests", () => {
     })
     await lightningService.close()
     await prisma.$disconnect()
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve))
   })
 
   async function fundWallet(
@@ -533,7 +533,7 @@ describe("Transaction, Reconciliation, and Wallet Routes E2E Tests", () => {
         server.close(async () => {
           const app = await initializeApp()
           server = app.listen(process.env.SERVER_PORT || 2999, () => {
-            setTimeout(resolve, 2000) // Increased delay to avoid race conditions
+            setTimeout(resolve) // Increased delay to avoid race conditions
           })
         })
       })
@@ -601,7 +601,7 @@ describe("Transaction, Reconciliation, and Wallet Routes E2E Tests", () => {
         server.close(async () => {
           const app = await initializeApp()
           server = app.listen(process.env.SERVER_PORT || 2999, () => {
-            setTimeout(resolve, 2000) // Increased delay
+            setTimeout(resolve) // Increased delay
           })
         })
       })
@@ -701,7 +701,7 @@ describe("Transaction, Reconciliation, and Wallet Routes E2E Tests", () => {
       const newServer = app.listen(0, () => {
         console.log("New test server started for reconciliation")
       })
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve))
       await new Promise<void>((resolve, reject) => {
         newServer.close((err) => {
           if (err) reject(err)
@@ -776,7 +776,7 @@ describe("Transaction, Reconciliation, and Wallet Routes E2E Tests", () => {
         server.close(async () => {
           const app = await initializeApp()
           server = app.listen(process.env.SERVER_PORT || 2999, () => {
-            setTimeout(resolve, 2000) // Increased delay
+            setTimeout(resolve) // Increased delay
           })
         })
       })
@@ -822,19 +822,39 @@ describe("Transaction, Reconciliation, and Wallet Routes E2E Tests", () => {
         .send({ invoice: depositInvoice })
         .expect(400) // Expect failure due to mocked payInvoice
 
-      // Manually create a transaction with inconsistent state since payInvoice fails
-      const transaction = await prisma.transaction.create({
-        data: {
-          walletId: receiverId,
-          amountInSats: 500,
-          type: TransactionType.WITHDRAW,
-          walletImpacted: true,
-          invoiceSettled: false,
-          invoice: {
-            id: depositRes.body.invoice.id,
-            request: depositInvoice,
+      // Fetch the wallet to ensure it exists
+      const walletBefore = await prisma.wallet.findUnique({ where: { userId: receiverId } })
+      console.log("Wallet before transaction:", walletBefore)
+      if (!walletBefore) {
+        throw new Error(`Wallet for user ${receiverId} not found`)
+      }
+      expect(walletBefore.balanceInSats).toBe(29000)
+
+      // Manually create a transaction with inconsistent state and deduct balance
+      const feeReserve = Math.round(500 / 20) // 25 satoshis
+      const total = 500 + feeReserve // 525 satoshis
+      const transaction = await prisma.$transaction(async (tx) => {
+        const walletUpdate = await tx.wallet.update({
+          where: { id: walletBefore.id }, // Use wallet ID instead of userId
+          data: { balanceInSats: { decrement: total } }, // Deduct amount + fee
+        })
+        console.log("Wallet after update in transaction:", walletUpdate)
+        if (walletUpdate.balanceInSats !== 29000 - total) {
+          throw new Error(`Wallet balance not updated correctly: ${walletUpdate.balanceInSats}`)
+        }
+        return tx.transaction.create({
+          data: {
+            walletId: walletBefore.id, // Use wallet ID
+            amountInSats: 500,
+            type: TransactionType.WITHDRAW,
+            walletImpacted: true,
+            invoiceSettled: false,
+            invoice: {
+              id: depositRes.body.invoice.id,
+              request: depositInvoice,
+            },
           },
-        },
+        })
       })
 
       console.log("Initial transaction state:", transaction)
@@ -844,7 +864,7 @@ describe("Transaction, Reconciliation, and Wallet Routes E2E Tests", () => {
       // Check wallet balance after creating the transaction (should reflect deduction)
       const walletAfterDeduction = await prisma.wallet.findUnique({ where: { userId: receiverId } })
       console.log("Wallet balance after withdrawal attempt:", walletAfterDeduction!.balanceInSats)
-      expect(walletAfterDeduction!.balanceInSats).toBe(28475) // 29000 - (500 + 25 fee)
+      expect(walletAfterDeduction!.balanceInSats).toBe(29000 - 525) // 28475
 
       const transactions = await prisma.transaction.findMany({
         where: { walletId: { in: [userId, receiverId, funderId] } },
@@ -878,7 +898,7 @@ describe("Transaction, Reconciliation, and Wallet Routes E2E Tests", () => {
       const newServer = app.listen(0, () => {
         console.log("New test server started for reconciliation")
       })
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve))
       await new Promise<void>((resolve, reject) => {
         newServer.close((err) => {
           if (err) reject(err)
@@ -895,7 +915,7 @@ describe("Transaction, Reconciliation, and Wallet Routes E2E Tests", () => {
 
       const wallet = await prisma.wallet.findUnique({ where: { userId: receiverId } })
       console.log("Wallet balance after restart:", wallet!.balanceInSats)
-      expect(wallet!.balanceInSats).toBe(29525) // Reverted to 29000 + (500 + 25 fee)
+      expect(wallet!.balanceInSats).toBe(29000) // Reverted to 29000
     })
 
     it("should reconcile WITHDRAW: walletImpacted=false, invoiceSettled=true", async () => {
@@ -979,7 +999,7 @@ describe("Transaction, Reconciliation, and Wallet Routes E2E Tests", () => {
       const newServer = app.listen(0, () => {
         console.log("New test server started for reconciliation")
       })
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve))
       await new Promise<void>((resolve, reject) => {
         newServer.close((err) => {
           if (err) reject(err)

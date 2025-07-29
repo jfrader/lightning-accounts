@@ -63,21 +63,88 @@ const payInvoice = (request: string, tokens?: number) => {
     if (!lnd) {
       return reject(new ApiError(httpStatus.SERVICE_UNAVAILABLE, "LND client not initialized"))
     }
-    const timeout = setTimeout(() => {
-      reject(new ApiError(httpStatus.REQUEST_TIMEOUT, "Withdrawal timed out"))
-    }, LND_TIMEOUT)
 
-    lightning.pay({ lnd, request, tokens }, (error, result) => {
-      clearTimeout(timeout)
-      if (error) {
-        const [, message, details] = error
-        logger.error(`Payment failed: ${message || "Unknown error"}`, { details })
+    // Decode invoice to get its ID for potential timeout check
+    lightning.decodePaymentRequest({ lnd, request }, (decodeError, decodeResult) => {
+      if (decodeError || !decodeResult) {
         return reject(
-          new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice")
+          decodeError ||
+            new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to decode payment request")
         )
       }
-      logger.info("Payment successful", { payment: result })
-      resolve(result)
+
+      const invoiceId = decodeResult.id
+
+      const timeout = setTimeout(() => {
+        logger.info(
+          `Payment for invoice ${invoiceId}: Timed out after ${LND_TIMEOUT}ms, checking invoice status`
+        )
+
+        // Retry utility for checkInvoice
+        const retryCheckInvoice = async <T>(
+          fn: () => Promise<T>,
+          retries = 3,
+          delay = 1000
+        ): Promise<T> => {
+          try {
+            return await fn()
+          } catch (error) {
+            if (retries === 0) throw error
+            logger.warn(`Retrying invoice check for ${invoiceId}, ${retries} attempts left`)
+            await new Promise((resolve) => setTimeout(resolve, delay))
+            return retryCheckInvoice(fn, retries - 1, delay)
+          }
+        }
+
+        // Check invoice status after timeout
+        retryCheckInvoice(() => checkInvoice(invoiceId))
+          .then((invoiceStatus) => {
+            logger.info(
+              `Invoice ${invoiceId} status after timeout - confirmed=${invoiceStatus.is_confirmed}`
+            )
+            if (invoiceStatus.is_confirmed) {
+              // Payment succeeded despite timeout
+              resolve({ id: invoiceId, confirmed: true })
+            } else {
+              reject(
+                new ApiError(
+                  httpStatus.REQUEST_TIMEOUT,
+                  "Withdrawal timed out and invoice not confirmed"
+                )
+              )
+            }
+          })
+          .catch((checkError) => {
+            logger.error(
+              `Failed to check invoice ${invoiceId} after timeout: ${checkError.message}`
+            )
+            reject(
+              new ApiError(
+                httpStatus.SERVICE_UNAVAILABLE,
+                `Withdrawal timed out and invoice check failed: ${checkError.message}`
+              )
+            )
+          })
+      }, LND_TIMEOUT)
+
+      if (!lnd) {
+        return reject(new ApiError(httpStatus.SERVICE_UNAVAILABLE, "LND client not initialized"))
+      }
+
+      lightning.pay({ lnd, request, tokens }, (error, result) => {
+        clearTimeout(timeout)
+        if (error) {
+          const [, message, details] = error
+          logger.error(`Payment failed for invoice ${invoiceId}: ${message || "Unknown error"}`, {
+            details,
+          })
+          return reject(
+            new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice")
+          )
+        }
+        logger.info(`Payment successful for invoice ${invoiceId}`, { payment: result })
+        resolve(result)
+      })
     })
   })
 }

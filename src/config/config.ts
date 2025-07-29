@@ -79,6 +79,7 @@ export default {
   },
   wallet: {
     limit: envVars.WALLET_LIMIT,
+    reconcileDryRun: process.env.WALLET_RECONCILE_DRY_RUN === "1", // Add this
   },
   jwt: {
     prefix: envVars.JWT_COOKIE_PREFIX || "",
