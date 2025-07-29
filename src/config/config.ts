@@ -7,6 +7,7 @@ dotenv.config({ path: path.join(process.cwd(), ".env") })
 const envVarsSchema = Joi.object()
   .keys({
     WALLET_LIMIT: Joi.string().description("Maximum allowed sats per wallet"),
+    WALLET_RECONCILE_DRY_RUN: Joi.string().description("Dry run reconciliation on startup"),
     NODE_ENV: Joi.string().valid("production", "development", "test").required(),
     NODE_PORT: Joi.number().default(3000),
     NODE_ORIGIN: Joi.string().required().description("Allowed origin"),

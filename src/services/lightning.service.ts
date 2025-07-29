@@ -8,6 +8,7 @@ export const LND_TIMEOUT = 60 * 1000
 
 let connected = false
 let lnd: lightning.AuthenticatedLnd | null = null
+let lndInfo: lightning.GetWalletInfoResult | null = null
 
 try {
   const { lnd: authenticatedLnd } = lightning.authenticatedLndGrpc({
@@ -28,6 +29,11 @@ const initLightning = () =>
     if (!lnd) {
       return reject(new ApiError(httpStatus.SERVICE_UNAVAILABLE, "LND client not initialized"))
     }
+
+    if (lnd && lndInfo) {
+      return resolve(lndInfo)
+    }
+
     logger.info("Getting lnd wallet info")
     lightning.getWalletInfo({ lnd }, (err, result) => {
       logger.info("Got lnd wallet info " + (result?.version || "unknown"))
@@ -35,6 +41,8 @@ const initLightning = () =>
         connected = false
         return reject(err)
       }
+
+      lndInfo = result
       connected = true
       resolve(result)
     })
