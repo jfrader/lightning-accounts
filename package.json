@@ -12,7 +12,7 @@
     "satoshi",
     "api",
     "accounts",
-    "integration"
+    "custodial"
   ],
   "files": [
     "node_modules/.prisma/client/*",
