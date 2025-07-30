@@ -7,42 +7,6 @@ import passport from "passport"
 
 const router = express.Router()
 
-router.get("/me", auth(), authController.getMe)
-router.post("/register", validate(authValidation.register), authController.register)
-router.post("/login", validate(authValidation.login), authController.login)
-router.post("/logout", authController.logout)
-router.post("/refresh-tokens", authController.refreshTokens)
-router.post(
-  "/forgot-password",
-  validate(authValidation.forgotPassword),
-  authController.forgotPassword
-)
-router.post("/reset-password", validate(authValidation.resetPassword), authController.resetPassword)
-router.post("/send-verification-email", auth(), authController.sendVerificationEmail)
-router.post("/verify-email", validate(authValidation.verifyEmail), authController.verifyEmail)
-
-router.get(
-  "/twitter",
-  passport.authenticate("twitter", {
-    scope: ["tweet.read", "users.read", "offline.access"],
-  })
-)
-
-router.get(
-  "/twitter/callback",
-  (req, res, next) => {
-    auth()(req, res, () => {
-      next()
-    })
-  },
-  (req, res, next) => {
-    passport.authenticate("twitter")(req, res, next)
-  },
-  authController.loginTwitter
-)
-
-export default router
-
 /**
  * @swagger
  * tags:
@@ -55,6 +19,7 @@ export default router
  * /auth/me:
  *   get:
  *     summary: Get user's own profile
+ *     operationId: getUserProfile
  *     tags: [Auth]
  *     responses:
  *       "200":
@@ -62,41 +27,24 @@ export default router
  *         content:
  *           application/json:
  *             schema:
- *                $ref: '#/components/schemas/User'
+ *               $ref: '#/components/schemas/User'
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
  *       "403":
  *         $ref: '#/components/responses/Forbidden'
  *       "404":
  *         $ref: '#/components/responses/NotFound'
+ *   deprecated:
+ *     operationId: getAuth
  */
-
-/**
- * @swagger
- * /auth/twitter:
- *   get:
- *     summary: Get twitter auth
- *     tags: [Auth]
- *     responses:
- *       "200":
- *         description: OK
- *         content:
- *           application/json:
- *             schema:
- *                $ref: '#/components/schemas/User'
- *       "401":
- *         $ref: '#/components/responses/Unauthorized'
- *       "403":
- *         $ref: '#/components/responses/Forbidden'
- *       "404":
- *         $ref: '#/components/responses/NotFound'
- */
+router.get("/me", auth(), authController.getMe)
 
 /**
  * @swagger
  * /auth/register:
  *   post:
- *     summary: Register as user
+ *     summary: Register a new user
+ *     operationId: registerUser
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -114,7 +62,7 @@ export default router
  *               email:
  *                 type: string
  *                 format: email
- *                 description: must be unique
+ *                 description: Must be unique
  *               password:
  *                 type: string
  *                 format: password
@@ -136,13 +84,17 @@ export default router
  *                   $ref: '#/components/schemas/User'
  *       "400":
  *         $ref: '#/components/responses/DuplicateEmail'
+ *   deprecated:
+ *     operationId: registerCreate
  */
+router.post("/register", validate(authValidation.register), authController.register)
 
 /**
  * @swagger
  * /auth/login:
  *   post:
- *     summary: Login
+ *     summary: Log in a user
+ *     operationId: loginUser
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -182,40 +134,52 @@ export default router
  *             example:
  *               code: 401
  *               message: Invalid email or password
+ *   deprecated:
+ *     operationId: loginCreate
  */
+router.post("/login", validate(authValidation.login), authController.login)
 
 /**
  * @swagger
  * /auth/logout:
  *   post:
- *     summary: Logout
+ *     summary: Log out a user
+ *     operationId: logoutUser
  *     tags: [Auth]
  *     responses:
  *       "204":
  *         description: No content
  *       "404":
  *         $ref: '#/components/responses/NotFound'
+ *   deprecated:
+ *     operationId: logoutCreate
  */
+router.post("/logout", authController.logout)
 
 /**
  * @swagger
  * /auth/refresh-tokens:
  *   post:
- *     summary: Refresh auth tokens
+ *     summary: Refresh authentication tokens
+ *     operationId: refreshAuthTokens
  *     tags: [Auth]
  *     responses:
  *       "204":
  *         description: No content
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
+ *   deprecated:
+ *     operationId: refreshTokensCreate
  */
+router.post("/refresh-tokens", authController.refreshTokens)
 
 /**
  * @swagger
  * /auth/forgot-password:
  *   post:
- *     summary: Forgot password
- *     description: An email will be sent to reset password.
+ *     summary: Request a password reset
+ *     description: An email will be sent to reset the password.
+ *     operationId: requestPasswordReset
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -236,13 +200,21 @@ export default router
  *         description: No content
  *       "404":
  *         $ref: '#/components/responses/NotFound'
+ *   deprecated:
+ *     operationId: forgotPasswordCreate
  */
+router.post(
+  "/forgot-password",
+  validate(authValidation.forgotPassword),
+  authController.forgotPassword
+)
 
 /**
  * @swagger
  * /auth/reset-password:
  *   post:
- *     summary: Reset password
+ *     summary: Reset user password
+ *     operationId: resetPassword
  *     tags: [Auth]
  *     parameters:
  *       - in: query
@@ -279,27 +251,35 @@ export default router
  *             example:
  *               code: 401
  *               message: Password reset failed
+ *   deprecated:
+ *     operationId: resetPasswordCreate
  */
+router.post("/reset-password", validate(authValidation.resetPassword), authController.resetPassword)
 
 /**
  * @swagger
  * /auth/send-verification-email:
  *   post:
- *     summary: Send verification email
- *     description: An email will be sent to verify email.
+ *     summary: Send email verification
+ *     description: An email will be sent to verify the user's email.
+ *     operationId: sendVerificationEmail
  *     tags: [Auth]
  *     responses:
  *       "204":
  *         description: No content
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
+ *   deprecated:
+ *     operationId: sendVerificationEmailCreate
  */
+router.post("/send-verification-email", auth(), authController.sendVerificationEmail)
 
 /**
  * @swagger
  * /auth/verify-email:
  *   post:
- *     summary: verify email
+ *     summary: Verify user email
+ *     operationId: verifyEmail
  *     tags: [Auth]
  *     parameters:
  *       - in: query
@@ -312,12 +292,81 @@ export default router
  *       "204":
  *         description: No content
  *       "401":
- *         description: verify email failed
+ *         description: Email verification failed
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *             example:
  *               code: 401
- *               message: verify email failed
+ *               message: Verify email failed
+ *   deprecated:
+ *     operationId: verifyEmailCreate
  */
+router.post("/verify-email", validate(authValidation.verifyEmail), authController.verifyEmail)
+
+/**
+ * @swagger
+ * /auth/twitter:
+ *   get:
+ *     summary: Initiate Twitter authentication
+ *     operationId: initiateTwitterAuth
+ *     tags: [Auth]
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ *       "403":
+ *         $ref: '#/components/responses/Forbidden'
+ *       "404":
+ *         $ref: '#/components/responses/NotFound'
+ *   deprecated:
+ *     operationId: twitterList
+ */
+router.get(
+  "/twitter",
+  passport.authenticate("twitter", {
+    scope: ["tweet.read", "users.read", "offline.access"],
+  })
+)
+
+/**
+ * @swagger
+ * /auth/twitter/callback:
+ *   get:
+ *     summary: Handle Twitter authentication callback
+ *     operationId: handleTwitterAuthCallback
+ *     tags: [Auth]
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ *       "403":
+ *         $ref: '#/components/responses/Forbidden'
+ *       "404":
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.get(
+  "/twitter/callback",
+  (req, res, next) => {
+    auth()(req, res, () => {
+      next()
+    })
+  },
+  (req, res, next) => {
+    passport.authenticate("twitter")(req, res, next)
+  },
+  authController.loginTwitter
+)
+
+export default router

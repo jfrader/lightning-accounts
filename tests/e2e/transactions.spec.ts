@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import request from "supertest"
 import { Server } from "http"
-import { initializeApp } from "../src/server"
-import prisma from "../src/client"
+import { initializeApp } from "../../src/server"
+import prisma from "../../src/client"
 import { TransactionType } from "@prisma/client"
-import lightningService from "../src/services/lightning.service"
+import lightningService from "../../src/services/lightning.service"
 
 describe("Transaction, Reconciliation, and Wallet Routes E2E Tests", () => {
   let userId: number // Test user (0_e2e_player)
