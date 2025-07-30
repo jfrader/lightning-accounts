@@ -1,6 +1,6 @@
 {
   "name": "lightning-accounts",
-  "version": "4.5.1",
+  "version": "5.0.0",
   "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/index.js",
@@ -28,18 +28,18 @@
   "scripts": {
     "build": "yarn swagger:generate && rimraf build && tsc -p tsconfig.json && cp -R src/static build/src/",
     "start": "nodemon",
-    "start:e2e": "dotenv -e .env.test -- prisma db push --force-reset && dotenv -e .env.test -- prisma db seed && dotenv -e .env.test -- nodemon",
     "start:migrate": "prisma db push && prisma db seed && yarn start",
     "start:prod": "node bin/lightning-accounts-server",
     "start:prod:migrate": "prisma migrate deploy && yarn start:prod",
     "start:test": "dotenv -e .env.test -- prisma db push --force-reset && dotenv -e .env.test -- prisma db seed && dotenv -e .env.test -- jest --ci --watchAll=false --detectOpenHandles --config ./jest.config.ts",
+    "start:e2e": "yarn start:test && dotenv -e .env.test -- nodemon",
     "lightning:payinvoice": "sudo docker compose exec -i --user lnd carol lncli -n regtest payinvoice",
-    "docker": "docker compose --env-file .env up --build --abort-on-container-exit",
+    "docker":  "NODE_ENV=development ./init-dev.sh",
+    "docker:e2e": "NODE_ENV=test ./init-e2e.sh",
+    "docker:test": "NODE_ENV=test ./init-test.sh",
     "docker:exec": "docker compose exec -i server yarn",
-    "docker:prod": "docker compose -f docker-compose.prod.yml --env-file .env up --build",
-    "docker:staging": "docker compose -f docker-compose.staging.yml --env-file .env up --build",
-    "docker:e2e": "docker compose -f docker-compose.e2e.yml --env-file .env.test up --build --abort-on-container-exit",
-    "docker:test": "./init-regtest-lightning.sh",
+    "docker:prod": "NODE_ENV=production docker compose -f docker-compose.prod.yml down && docker compose -f docker-compose.prod.yml --env-file .env up --build",
+    "docker:staging": "docker compose -f docker-compose.staging.yml down && docker compose -f docker-compose.staging.yml --env-file .env up --build",
     "swagger:specs": "yarn prisma generate && cross-env NODE_ENV=development ts-node scripts/prismaToSwagger.ts && cross-env NODE_ENV=development ts-node scripts/swaggerToJson.ts",
     "swagger:client": "yarn swagger:specs && yarn swagger-typescript-api -p ./dist/swagger.json -o ./dist -n index.ts --axios",
     "swagger:generate": "yarn swagger:client && tsc -p tsconfig.dist.json",
@@ -51,8 +51,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prettier": "prettier --check **/*.ts",
-    "prettier:fix": "prettier --write **/*.ts",
-    "test": "./init-test.sh"
+    "prettier:fix": "prettier --write **/*.ts"
   },
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",

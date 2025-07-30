@@ -1,16 +1,16 @@
 #!/bin/bash
-export NODE_ENV=test
 
 # Configuration
-ALICE_CONTAINER="lightning-accounts-polar-alice"
-CAROL_CONTAINER="lightning-accounts-polar-carol"
-BOB_CONTAINER="lightning-accounts-polar-bob"
-BACKEND_CONTAINER="lightning-accounts-polar-backend1"
-SERVER_CONTAINER="lightning-accounts-server"
-POSTGRES_CONTAINER="lightning-accounts-postgres-test"
-ALICE_HOST="lightning-accounts-polar-alice"
-CAROL_HOST="lightning-accounts-polar-carol"
-BOB_HOST="lightning-accounts-polar-bob"
+NODE_ENV=${NODE_ENV:-test}
+ALICE_CONTAINER="lightning-accounts-${NODE_ENV}-alice"
+CAROL_CONTAINER="lightning-accounts-${NODE_ENV}-carol"
+BOB_CONTAINER="lightning-accounts-${NODE_ENV}-bob"
+BACKEND_CONTAINER="lightning-accounts-${NODE_ENV}-backend1"
+SERVER_CONTAINER="lightning-accounts-${NODE_ENV}-server"
+POSTGRES_CONTAINER="lightning-accounts-${NODE_ENV}-postgres-test"
+ALICE_HOST="10.29.0.13"
+CAROL_HOST="10.29.0.15"
+BOB_HOST="10.29.0.14"
 ALICE_PORT="9735"
 CAROL_PORT="9735"
 BOB_PORT="9735"
@@ -90,14 +90,46 @@ wait_for_lnd_sync() {
 ensure_wallet_ready() {
     local container=$1 host=$2 macaroon=$3 tls=$4 name=$5
     echo "Ensuring $name's wallet is ready..."
+    # Verify TLS and macaroon files exist
+    if ! docker exec $container test -f "$tls"; then
+        echo "Error: TLS certificate $tls not found in $container"
+        docker logs $container
+        exit 1
+    fi
+    if ! docker exec $container test -f "$macaroon"; then
+        echo "Error: Macaroon $macaroon not found in $container"
+        docker logs $container
+        exit 1
+    fi
     if ! docker exec $container lncli --rpcserver=$host:10009 --macaroonpath=$macaroon --tlscertpath=$tls getinfo >/dev/null 2>&1; then
         echo "Creating or unlocking $name's wallet..."
-        docker exec $container lncli --rpcserver=$host:10009 create --no_seed_passphrase >/tmp/${name}_create.log 2>&1 || \
-        docker exec $container lncli --rpcserver=$host:10009 unlock --no_seed_passphrase >/tmp/${name}_create.log 2>&1
-        sleep 2
+        # Check if wallet exists by checking for wallet.db
+        if ! docker exec $container test -f /home/lnd/.lnd/data/chain/bitcoin/regtest/wallet.db; then
+            echo "Creating new wallet for $name..."
+            # Create and use password file within the container
+            docker exec $container sh -c "echo -e 'testpassword\ntestpassword' > /tmp/wallet_password.txt && lncli --rpcserver=$host:10009 --tlscertpath=$tls create < /tmp/wallet_password.txt && rm /tmp/wallet_password.txt" >/tmp/${name}_create.log 2>&1
+            if [ $? -ne 0 ]; then
+                echo "Error: Failed to create $name's wallet"
+                cat /tmp/${name}_create.log
+                docker logs $container
+                exit 1
+            fi
+        else
+            echo "Unlocking existing wallet for $name..."
+            # Create and use password file within the container
+            docker exec $container sh -c "echo 'testpassword' > /tmp/wallet_password.txt && lncli --rpcserver=$host:10009 --tlscertpath=$tls unlock --stdin < /tmp/wallet_password.txt && rm /tmp/wallet_password.txt" >/tmp/${name}_unlock.log 2>&1
+            if [ $? -ne 0 ]; then
+                echo "Error: Failed to unlock $name's wallet"
+                cat /tmp/${name}_unlock.log
+                docker logs $container
+                exit 1
+            fi
+        fi
+        sleep 5
         if ! docker exec $container lncli --rpcserver=$host:10009 --macaroonpath=$macaroon --tlscertpath=$tls getinfo >/dev/null 2>&1; then
             echo "Error: Failed to initialize $name's wallet"
-            cat /tmp/${name}_create.log
+            cat /tmp/${name}_create.log || cat /tmp/${name}_unlock.log
+            docker logs $container
             exit 1
         fi
     fi
@@ -188,12 +220,38 @@ rebalance_channel() {
     local amount=$REBALANCE_AMOUNT
     local fee_limit=1000
 
-    CHANNEL_INFO=$(docker exec $sender_container lncli --rpcserver=$sender_host:10009 --macaroonpath=$sender_macaroon --tlscertpath=$sender_tls listchannels | jq -r ".channels[] | select(.remote_pubkey==\"$remote_pubkey\" and .active==true) | {local_balance: .local_balance, chan_id: .chan_id}")
+    echo "Attempting to rebalance channel from $sender_name to $receiver_name (remote_pubkey: $remote_pubkey)..."
+    
+    # Get raw listchannels output for debugging
+    LISTCHANNELS_OUTPUT=$(docker exec $sender_container lncli --rpcserver=$sender_host:10009 --macaroonpath=$sender_macaroon --tlscertpath=$sender_tls listchannels 2>&1)
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to execute listchannels for $sender_name: $LISTCHANNELS_OUTPUT"
+        docker logs $sender_container
+        exit 1
+    fi
+
+    # Check if channels array exists and is non-empty
+    CHANNELS_COUNT=$(echo "$LISTCHANNELS_OUTPUT" | jq '.channels | length')
+    if [ "$CHANNELS_COUNT" -eq 0 ]; then
+        echo "Error: No channels found for $sender_name. Raw output: $LISTCHANNELS_OUTPUT"
+        docker logs $sender_container
+        exit 1
+    fi
+
+    # Get channel info, selecting the first active channel with the specified remote_pubkey
+    CHANNEL_INFO=$(echo "$LISTCHANNELS_OUTPUT" | jq -r ".channels[] | select(.remote_pubkey==\"$remote_pubkey\" and .active==true) | {local_balance: .local_balance, chan_id: .chan_id} | first // empty")
     if [ -n "$CHANNEL_INFO" ]; then
         LOCAL_BALANCE=$(echo "$CHANNEL_INFO" | jq -r .local_balance)
         CHAN_ID=$(echo "$CHANNEL_INFO" | jq -r .chan_id)
+        # Verify LOCAL_BALANCE is a valid integer
+        if ! [[ "$LOCAL_BALANCE" =~ ^[0-9]+$ ]]; then
+            echo "Error: Invalid local_balance for channel from $sender_name to $receiver_name: $LOCAL_BALANCE"
+            echo "Raw listchannels output: $LISTCHANNELS_OUTPUT"
+            docker logs $sender_container
+            exit 1
+        fi
         if [ "$LOCAL_BALANCE" -gt $((CHANNEL_AMOUNT - PUSH_AMOUNT)) ]; then
-            echo "Rebalancing channel from $sender_name to $receiver_name (local balance: $LOCAL_BALANCE)..."
+            echo "Rebalancing channel from $sender_name to $receiver_name (local balance: $LOCAL_BALANCE, chan_id: $CHAN_ID)..."
             INVOICE=$(docker exec $receiver_container lncli --rpcserver=$receiver_host:10009 --macaroonpath=$receiver_macaroon --tlscertpath=$receiver_tls addinvoice --amt=$amount | jq -r .payment_request)
             if [ -z "$INVOICE" ]; then
                 echo "Error: Failed to create invoice for $receiver_name"
@@ -215,7 +273,9 @@ rebalance_channel() {
             return 0
         fi
     else
-        echo "No active channel found from $sender_name to $receiver_name"
+        echo "No active channel found from $sender_name to $receiver_name (remote_pubkey: $remote_pubkey)"
+        echo "Raw listchannels output: $LISTCHANNELS_OUTPUT"
+        docker logs $sender_container
         return 1
     fi
 }
@@ -224,11 +284,6 @@ rebalance_channel() {
 command -v docker >/dev/null 2>&1 || { echo "Error: docker not found"; exit 1; }
 command -v docker-compose >/dev/null 2>&1 || { echo "Error: docker-compose not found"; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo "Error: jq not found; install with 'sudo apt-get install jq'"; exit 1; }
-
-# Stop and restart containers
-echo "Restarting Docker services..."
-docker compose -f docker-compose.test.yml down
-docker compose -f docker-compose.test.yml up backend1 alice carol bob -d --build --force-recreate
 
 # Wait for containers to be healthy
 wait_for_healthy $BACKEND_CONTAINER $TIMEOUT
@@ -323,9 +378,3 @@ BACKEND_HEIGHT=$(docker exec $BACKEND_CONTAINER bitcoin-cli -rpcconnect=$BACKEND
 wait_for_lnd_sync $ALICE_CONTAINER $ALICE_HOST $ALICE_MACAROON $ALICE_TLS $TIMEOUT $BACKEND_HEIGHT
 wait_for_lnd_sync $CAROL_CONTAINER $CAROL_HOST $CAROL_MACAROON $CAROL_TLS $TIMEOUT $BACKEND_HEIGHT
 wait_for_lnd_sync $BOB_CONTAINER $BOB_HOST $BOB_MACAROON $BOB_TLS $TIMEOUT $BACKEND_HEIGHT
-
-# Start postgres and server
-echo "Starting postgres and server..."
-docker compose -f docker-compose.test.yml up postgres_ln_test server --build --force-recreate
-
-echo "Channel setup complete with sufficient liquidity"
