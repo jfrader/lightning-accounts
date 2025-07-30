@@ -47,8 +47,6 @@ const router = express.Router()
  *         $ref: '#/components/responses/Unauthorized'
  *       "403":
  *         $ref: '#/components/responses/Forbidden'
- *   deprecated:
- *     operationId: depositCreate
  */
 router
   .route("/deposit")
@@ -91,8 +89,6 @@ router
  *         $ref: '#/components/responses/Unauthorized'
  *       "403":
  *         $ref: '#/components/responses/Forbidden'
- *   deprecated:
- *     operationId: withdrawCreate
  */
 router
   .route("/withdraw")
@@ -177,8 +173,6 @@ router
  *         $ref: '#/components/responses/Unauthorized'
  *       "403":
  *         $ref: '#/components/responses/Forbidden'
- *   deprecated:
- *     operationId: depositDetail
  */
 router
   .route("/deposit/:transactionId")
@@ -214,8 +208,6 @@ router
  *         $ref: '#/components/responses/Unauthorized'
  *       "403":
  *         $ref: '#/components/responses/Forbidden'
- *   deprecated:
- *     operationId: payRequestDetail
  */
 router
   .route("/pay-request/:payRequestId")
@@ -302,8 +294,6 @@ router
  *         $ref: '#/components/responses/Unauthorized'
  *       "403":
  *         $ref: '#/components/responses/Forbidden'
- *   deprecated:
- *     operationId: payRequestCreate
  */
 router
   .route("/pay-request")
@@ -361,8 +351,6 @@ router
    *         $ref: '#/components/responses/Unauthorized'
    *       "403":
    *         $ref: '#/components/responses/Forbidden'
-   *   deprecated:
-   *     operationId: payRequestsCreate
    */
   .post(
     auth(UserPermission.wallet_invoice),
@@ -405,8 +393,6 @@ router
    *         $ref: '#/components/responses/Unauthorized'
    *       "403":
    *         $ref: '#/components/responses/Forbidden'
-   *   deprecated:
-   *     operationId: payRequestsList
    */
   .get(
     auth(UserPermission.wallet_invoice),

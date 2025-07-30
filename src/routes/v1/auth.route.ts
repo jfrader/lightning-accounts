@@ -34,8 +34,6 @@ const router = express.Router()
  *         $ref: '#/components/responses/Forbidden'
  *       "404":
  *         $ref: '#/components/responses/NotFound'
- *   deprecated:
- *     operationId: getAuth
  */
 router.get("/me", auth(), authController.getMe)
 
@@ -84,8 +82,6 @@ router.get("/me", auth(), authController.getMe)
  *                   $ref: '#/components/schemas/User'
  *       "400":
  *         $ref: '#/components/responses/DuplicateEmail'
- *   deprecated:
- *     operationId: registerCreate
  */
 router.post("/register", validate(authValidation.register), authController.register)
 
@@ -134,8 +130,6 @@ router.post("/register", validate(authValidation.register), authController.regis
  *             example:
  *               code: 401
  *               message: Invalid email or password
- *   deprecated:
- *     operationId: loginCreate
  */
 router.post("/login", validate(authValidation.login), authController.login)
 
@@ -151,8 +145,6 @@ router.post("/login", validate(authValidation.login), authController.login)
  *         description: No content
  *       "404":
  *         $ref: '#/components/responses/NotFound'
- *   deprecated:
- *     operationId: logoutCreate
  */
 router.post("/logout", authController.logout)
 
@@ -168,8 +160,6 @@ router.post("/logout", authController.logout)
  *         description: No content
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
- *   deprecated:
- *     operationId: refreshTokensCreate
  */
 router.post("/refresh-tokens", authController.refreshTokens)
 
@@ -200,8 +190,6 @@ router.post("/refresh-tokens", authController.refreshTokens)
  *         description: No content
  *       "404":
  *         $ref: '#/components/responses/NotFound'
- *   deprecated:
- *     operationId: forgotPasswordCreate
  */
 router.post(
   "/forgot-password",
@@ -251,8 +239,6 @@ router.post(
  *             example:
  *               code: 401
  *               message: Password reset failed
- *   deprecated:
- *     operationId: resetPasswordCreate
  */
 router.post("/reset-password", validate(authValidation.resetPassword), authController.resetPassword)
 
@@ -269,8 +255,6 @@ router.post("/reset-password", validate(authValidation.resetPassword), authContr
  *         description: No content
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
- *   deprecated:
- *     operationId: sendVerificationEmailCreate
  */
 router.post("/send-verification-email", auth(), authController.sendVerificationEmail)
 
@@ -300,8 +284,6 @@ router.post("/send-verification-email", auth(), authController.sendVerificationE
  *             example:
  *               code: 401
  *               message: Verify email failed
- *   deprecated:
- *     operationId: verifyEmailCreate
  */
 router.post("/verify-email", validate(authValidation.verifyEmail), authController.verifyEmail)
 
@@ -325,8 +307,6 @@ router.post("/verify-email", validate(authValidation.verifyEmail), authControlle
  *         $ref: '#/components/responses/Forbidden'
  *       "404":
  *         $ref: '#/components/responses/NotFound'
- *   deprecated:
- *     operationId: twitterList
  */
 router.get(
   "/twitter",

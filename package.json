@@ -1,6 +1,6 @@
 {
   "name": "lightning-accounts",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "REST API For hosting custodial lightning accounts",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/index.js",
@@ -39,7 +39,7 @@
     "docker:test": "NODE_ENV=test ./init-test.sh",
     "docker:exec": "docker compose exec -i server yarn",
     "docker:prod": "NODE_ENV=production docker compose -f docker-compose.prod.yml down && docker compose -f docker-compose.prod.yml --env-file .env up --build",
-    "docker:staging": "docker compose -f docker-compose.staging.yml down && docker compose -f docker-compose.staging.yml --env-file .env up --build",
+    "docker:staging": "docker compose -f docker-compose.staging.yml down && docker compose -f docker-compose.staging.yml --env-file .env up --build -d",
     "swagger:specs": "yarn prisma generate && cross-env NODE_ENV=development ts-node scripts/prismaToSwagger.ts && cross-env NODE_ENV=development ts-node scripts/swaggerToJson.ts",
     "swagger:client": "yarn swagger:specs && yarn swagger-typescript-api -p ./dist/swagger.json -o ./dist -n index.ts --axios",
     "swagger:generate": "yarn swagger:client && tsc -p tsconfig.dist.json",
