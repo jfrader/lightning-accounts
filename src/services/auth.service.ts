@@ -10,16 +10,11 @@ import exclude from "../utils/exclude"
 import logger from "../config/logger"
 import config from "../config/config"
 
-/**
- * Login with username and password
- * @param {string} email
- * @param {string} password
- * @returns {Promise<Omit<User, 'password'>>}
- */
 const loginUserWithEmailAndPassword = async (
   email: string,
   password: string
 ): Promise<Omit<User, "password" | "seedHash">> => {
+  logger.info("Attempting user login", { email })
   const user = await userService.getUserByEmail(email, [
     "id",
     "email",
@@ -36,28 +31,34 @@ const loginUserWithEmailAndPassword = async (
   ])
 
   if (!user) {
+    logger.error("User not found", { email })
     throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password")
   }
 
   if (config.env !== "test" && user.role === Role.APPLICATION) {
+    logger.error("Application user attempted email login", { email })
     throw new ApiError(httpStatus.BAD_REQUEST, "Applications can't use email and password login")
   }
 
-  if (!(await isPasswordMatch(password, user.password as string))) {
+  logger.debug("Comparing password", { email, passwordLength: password.length })
+  const isMatch = await isPasswordMatch(password, user.password as string)
+  if (!isMatch) {
+    logger.error("Password mismatch", {
+      email,
+      passwordLength: password.length,
+      storedHash: user.password,
+    })
     throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password")
   }
 
+  logger.info("Login successful", { email })
   return exclude(user, ["password"])
 }
 
-/**
- * Login with seed phrase
- * @param {string} seedPhrase
- * @returns {Promise<Omit<User, 'password' | 'seedHash'>>}
- */
 const loginUserWithSeedPhrase = async (
   seedPhrase: string
 ): Promise<Omit<User, "password" | "seedHash">> => {
+  logger.info("Attempting seed phrase login", {})
   const user = await prisma.user.findFirst({
     where: { seedHash: { not: null } },
     select: {
@@ -77,23 +78,23 @@ const loginUserWithSeedPhrase = async (
   })
 
   if (!user || !user.seedHash) {
+    logger.error("User not found or no seed hash", { seedPhraseLength: seedPhrase.length })
     throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid seed phrase")
   }
 
+  logger.debug("Comparing seed phrase", { userId: user.id, email: user.email })
   const isMatch = await isPasswordMatch(seedPhrase, user.seedHash)
   if (!isMatch) {
+    logger.error("Seed phrase mismatch", { userId: user.id, email: user.email })
     throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid seed phrase")
   }
 
+  logger.info("Seed phrase login successful", { userId: user.id, email: user.email })
   return exclude(user, ["seedHash"])
 }
 
-/**
- * Logout
- * @param {string} refreshToken
- * @returns {Promise<void>}
- */
 const logout = async (refreshToken: string): Promise<void> => {
+  logger.info("Attempting logout", { refreshToken })
   const refreshTokenData = await prisma.token.findFirst({
     where: {
       token: refreshToken,
@@ -102,80 +103,131 @@ const logout = async (refreshToken: string): Promise<void> => {
     },
   })
   if (!refreshTokenData) {
+    logger.error("Refresh token not found", { refreshToken })
     throw new ApiError(httpStatus.NOT_FOUND, "Not found")
   }
   await prisma.token.delete({ where: { id: refreshTokenData.id } })
+  logger.info("Logout successful", { refreshToken })
 }
 
-/**
- * Refresh auth tokens
- * @param {string} refreshToken
- * @returns {Promise<AuthTokensResponse>}
- */
 const refreshAuth = async (refreshToken: string): Promise<AuthTokensResponse> => {
   try {
+    logger.info("Attempting to refresh auth tokens", { refreshToken })
+    logger.debug("Verifying refresh token", { refreshToken })
     const refreshTokenData = await tokenService.verifyToken(refreshToken, TokenType.REFRESH)
     const { userId } = refreshTokenData
+    logger.debug("Refresh token verified", { userId })
     await prisma.token.deleteMany({ where: { expires: { lte: new Date() }, userId } })
-    return await tokenService.generateAuthTokens({ id: userId })
-  } catch (error) {
-    logger.error("Refresh Auth Error", error)
-    console.error(error)
-    console.log(error)
+    logger.debug("Expired tokens deleted", { userId })
+    const tokens = await tokenService.generateAuthTokens({ id: userId })
+    logger.info("Auth tokens generated", { userId })
+    return tokens
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const errorStack = error instanceof Error ? error.stack : undefined
+    logger.error("Refresh auth failed", { error: errorMessage, stack: errorStack })
     throw new ApiError(httpStatus.FORBIDDEN, "Please authenticate")
   }
 }
 
-/**
- * Reset password
- * @param {string} resetPasswordToken
- * @param {string} newPassword
- * @returns {Promise<void>}
- */
 const resetPassword = async (resetPasswordToken: string, newPassword: string): Promise<void> => {
   try {
+    logger.info("Attempting password reset", { resetPasswordToken })
     const resetPasswordTokenData = await tokenService.verifyToken(
       resetPasswordToken,
       TokenType.RESET_PASSWORD
     )
+    logger.debug("Reset password token verified", { userId: resetPasswordTokenData.userId })
     const user = await userService.getUserById(resetPasswordTokenData.userId)
     if (!user) {
+      logger.error("User not found for reset password", { userId: resetPasswordTokenData.userId })
       throw new ApiError(httpStatus.NOT_FOUND, "User not found")
     }
+    logger.debug("Hashing new password", {
+      userId: user.id,
+      email: user.email,
+    })
     const encryptedPassword = await encryptPassword(newPassword)
-    await userService.updateUserById(
-      user.id,
-      { password: encryptedPassword },
-      ["id", "email", "name", "role"],
-      false
-    )
-    await prisma.token.deleteMany({ where: { userId: user.id, type: TokenType.RESET_PASSWORD } })
-  } catch (error) {
+    logger.debug("Updating user password", {
+      userId: user.id,
+      email: user.email,
+    })
+
+    await prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: user.id },
+        data: { password: encryptedPassword },
+        select: { id: true, email: true, name: true, role: true },
+      })
+      logger.debug("Password updated in transaction", {
+        userId: updatedUser.id,
+        email: updatedUser.email,
+      })
+
+      // Verify the update
+      const verifiedUser = await tx.user.findUnique({
+        where: { id: user.id },
+        select: { password: true },
+      })
+      if (!verifiedUser || verifiedUser.password !== encryptedPassword) {
+        logger.error("Password update verification failed", {
+          userId: user.id,
+        })
+        throw new Error("Password update did not persist")
+      }
+      logger.debug("Password update verified", { userId: user.id, password: verifiedUser.password })
+
+      await tx.token.deleteMany({ where: { userId: user.id, type: TokenType.RESET_PASSWORD } })
+      logger.debug("Reset tokens deleted", { userId: user.id })
+    })
+    logger.info("Password reset successful", { userId: user.id, email: user.email })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const errorStack = error instanceof Error ? error.stack : undefined
+    logger.error("Password reset failed", { error: errorMessage, stack: errorStack })
     throw new ApiError(httpStatus.UNAUTHORIZED, "Password reset failed")
   }
 }
 
-/**
- * Verify email
- * @param {string} verifyEmailToken
- * @returns {Promise<void>}
- */
 const verifyEmail = async (verifyEmailToken: string): Promise<void> => {
   try {
+    logger.info("Attempting email verification", { verifyEmailToken })
     const verifyEmailTokenData = await tokenService.verifyToken(
       verifyEmailToken,
       TokenType.VERIFY_EMAIL
     )
-    await prisma.token.deleteMany({
-      where: { userId: verifyEmailTokenData.userId, type: TokenType.VERIFY_EMAIL },
+    logger.debug("Email token verified", { userId: verifyEmailTokenData.userId })
+    await prisma.$transaction(async (tx) => {
+      await tx.token.deleteMany({
+        where: { userId: verifyEmailTokenData.userId, type: TokenType.VERIFY_EMAIL },
+      })
+      logger.debug("Email verification tokens deleted", { userId: verifyEmailTokenData.userId })
+      const updatedUser = await tx.user.update({
+        where: { id: verifyEmailTokenData.userId },
+        data: { isEmailVerified: true },
+        select: { id: true, email: true, name: true, role: true },
+      })
+      logger.debug("Email verified in transaction", {
+        userId: updatedUser.id,
+        email: updatedUser.email,
+      })
+
+      // Verify the update
+      const verifiedUser = await tx.user.findUnique({
+        where: { id: verifyEmailTokenData.userId },
+        select: { isEmailVerified: true },
+      })
+      if (!verifiedUser || !verifiedUser.isEmailVerified) {
+        logger.error("Email verification update failed", { userId: verifyEmailTokenData.userId })
+        throw new Error("Email verification update did not persist")
+      }
+      logger.debug("Email verification update verified", { userId: verifyEmailTokenData.userId })
     })
-    await userService.updateUserById(
-      verifyEmailTokenData.userId,
-      { isEmailVerified: true },
-      ["id", "email", "name", "role"],
-      false
-    )
-  } catch (error) {
+    logger.info("Email verification successful", { userId: verifyEmailTokenData.userId })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const errorStack = error instanceof Error ? error.stack : undefined
+    logger.error("Email verification failed", { error: errorMessage, stack: errorStack })
     throw new ApiError(httpStatus.UNAUTHORIZED, "Email verification failed")
   }
 }

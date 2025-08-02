@@ -8,7 +8,7 @@ async function testEmail(to: string) {
     const testToken = "test-token-123"
     await emailService.sendVerificationEmail(to, testToken)
     logger.info(`Test email sent successfully to ${to}`)
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Failed to send test email to ${to}: ${error.message}`)
     process.exit(1) // Exit with error code
   }
