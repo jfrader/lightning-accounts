@@ -7,15 +7,23 @@ import { UserWithWallet } from "../types/user"
 import { Profile } from "@superfaceai/passport-twitter-oauth2"
 import authService from "./auth.service"
 import { getRecoveryPassword } from "../utils/string/getRandomWord"
+import { createHmac } from "crypto"
+import config from "../config/config"
+
+const hashSeedPhrase = (seedPhrase: string): string => {
+  return createHmac("sha256", config.seedHashSecret).update(seedPhrase).digest("hex")
+}
 
 export const USER_DEFAULT_FIELDS = ["id", "name", "role", "avatarUrl"]
-export const USER_PRIVATE_FIELDS = ["email", "twitter", "isEmailVerified", "createdAt", "updatedAt"]
+export const USER_PRIVATE_FIELDS = [
+  "email",
+  "twitter",
+  "isEmailVerified",
+  "createdAt",
+  "updatedAt",
+  "hasSeed",
+]
 
-/**
- * Create a user
- * @param {Object} userBody
- * @returns {Promise<User>}
- */
 const createUser = async (
   email: string,
   password: string,
@@ -38,13 +46,13 @@ const createUser = async (
 }
 
 const createUserWithSeed = async (name: string) => {
-  const seedPhrase = getRecoveryPassword()
-  const seedHash = await encryptPassword(seedPhrase)
-
+  const seedPhrase = getRecoveryPassword(5, " ")
+  const seedHash = hashSeedPhrase(seedPhrase)
   const user = await prisma.user.create({
     data: {
       name,
       seedHash,
+      hasSeed: true,
       role: Role.USER,
       wallet: { create: { balanceInSats: 0, disabled: false } },
     },
@@ -58,14 +66,9 @@ const createUserWithSeed = async (name: string) => {
       nostrPubkey: true,
     },
   })
-
   return { user, seedPhrase }
 }
 
-/**
- * Upsert a twitter user
- * @returns {Promise<User>}
- */
 const upsertTwitterUser = async (
   { id, displayName, username, photos, name }: Profile,
   currentUser?: User | null
@@ -98,25 +101,16 @@ const upsertTwitterUser = async (
       nostrPubkey: true,
       name: true,
       role: true,
+      hasSeed: true,
     },
   })
 
   if (!user) {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to upsert user")
   }
-
   return user
 }
 
-/**
- * Query for users
- * @param {Object} filter - Mongo filter
- * @param {Object} options - Query options
- * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
- * @param {number} [options.limit] - Maximum number of results per page (default = 10)
- * @param {number} [options.page] - Current page (default = 1)
- * @returns {Promise<QueryResult>}
- */
 const queryUsers = async <Key extends keyof User>(
   filter: object,
   options: {
@@ -142,12 +136,6 @@ const queryUsers = async <Key extends keyof User>(
   return users as Pick<User, Key>[]
 }
 
-/**
- * Get user by id
- * @param {ObjectId} id
- * @param {Array<Key>} keys
- * @returns {Promise<Pick<User, Key> | null>}
- */
 const getUserById = async <Key extends keyof UserWithWallet>(
   id: number,
   keys: Key[] = USER_DEFAULT_FIELDS as Key[]
@@ -160,16 +148,9 @@ const getUserById = async <Key extends keyof UserWithWallet>(
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
-
   return user as Promise<Pick<UserWithWallet, Key> | null>
 }
 
-/**
- * Get user and their wallet by id
- * @param {ObjectId} id
- * @param {Array<Key>} keys
- * @returns {Promise<Pick<User, Key> | null>}
- */
 const getUserWithWallet = async <Key extends keyof UserWithWallet>(
   id: number,
   keys: Key[] = [...USER_DEFAULT_FIELDS, ...USER_PRIVATE_FIELDS] as Key[]
@@ -177,12 +158,6 @@ const getUserWithWallet = async <Key extends keyof UserWithWallet>(
   return getUserById(id, [...keys, "wallet"])
 }
 
-/**
- * Get user by email
- * @param {string} email
- * @param {Array<Key>} keys
- * @returns {Promise<Pick<User, Key> | null>}
- */
 const getUserByEmail = async <Key extends keyof User>(
   email: string,
   keys: Key[] = USER_DEFAULT_FIELDS as Key[]
@@ -193,12 +168,6 @@ const getUserByEmail = async <Key extends keyof User>(
   }) as Promise<Pick<User, Key> | null>
 }
 
-/**
- * Update user by id
- * @param {ObjectId} userId
- * @param {Object} updateBody
- * @returns {Promise<User>}
- */
 const updateUserById = async <Key extends keyof User>(
   userId: number,
   updateBody: Prisma.UserUpdateInput,
@@ -217,7 +186,6 @@ const updateUserById = async <Key extends keyof User>(
   if (updateBody.name && updateBody.name.toString().length > 16) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Name too long")
   }
-
   if (requirePassword && user.email && (updateBody.email || updateBody.password)) {
     if (!password) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Password not provided")
@@ -227,7 +195,6 @@ const updateUserById = async <Key extends keyof User>(
       throw new ApiError(httpStatus.BAD_REQUEST, "Password doesn't match")
     }
   }
-
   const updatedUser = await prisma.user.update({
     where: { id: user.id },
     data: {
@@ -241,11 +208,6 @@ const updateUserById = async <Key extends keyof User>(
   return updatedUser as Pick<User, Key> | null
 }
 
-/**
- * Delete user by id
- * @param {ObjectId} userId
- * @returns {Promise<UserWithWallet>}
- */
 const deleteUserById = async (userId: number): Promise<UserWithWallet> => {
   const user = await getUserById(userId)
   if (!user) {
@@ -255,11 +217,6 @@ const deleteUserById = async (userId: number): Promise<UserWithWallet> => {
   return user
 }
 
-/**
- * Get user wallet
- * @param {ObjectId} userId
- * @returns {Promise<Wallet>}
- */
 const getUserWallet = async (userId: number): Promise<Wallet> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -269,12 +226,50 @@ const getUserWallet = async (userId: number): Promise<Wallet> => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
-
   if (!user.wallet) {
     throw new ApiError(httpStatus.NOT_FOUND, "Wallet not found")
   }
-
   return user.wallet
+}
+
+const addSeedToUser = async <Key extends keyof User>(
+  userId: number,
+  keys: Key[] = USER_DEFAULT_FIELDS as Key[]
+): Promise<{ user: Pick<User, Key>; seedPhrase: string }> => {
+  const user = await getUserById(userId, [
+    "id",
+    "email",
+    "twitterId",
+    "seedHash",
+    "hasSeed",
+    "nostrPubkey",
+  ])
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+  }
+
+  // Check for other authentication methods
+  const hasOtherAuthMethod = user.email || user.twitterId || user.nostrPubkey
+  if (user.seedHash && user.hasSeed && !hasOtherAuthMethod) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Cannot update seed phrase without another auth method"
+    )
+  }
+
+  const seedPhrase = getRecoveryPassword(5, " ")
+  const seedHash = hashSeedPhrase(seedPhrase)
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      seedHash,
+      hasSeed: true,
+    },
+    select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
+  })
+
+  return { user: updatedUser as Pick<User, Key>, seedPhrase }
 }
 
 export default {
@@ -288,4 +283,5 @@ export default {
   deleteUserById,
   getUserWithWallet,
   getUserWallet,
+  addSeedToUser,
 }

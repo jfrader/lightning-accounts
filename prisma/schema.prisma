@@ -23,6 +23,7 @@ model User {
   twitter             String?
   nostrPubkey         String?      @unique
   seedHash            String?
+  hasSeed             Boolean      @default(false)
   avatarUrl           String?
   name                String
   role                Role         @default(USER)

@@ -438,4 +438,35 @@ router.get(
   authController.loginTwitter
 )
 
+/**
+ * @swagger
+ * /auth/add-seed:
+ *   post:
+ *     summary: Add a seed phrase to an existing user
+ *     operationId: addSeed
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 seedPhrase:
+ *                   type: string
+ *                   description: The generated seed phrase
+ *       "400":
+ *         $ref: '#/components/responses/BadRequest'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ *       "404":
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.post("/add-seed", auth(), validate(authValidation.addSeed), authController.addSeed)
+
 export default router

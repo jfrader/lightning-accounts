@@ -2,8 +2,13 @@ import { Strategy as CustomStrategy } from "passport-custom"
 import { Request } from "express"
 import prisma from "../../client"
 import logger from "../logger"
-import { isPasswordMatch } from "../../utils/encryption"
+import { createHmac } from "crypto"
 import { SessionUser } from "../../types/user"
+import config from "../config"
+
+const hashSeedPhrase = (seedPhrase: string): string => {
+  return createHmac("sha256", config.seedHashSecret).update(seedPhrase).digest("hex")
+}
 
 export const seedStrategy = new CustomStrategy(
   async (req: Request, done: (err: unknown, user: SessionUser | false) => void) => {
@@ -15,8 +20,13 @@ export const seedStrategy = new CustomStrategy(
         return done(new Error("Seed phrase is required"), false)
       }
 
+      const hashedSeed = hashSeedPhrase(seedPhrase)
+
       const user = await prisma.user.findFirst({
-        where: { seedHash: { not: null } },
+        where: {
+          seedHash: hashedSeed,
+          hasSeed: true,
+        },
         select: {
           id: true,
           email: true,
@@ -26,22 +36,22 @@ export const seedStrategy = new CustomStrategy(
           role: true,
           avatarUrl: true,
           seedHash: true,
+          hasSeed: true,
         },
       })
 
-      if (!user || !user.seedHash) {
-        logger.error("User not found or no seed hash", { seedPhraseLength: seedPhrase.length })
+      if (!user) {
+        logger.error("User not found with provided seed phrase", {
+          seedPhraseLength: seedPhrase.length,
+          hashedSeed,
+        })
         return done(null, false)
       }
 
-      logger.debug("Comparing seed phrase", { userId: user.id, email: user.email })
-      const isMatch = await isPasswordMatch(seedPhrase, user.seedHash)
-      if (!isMatch) {
-        logger.error("Seed phrase mismatch", { userId: user.id, email: user.email })
-        return done(null, false)
-      }
-
-      logger.info("Seed phrase authentication successful", { userId: user.id, email: user.email })
+      logger.info("Seed phrase authentication successful", {
+        userId: user.id,
+        email: user.email,
+      })
       done(null, user)
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error"

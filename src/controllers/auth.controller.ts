@@ -19,7 +19,6 @@ const register = catchAsync(async (req, res) => {
   const user = await userService.createUser(email, password, name)
   const userWithoutPassword = exclude(user, ["password", "createdAt", "updatedAt"])
   const tokens = await tokenService.generateAuthTokens(user)
-
   authCookie(tokens, res).status(httpStatus.CREATED).send({ user: userWithoutPassword })
 })
 
@@ -33,9 +32,7 @@ const login = catchAsync(async (req, res) => {
 const registerWithSeed = catchAsync(async (req, res) => {
   const { name } = req.body
   const { user, seedPhrase } = await userService.createUserWithSeed(name)
-  const tokens = await tokenService.generateAuthTokens(user)
-
-  authCookie(tokens, res).status(httpStatus.CREATED).send({ user, seedPhrase })
+  res.status(httpStatus.CREATED).send({ user, seedPhrase })
 })
 
 const loginWithSeed = catchAsync(async (req, res) => {
@@ -46,13 +43,10 @@ const loginWithSeed = catchAsync(async (req, res) => {
 
 const loginTwitter = catchAsync(async (req, res) => {
   const user = req.user as User | void
-
   if (!user) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate")
   }
-
   const tokens = await tokenService.generateAuthTokens(user)
-
   authCookie(tokens, res).redirect(config.origin)
 })
 
@@ -65,7 +59,6 @@ const logout = catchAsync(async (req, res) => {
   } catch (e: any) {
     logger.error(e.message)
   }
-
   res.status(httpStatus.NO_CONTENT).send()
 })
 
@@ -78,14 +71,12 @@ const refreshTokens = catchAsync(async (req, res) => {
 
 const forgotPassword = catchAsync(async (req, res) => {
   const resetPasswordToken = await tokenService.generateResetPasswordToken(req.body.email)
-
   if (resetPasswordToken) {
     emailService
       .sendResetPasswordEmail(req.body.email, resetPasswordToken)
       .then(() => logger.info("Sent reset password email to " + req.body.email))
       .catch(() => logger.warn("Tried to reset password on non existent email " + req.body.email))
   }
-
   res.status(httpStatus.NO_CONTENT).send()
 })
 
@@ -96,13 +87,10 @@ const resetPassword = catchAsync(async (req, res) => {
 
 const sendVerificationEmail = catchAsync(async (req, res) => {
   const user = req.user as User
-
   if (!user.email) {
     throw new ApiError(httpStatus.BAD_REQUEST, "User doesn't have an email setup")
   }
-
   const verifyEmailToken = await tokenService.generateVerifyEmailToken(user)
-
   await emailService.sendVerificationEmail(user.email, verifyEmailToken)
   res.status(httpStatus.NO_CONTENT).send()
 })
@@ -119,6 +107,13 @@ const getMe = catchAsync(async (req, res) => {
   authCookieResponse(tokens, res).send(userWithWallet)
 })
 
+const addSeed = catchAsync(async (req, res) => {
+  const user = req.user as User
+  const { user: updatedUser, seedPhrase } = await userService.addSeedToUser(user.id)
+  const tokens = await tokenService.generateAuthTokens(updatedUser)
+  authCookieResponse(tokens, res).status(httpStatus.OK).send({ user: updatedUser, seedPhrase })
+})
+
 export default {
   register,
   login,
@@ -132,4 +127,5 @@ export default {
   getMe,
   registerWithSeed,
   loginWithSeed,
+  addSeed,
 }

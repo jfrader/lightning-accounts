@@ -52,6 +52,7 @@ const envVarsSchema = Joi.object()
     LND_CERT: Joi.string().description("LND tls.cert encoded in base64"),
     LND_ADMIN_MACAROON: Joi.string().description("LND admin.macaroon encoded in base64"),
     LND_SOCKET: Joi.string().description("LND host socket"),
+    SEED_HASH_SECRET: Joi.string().required().description("Secret key for hashing seed phrases"),
   })
   .unknown()
 
@@ -80,7 +81,7 @@ export default {
   },
   wallet: {
     limit: envVars.WALLET_LIMIT,
-    reconcileDryRun: process.env.WALLET_RECONCILE_DRY_RUN === "1", // Add this
+    reconcileDryRun: process.env.WALLET_RECONCILE_DRY_RUN === "1",
   },
   jwt: {
     prefix: envVars.JWT_COOKIE_PREFIX || "",
@@ -115,4 +116,5 @@ export default {
     },
     from: envVars.EMAIL_FROM,
   },
+  seedHashSecret: envVars.SEED_HASH_SECRET,
 }

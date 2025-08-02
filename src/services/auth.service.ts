@@ -9,6 +9,7 @@ import { AuthTokensResponse } from "../types/response"
 import exclude from "../utils/exclude"
 import logger from "../config/logger"
 import config from "../config/config"
+import { getRecoveryPassword } from "../utils/string/getRandomWord"
 
 const loginUserWithEmailAndPassword = async (
   email: string,
@@ -28,6 +29,7 @@ const loginUserWithEmailAndPassword = async (
     "twitterId",
     "avatarUrl",
     "nostrPubkey",
+    "hasSeed",
   ])
 
   if (!user) {
@@ -53,49 +55,6 @@ const loginUserWithEmailAndPassword = async (
 
   logger.info("Login successful", { email })
   return exclude(user, ["password"])
-}
-
-const loginUserWithSeedPhrase = async (
-  seedPhrase: string
-): Promise<Omit<User, "password" | "seedHash">> => {
-  logger.info("Attempting seed phrase login", {})
-  if (!seedPhrase || typeof seedPhrase !== "string") {
-    logger.error("Invalid seed phrase", { seedPhraseLength: seedPhrase?.length || 0 })
-    throw new ApiError(httpStatus.BAD_REQUEST, "Seed phrase is required")
-  }
-
-  const user = await prisma.user.findFirst({
-    where: { seedHash: { not: null } },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      isEmailVerified: true,
-      createdAt: true,
-      updatedAt: true,
-      twitter: true,
-      twitterId: true,
-      nostrPubkey: true,
-      avatarUrl: true,
-      seedHash: true,
-    },
-  })
-
-  if (!user || !user.seedHash) {
-    logger.error("User not found or no seed hash", { seedPhraseLength: seedPhrase.length })
-    throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid seed phrase")
-  }
-
-  logger.debug("Comparing seed phrase", { userId: user.id, email: user.email })
-  const isMatch = await isPasswordMatch(seedPhrase, user.seedHash)
-  if (!isMatch) {
-    logger.error("Seed phrase mismatch", { userId: user.id, email: user.email })
-    throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid seed phrase")
-  }
-
-  logger.info("Seed phrase login successful", { userId: user.id, email: user.email })
-  return exclude(user, ["seedHash"])
 }
 
 const logout = async (refreshToken: string): Promise<void> => {
@@ -164,14 +123,13 @@ const resetPassword = async (resetPasswordToken: string, newPassword: string): P
       const updatedUser = await tx.user.update({
         where: { id: user.id },
         data: { password: encryptedPassword },
-        select: { id: true, email: true, name: true, role: true },
+        select: { id: true, email: true, name: true, role: true, hasSeed: true },
       })
       logger.debug("Password updated in transaction", {
         userId: updatedUser.id,
         email: updatedUser.email,
       })
 
-      // Verify the update
       const verifiedUser = await tx.user.findUnique({
         where: { id: user.id },
         select: { password: true },
@@ -198,6 +156,63 @@ const resetPassword = async (resetPasswordToken: string, newPassword: string): P
   }
 }
 
+const generateSeedPhrase = async (userId: number): Promise<string> => {
+  try {
+    logger.info("Attempting to generate seed phrase", { userId })
+    const user = await userService.getUserById(userId)
+    if (!user) {
+      logger.error("User not found", { userId })
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+    }
+
+    const seedPhrase = getRecoveryPassword(5, " ")
+    logger.debug("Generated seed phrase", {
+      userId,
+      email: user.email,
+      seedPhraseLength: seedPhrase.length,
+    })
+    const encryptedSeed = await encryptPassword(seedPhrase)
+
+    await prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: { seedHash: encryptedSeed, hasSeed: true },
+        select: { id: true, email: true, name: true, role: true, hasSeed: true },
+      })
+      logger.debug("Seed phrase updated in transaction", {
+        userId: updatedUser.id,
+        email: updatedUser.email,
+      })
+
+      const verifiedUser = await tx.user.findUnique({
+        where: { id: userId },
+        select: { seedHash: true, hasSeed: true },
+      })
+      if (!verifiedUser || verifiedUser.seedHash !== encryptedSeed || !verifiedUser.hasSeed) {
+        logger.error("Seed phrase update verification failed", {
+          userId,
+          expectedHash: encryptedSeed,
+          actualHash: verifiedUser?.seedHash,
+          hasSeed: verifiedUser?.hasSeed,
+        })
+        throw new Error("Seed phrase update did not persist")
+      }
+      logger.debug("Seed phrase update verified", {
+        userId,
+        seedHash: verifiedUser.seedHash,
+        hasSeed: verifiedUser.hasSeed,
+      })
+    })
+    logger.info("Seed phrase generated and set successfully", { userId, email: user.email })
+    return seedPhrase
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const errorStack = error instanceof Error ? error.stack : undefined
+    logger.error("Seed phrase generation failed", { error: errorMessage, stack: errorStack })
+    throw new ApiError(httpStatus.BAD_REQUEST, "Seed phrase generation failed")
+  }
+}
+
 const verifyEmail = async (verifyEmailToken: string): Promise<void> => {
   try {
     logger.info("Attempting email verification", { verifyEmailToken })
@@ -214,14 +229,13 @@ const verifyEmail = async (verifyEmailToken: string): Promise<void> => {
       const updatedUser = await tx.user.update({
         where: { id: verifyEmailTokenData.userId },
         data: { isEmailVerified: true },
-        select: { id: true, email: true, name: true, role: true },
+        select: { id: true, email: true, name: true, role: true, hasSeed: true },
       })
       logger.debug("Email verified in transaction", {
         userId: updatedUser.id,
         email: updatedUser.email,
       })
 
-      // Verify the update
       const verifiedUser = await tx.user.findUnique({
         where: { id: verifyEmailTokenData.userId },
         select: { isEmailVerified: true },
@@ -243,11 +257,11 @@ const verifyEmail = async (verifyEmailToken: string): Promise<void> => {
 
 export default {
   loginUserWithEmailAndPassword,
-  loginUserWithSeedPhrase,
   isPasswordMatch,
   encryptPassword,
   logout,
   refreshAuth,
   resetPassword,
+  generateSeedPhrase,
   verifyEmail,
 }

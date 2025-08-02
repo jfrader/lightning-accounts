@@ -28,6 +28,7 @@ const jwtVerify: VerifyCallback = async (
         role: true,
         avatarUrl: true,
         nostrPubkey: true,
+        hasSeed: true,
       },
       where: { id: payload.sub },
     })

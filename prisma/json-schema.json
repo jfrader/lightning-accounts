@@ -51,6 +51,10 @@
             "null"
           ]
         },
+        "hasSeed": {
+          "type": "boolean",
+          "default": false
+        },
         "avatarUrl": {
           "type": [
             "string",

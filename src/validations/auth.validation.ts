@@ -1,8 +1,6 @@
-// src/validations/auth.validation.ts
 import Joi from "joi"
 import { password } from "./custom.validation"
 
-// Custom validation for seed phrase (5 words)
 const seedPhrase = Joi.string()
   .required()
   .pattern(/^\w+\s+\w+\s+\w+\s+\w+\s+\w+$/)
@@ -62,6 +60,10 @@ const loginWithSeed = {
   }),
 }
 
+const addSeed = {
+  body: Joi.object().keys({}).optional(),
+}
+
 export default {
   register,
   login,
@@ -71,4 +73,5 @@ export default {
   verifyEmail,
   registerWithSeed,
   loginWithSeed,
+  addSeed,
 }
