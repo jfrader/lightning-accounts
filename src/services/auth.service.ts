@@ -19,7 +19,7 @@ import config from "../config/config"
 const loginUserWithEmailAndPassword = async (
   email: string,
   password: string
-): Promise<Omit<User, "password">> => {
+): Promise<Omit<User, "password" | "seedHash">> => {
   const user = await userService.getUserByEmail(email, [
     "id",
     "email",
@@ -48,6 +48,44 @@ const loginUserWithEmailAndPassword = async (
   }
 
   return exclude(user, ["password"])
+}
+
+/**
+ * Login with seed phrase
+ * @param {string} seedPhrase
+ * @returns {Promise<Omit<User, 'password' | 'seedHash'>>}
+ */
+const loginUserWithSeedPhrase = async (
+  seedPhrase: string
+): Promise<Omit<User, "password" | "seedHash">> => {
+  const user = await prisma.user.findFirst({
+    where: { seedHash: { not: null } },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      isEmailVerified: true,
+      createdAt: true,
+      updatedAt: true,
+      twitter: true,
+      twitterId: true,
+      nostrPubkey: true,
+      avatarUrl: true,
+      seedHash: true,
+    },
+  })
+
+  if (!user || !user.seedHash) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid seed phrase")
+  }
+
+  const isMatch = await isPasswordMatch(seedPhrase, user.seedHash)
+  if (!isMatch) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid seed phrase")
+  }
+
+  return exclude(user, ["seedHash"])
 }
 
 /**
@@ -144,6 +182,7 @@ const verifyEmail = async (verifyEmailToken: string): Promise<void> => {
 
 export default {
   loginUserWithEmailAndPassword,
+  loginUserWithSeedPhrase,
   isPasswordMatch,
   encryptPassword,
   logout,

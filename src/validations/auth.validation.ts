@@ -1,5 +1,12 @@
+// src/validations/auth.validation.ts
 import Joi from "joi"
 import { password } from "./custom.validation"
+
+// Custom validation for seed phrase (5 words)
+const seedPhrase = Joi.string()
+  .required()
+  .pattern(/^\w+\s+\w+\s+\w+\s+\w+\s+\w+$/)
+  .message("Seed phrase must consist of exactly 5 words separated by spaces")
 
 const register = {
   body: Joi.object().keys({
@@ -43,6 +50,18 @@ const verifyEmail = {
   }),
 }
 
+const registerWithSeed = {
+  body: Joi.object().keys({
+    name: Joi.string().required().max(16),
+  }),
+}
+
+const loginWithSeed = {
+  body: Joi.object().keys({
+    seedPhrase,
+  }),
+}
+
 export default {
   register,
   login,
@@ -50,4 +69,6 @@ export default {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  registerWithSeed,
+  loginWithSeed,
 }

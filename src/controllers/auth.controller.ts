@@ -30,6 +30,20 @@ const login = catchAsync(async (req, res) => {
   authCookie(tokens, res).send({ user })
 })
 
+const registerWithSeed = catchAsync(async (req, res) => {
+  const { name } = req.body
+  const { user, seedPhrase } = await userService.createUserWithSeed(name)
+  const tokens = await tokenService.generateAuthTokens(user)
+
+  authCookie(tokens, res).status(httpStatus.CREATED).send({ user, seedPhrase })
+})
+
+const loginWithSeed = catchAsync(async (req, res) => {
+  const user = req.user as User
+  const tokens = await tokenService.generateAuthTokens(user)
+  authCookie(tokens, res).send({ user: exclude(user, ["password", "seedHash"]) })
+})
+
 const loginTwitter = catchAsync(async (req, res) => {
   const user = req.user as User | void
 
@@ -109,4 +123,6 @@ export default {
   sendVerificationEmail,
   verifyEmail,
   getMe,
+  registerWithSeed,
+  loginWithSeed,
 }

@@ -25,6 +25,7 @@ const allRoles = {
     UserPermission.wallet_pay,
     UserPermission.users_read,
     UserPermission.users_write,
+    UserPermission.wallet_pay_user,
   ],
 }
 

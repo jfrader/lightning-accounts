@@ -15,6 +15,7 @@ import ApiError from "./utils/ApiError"
 import { jwtStrategy } from "./config/passport/jwt.strategy"
 import { applicationStrategy } from "./config/passport/application.strategy"
 import { twitterStrategy } from "./config/passport/twitter.strategy"
+import { seedStrategy } from "./config/passport/seed.strategy"
 import session from "express-session"
 import { User } from "@prisma/client"
 import path from "node:path"
@@ -85,6 +86,7 @@ app.use(passport.session())
 passport.use("application", applicationStrategy)
 passport.use("jwt", jwtStrategy)
 passport.use("twitter", twitterStrategy)
+passport.use("seed", seedStrategy)
 
 if (config.env === "production") {
   app.use("/v1/auth", authLimiter)

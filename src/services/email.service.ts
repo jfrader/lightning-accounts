@@ -2,13 +2,18 @@ import nodemailer from "nodemailer"
 import config from "../config/config"
 import logger from "../config/logger"
 
-const transport: nodemailer.Transporter = nodemailer.createTransport(config.email.smtp)
+const transport: nodemailer.Transporter = nodemailer.createTransport({
+  ...config.email.smtp,
+  secure: false,
+})
+
+// Verify SMTP connection
 transport
   .verify()
   .then(() => logger.info("Connected to email server"))
-  .catch(() =>
+  .catch((error) =>
     logger.warn(
-      "Unable to connect to email server. Make sure you have configured the SMTP options in .env"
+      `Unable to connect to email server: ${error.message}. Make sure you have configured the SMTP options in .env`
     )
   )
 
@@ -20,8 +25,15 @@ transport
  * @returns {Promise}
  */
 const sendEmail = async (to: string, subject: string, text: string) => {
-  const msg = { from: config.email.from, to, subject, text }
-  await transport.sendMail(msg)
+  try {
+    const msg = { from: config.email.from, to, subject, text }
+    const info = await transport.sendMail(msg)
+    logger.info(`Email sent to ${to}: ${info.messageId}`)
+    return info
+  } catch (error: any) {
+    logger.error(`Failed to send email to ${to}: ${error.message}`)
+    throw error
+  }
 }
 
 /**
@@ -31,11 +43,9 @@ const sendEmail = async (to: string, subject: string, text: string) => {
  * @returns {Promise}
  */
 const sendResetPasswordEmail = async (to: string, token: string) => {
-  const subject = "Reset password"
-  const resetPasswordUrl = `http://link-to-app/reset-password?token=${token}`
-  const text = `Dear user,
-To reset your password, click on this link: ${resetPasswordUrl}
-If you did not request any password resets, then ignore this email.`
+  const subject = "Reset Password"
+  const resetPasswordUrl = `${config.origin}/reset-password?token=${token}`
+  const text = `Querido usuario,\n\nPara resetear tu password, hace click en este link: ${resetPasswordUrl}\nSi no pediste resetear tu password, ignora este email.`
   await sendEmail(to, subject, text)
 }
 
@@ -47,9 +57,8 @@ If you did not request any password resets, then ignore this email.`
  */
 const sendVerificationEmail = async (to: string, token: string) => {
   const subject = "Email Verification"
-  const verificationEmailUrl = `http://link-to-app/verify-email?token=${token}`
-  const text = `Dear user,
-To verify your email, click on this link: ${verificationEmailUrl}`
+  const verificationEmailUrl = `${config.origin}/verify-email?token=${token}`
+  const text = `Querido usuario,\n\nPara verificar tu email, hace click en este link: ${verificationEmailUrl}\nSi no te registraste en Trucoshi, ignora este email.`
   await sendEmail(to, subject, text)
 }
 

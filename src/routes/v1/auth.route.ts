@@ -150,6 +150,95 @@ router.post("/logout", authController.logout)
 
 /**
  * @swagger
+ * /auth/register-seed:
+ *   post:
+ *     summary: Register a new user with a seed phrase
+ *     operationId: registerWithSeed
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *             example:
+ *               name: fake name
+ *     responses:
+ *       "201":
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 seedPhrase:
+ *                   type: string
+ *                   description: The generated seed phrase
+ *       "400":
+ *         $ref: '#/components/responses/BadRequest'
+ */
+router.post(
+  "/register-seed",
+  validate(authValidation.registerWithSeed),
+  authController.registerWithSeed
+)
+
+/**
+ * @swagger
+ * /auth/login-seed:
+ *   post:
+ *     summary: Log in a user with a seed phrase
+ *     operationId: loginWithSeed
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - seedPhrase
+ *             properties:
+ *               seedPhrase:
+ *                 type: string
+ *             example:
+ *               seedPhrase: apple banana cherry date elder
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       "401":
+ *         description: Invalid seed phrase
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               code: 401
+ *               message: Invalid seed phrase
+ */
+router.post(
+  "/login-seed",
+  validate(authValidation.loginWithSeed),
+  passport.authenticate("seed", { session: false }),
+  authController.loginWithSeed
+)
+
+/**
+ * @swagger
  * /auth/refresh-tokens:
  *   post:
  *     summary: Refresh authentication tokens

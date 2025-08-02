@@ -22,6 +22,7 @@ model User {
   twitterId           String?      @unique
   twitter             String?
   nostrPubkey         String?      @unique
+  seedHash            String?
   avatarUrl           String?
   name                String
   role                Role         @default(USER)

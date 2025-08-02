@@ -11,12 +11,15 @@ const jwtOptions = {
   jwtFromRequest: cookieExtractor,
 }
 
-const jwtVerify: VerifyCallback = async (payload, done) => {
+const jwtVerify: VerifyCallback = async (
+  payload,
+  done: (err: unknown, user: SessionUser | false) => void
+) => {
   try {
     if (payload.type !== TokenType.ACCESS) {
       throw new Error("Invalid token type")
     }
-    const user: SessionUser | null = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       select: {
         id: true,
         email: true,
@@ -24,6 +27,7 @@ const jwtVerify: VerifyCallback = async (payload, done) => {
         name: true,
         role: true,
         avatarUrl: true,
+        nostrPubkey: true,
       },
       where: { id: payload.sub },
     })

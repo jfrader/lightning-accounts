@@ -6,6 +6,7 @@ import { encryptPassword } from "../utils/encryption"
 import { UserWithWallet } from "../types/user"
 import { Profile } from "@superfaceai/passport-twitter-oauth2"
 import authService from "./auth.service"
+import { getRecoveryPassword } from "../utils/string/getRandomWord"
 
 export const USER_DEFAULT_FIELDS = ["id", "name", "role", "avatarUrl"]
 export const USER_PRIVATE_FIELDS = ["email", "twitter", "isEmailVerified", "createdAt", "updatedAt"]
@@ -34,6 +35,31 @@ const createUser = async (
       wallet: { create: { balanceInSats: 0, disabled: false } },
     },
   })
+}
+
+const createUserWithSeed = async (name: string) => {
+  const seedPhrase = getRecoveryPassword()
+  const seedHash = await encryptPassword(seedPhrase)
+
+  const user = await prisma.user.create({
+    data: {
+      name,
+      seedHash,
+      role: Role.USER,
+      wallet: { create: { balanceInSats: 0, disabled: false } },
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      avatarUrl: true,
+      twitter: true,
+      nostrPubkey: true,
+    },
+  })
+
+  return { user, seedPhrase }
 }
 
 /**
@@ -69,6 +95,7 @@ const upsertTwitterUser = async (
       email: true,
       twitter: true,
       avatarUrl: true,
+      nostrPubkey: true,
       name: true,
       role: true,
     },
@@ -252,6 +279,7 @@ const getUserWallet = async (userId: number): Promise<Wallet> => {
 
 export default {
   createUser,
+  createUserWithSeed,
   upsertTwitterUser,
   queryUsers,
   getUserById,

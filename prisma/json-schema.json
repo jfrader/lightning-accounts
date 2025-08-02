@@ -45,6 +45,12 @@
             "null"
           ]
         },
+        "seedHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "avatarUrl": {
           "type": [
             "string",
