@@ -4,7 +4,7 @@ import compression from "compression"
 import cors, { CorsOptions } from "cors"
 import passport from "passport"
 import httpStatus from "http-status"
-import config from "./config/config"
+import config from "./config/config" // Ensure this imports the updated config
 import morgan from "./config/morgan"
 import xss from "./middlewares/xss"
 import cookieParser from "cookie-parser"
@@ -25,7 +25,19 @@ import { getCookieName } from "./utils/authCookie"
 const secure = config.env === "production"
 
 const app = express()
-app.set("trust proxy", 1)
+
+// Set trust proxy based on config
+const trustedProxies = ["loopback"]
+if (config.trustedProxyIp) {
+  trustedProxies.push(config.trustedProxyIp)
+}
+app.set("trust proxy", trustedProxies)
+
+// Debug logging for IP headers
+app.use((req, res, next) => {
+  console.log("Client IP:", req.ip, "X-Forwarded-For:", req.headers["x-forwarded-for"])
+  next()
+})
 
 passport.serializeUser(function (user, done) {
   done(null, user)
@@ -77,8 +89,6 @@ app.use(
     },
   })
 )
-
-app.enable("trust proxy")
 
 app.use(passport.initialize())
 app.use(passport.session())
