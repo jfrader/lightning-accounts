@@ -1,6 +1,41 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "Session": {
+      "type": "object",
+      "properties": {
+        "sid": {
+          "type": "string"
+        },
+        "sess": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "expire": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "sid",
+        "expire",
+        "updatedAt"
+      ]
+    },
     "User": {
       "type": "object",
       "properties": {
@@ -331,6 +366,9 @@
   },
   "type": "object",
   "properties": {
+    "session": {
+      "$ref": "#/definitions/Session"
+    },
     "user": {
       "$ref": "#/definitions/User"
     },

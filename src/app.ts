@@ -21,8 +21,11 @@ import { User } from "@prisma/client"
 import path from "node:path"
 import { SessionCookie } from "./types/tokens"
 import { getCookieName } from "./utils/authCookie"
+import { PrismaClient } from "@prisma/client"
+import { PrismaSessionStore } from "./config/session"
 
 const secure = config.env === "production"
+const prisma = new PrismaClient()
 
 const app = express()
 
@@ -79,6 +82,7 @@ app.get("/js/autoclose.js", (req, res) => {
 
 app.use(
   session({
+    store: new PrismaSessionStore(prisma),
     secret: config.jwt.secret,
     name: getCookieName(SessionCookie.sid),
     proxy: secure,
