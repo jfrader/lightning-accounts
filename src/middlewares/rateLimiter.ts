@@ -1,9 +1,7 @@
-import rateLimit from "express-rate-limit"
+import rateLimit, { Options } from "express-rate-limit"
 import { Request } from "express"
 
-export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+const BASE_LIMITER: Partial<Options> = {
   message: { message: "Too many requests, please try again later." },
   keyGenerator: (req: Request): string => {
     const xForwardedFor = req.headers["x-forwarded-for"]
@@ -22,8 +20,20 @@ export const authLimiter = rateLimit({
 
     return clientIp || "unknown"
   },
-  skipFailedRequests: true,
   handler: (_req, res) => {
     res.status(429).json({ message: "Too many requests, please try again later." })
   },
+}
+
+export const appLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  skipFailedRequests: true,
+  ...BASE_LIMITER,
+})
+
+export const authLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 50,
+  ...BASE_LIMITER,
 })
