@@ -150,42 +150,27 @@ const generateSeedPhrase = async (userId: number): Promise<string> => {
     }
 
     const seedPhrase = getRecoveryPassword(5, " ")
-    logger.debug("Generated seed phrase", {
-      userId,
-      email: user.email,
-      seedPhraseLength: seedPhrase.length,
-    })
+    logger.debug("Generated seed phrase")
     const encryptedSeed = await encryptPassword(seedPhrase)
 
     await prisma.$transaction(async (tx) => {
-      const updatedUser = await tx.user.update({
+      await tx.user.update({
         where: { id: userId },
         data: { seedHash: encryptedSeed, hasSeed: true },
         select: { id: true, email: true, name: true, role: true, hasSeed: true },
       })
-      logger.debug("Seed phrase updated in transaction", {
-        userId: updatedUser.id,
-        email: updatedUser.email,
-      })
+
+      logger.debug("Seed phrase updated in transaction")
 
       const verifiedUser = await tx.user.findUnique({
         where: { id: userId },
         select: { seedHash: true, hasSeed: true },
       })
       if (!verifiedUser || verifiedUser.seedHash !== encryptedSeed || !verifiedUser.hasSeed) {
-        logger.error("Seed phrase update verification failed", {
-          userId,
-          expectedHash: encryptedSeed,
-          actualHash: verifiedUser?.seedHash,
-          hasSeed: verifiedUser?.hasSeed,
-        })
+        logger.error("Seed phrase update verification failed")
         throw new Error("Seed phrase update did not persist")
       }
-      logger.debug("Seed phrase update verified", {
-        userId,
-        seedHash: verifiedUser.seedHash,
-        hasSeed: verifiedUser.hasSeed,
-      })
+      logger.debug("Seed phrase update verified")
     })
     logger.info("Seed phrase generated and set successfully")
     return seedPhrase
