@@ -4,7 +4,7 @@ import compression from "compression"
 import cors, { CorsOptions } from "cors"
 import passport from "passport"
 import httpStatus from "http-status"
-import config from "./config/config" // Ensure this imports the updated config
+import config from "./config/config"
 import morgan from "./config/morgan"
 import xss from "./middlewares/xss"
 import cookieParser from "cookie-parser"
@@ -27,15 +27,19 @@ const secure = config.env === "production"
 const app = express()
 
 // Set trust proxy based on config
-const trustedProxies = ["loopback"]
-if (config.trustedProxyIp) {
-  trustedProxies.push(config.trustedProxyIp)
-}
+const trustedProxies = ["loopback", ...config.trustedProxyIps]
 app.set("trust proxy", trustedProxies)
 
 // Debug logging for IP headers
 app.use((req, res, next) => {
-  console.log("Client IP:", req.ip, "X-Forwarded-For:", req.headers["x-forwarded-for"])
+  console.log(
+    "Client IP:",
+    req.ip,
+    "X-Forwarded-For:",
+    req.headers["x-forwarded-for"],
+    "X-Real-IP:",
+    req.headers["x-real-ip"]
+  )
   next()
 })
 

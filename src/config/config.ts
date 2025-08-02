@@ -19,7 +19,7 @@ const envVarsSchema = Joi.object()
     NODE_TRUSTED_PROXY_IP: Joi.string()
       .empty("")
       .default("")
-      .description("IP address of the trusted external proxy server for trust proxy setting"),
+      .description("Comma-separated IP addresses of trusted proxy servers for trust proxy setting"),
     NODE_DEBUG_LEVEL: Joi.string().description(
       "Debug level (trace, debug, info, warning, error, fatal)"
     ),
@@ -74,7 +74,9 @@ export default {
   origin: envVars.NODE_ORIGIN,
   host: envVars.NODE_HOST,
   domain: envVars.NODE_DOMAIN,
-  trustedProxyIp: envVars.NODE_TRUSTED_PROXY_IP,
+  trustedProxyIps: envVars.NODE_TRUSTED_PROXY_IP
+    ? envVars.NODE_TRUSTED_PROXY_IP.split(",").map((ip: string) => ip.trim())
+    : [],
   debug_level: envVars.NODE_DEBUG_LEVEL,
   application: {
     address: envVars.APPLICATION_ADDRESS,
@@ -100,7 +102,7 @@ export default {
   },
   lnurl: {
     host: envVars.LNURL_HOST,
-    port: envVars.LNUR_PORT, // Note: Typo in original (LNUR_PORT), consider fixing to LNURL_PORT
+    port: envVars.LNURL_PORT,
   },
   lightning: {
     driver: "lnd",
