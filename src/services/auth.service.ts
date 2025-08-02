@@ -45,11 +45,7 @@ const loginUserWithEmailAndPassword = async (
   logger.debug("Comparing password", { email, passwordLength: password.length })
   const isMatch = await isPasswordMatch(password, user.password as string)
   if (!isMatch) {
-    logger.error("Password mismatch", {
-      email,
-      passwordLength: password.length,
-      storedHash: user.password,
-    })
+    logger.error("Password mismatch")
     throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password")
   }
 
@@ -67,17 +63,17 @@ const logout = async (refreshToken: string): Promise<void> => {
     },
   })
   if (!refreshTokenData) {
-    logger.error("Refresh token not found", { refreshToken })
+    logger.error("Refresh token not found")
     throw new ApiError(httpStatus.NOT_FOUND, "Not found")
   }
   await prisma.token.delete({ where: { id: refreshTokenData.id } })
-  logger.info("Logout successful", { refreshToken })
+  logger.info("Logout successful")
 }
 
 const refreshAuth = async (refreshToken: string): Promise<AuthTokensResponse> => {
   try {
-    logger.info("Attempting to refresh auth tokens", { refreshToken })
-    logger.debug("Verifying refresh token", { refreshToken })
+    logger.info("Attempting to refresh auth tokens")
+    logger.debug("Verifying refresh token")
     const refreshTokenData = await tokenService.verifyToken(refreshToken, TokenType.REFRESH)
     const { userId } = refreshTokenData
     logger.debug("Refresh token verified", { userId })
@@ -107,17 +103,9 @@ const resetPassword = async (resetPasswordToken: string, newPassword: string): P
       logger.error("User not found for reset password", { userId: resetPasswordTokenData.userId })
       throw new ApiError(httpStatus.NOT_FOUND, "User not found")
     }
-    logger.debug("Hashing new password", {
-      userId: user.id,
-      email: user.email,
-      newPasswordLength: newPassword.length,
-    })
+    logger.debug("Hashing new password")
     const encryptedPassword = await encryptPassword(newPassword)
-    logger.debug("Updating user password", {
-      userId: user.id,
-      email: user.email,
-      encryptedPassword,
-    })
+    logger.debug("Updating user password")
 
     await prisma.$transaction(async (tx) => {
       const updatedUser = await tx.user.update({
@@ -135,19 +123,15 @@ const resetPassword = async (resetPasswordToken: string, newPassword: string): P
         select: { password: true },
       })
       if (!verifiedUser || verifiedUser.password !== encryptedPassword) {
-        logger.error("Password update verification failed", {
-          userId: user.id,
-          expectedHash: encryptedPassword,
-          actualHash: verifiedUser?.password,
-        })
+        logger.error("Password update verification failed")
         throw new Error("Password update did not persist")
       }
-      logger.debug("Password update verified", { userId: user.id, password: verifiedUser.password })
+      logger.debug("Password update verified", { userId: user.id })
 
       await tx.token.deleteMany({ where: { userId: user.id, type: TokenType.RESET_PASSWORD } })
-      logger.debug("Reset tokens deleted", { userId: user.id })
+      logger.debug("Reset tokens deleted")
     })
-    logger.info("Password reset successful", { userId: user.id, email: user.email })
+    logger.info("Password reset successful")
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
     const errorStack = error instanceof Error ? error.stack : undefined
@@ -203,7 +187,7 @@ const generateSeedPhrase = async (userId: number): Promise<string> => {
         hasSeed: verifiedUser.hasSeed,
       })
     })
-    logger.info("Seed phrase generated and set successfully", { userId, email: user.email })
+    logger.info("Seed phrase generated and set successfully")
     return seedPhrase
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
