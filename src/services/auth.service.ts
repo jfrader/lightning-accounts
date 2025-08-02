@@ -59,6 +59,11 @@ const loginUserWithSeedPhrase = async (
   seedPhrase: string
 ): Promise<Omit<User, "password" | "seedHash">> => {
   logger.info("Attempting seed phrase login", {})
+  if (!seedPhrase || typeof seedPhrase !== "string") {
+    logger.error("Invalid seed phrase", { seedPhraseLength: seedPhrase?.length || 0 })
+    throw new ApiError(httpStatus.BAD_REQUEST, "Seed phrase is required")
+  }
+
   const user = await prisma.user.findFirst({
     where: { seedHash: { not: null } },
     select: {
@@ -146,11 +151,13 @@ const resetPassword = async (resetPasswordToken: string, newPassword: string): P
     logger.debug("Hashing new password", {
       userId: user.id,
       email: user.email,
+      newPasswordLength: newPassword.length,
     })
     const encryptedPassword = await encryptPassword(newPassword)
     logger.debug("Updating user password", {
       userId: user.id,
       email: user.email,
+      encryptedPassword,
     })
 
     await prisma.$transaction(async (tx) => {
@@ -172,6 +179,8 @@ const resetPassword = async (resetPasswordToken: string, newPassword: string): P
       if (!verifiedUser || verifiedUser.password !== encryptedPassword) {
         logger.error("Password update verification failed", {
           userId: user.id,
+          expectedHash: encryptedPassword,
+          actualHash: verifiedUser?.password,
         })
         throw new Error("Password update did not persist")
       }

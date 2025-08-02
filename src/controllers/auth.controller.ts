@@ -78,7 +78,14 @@ const refreshTokens = catchAsync(async (req, res) => {
 
 const forgotPassword = catchAsync(async (req, res) => {
   const resetPasswordToken = await tokenService.generateResetPasswordToken(req.body.email)
-  await emailService.sendResetPasswordEmail(req.body.email, resetPasswordToken)
+
+  if (resetPasswordToken) {
+    emailService
+      .sendResetPasswordEmail(req.body.email, resetPasswordToken)
+      .then(() => logger.info("Sent reset password email to " + req.body.email))
+      .catch(() => logger.warn("Tried to reset password on non existent email " + req.body.email))
+  }
+
   res.status(httpStatus.NO_CONTENT).send()
 })
 
