@@ -64,6 +64,11 @@ const logout = catchAsync(async (req, res) => {
 
 const refreshTokens = catchAsync(async (req, res) => {
   const token = cookieExtractor(req, getCookieName(JwtCookie.refresh))
+
+  if (!token) {
+    res.status(httpStatus.BAD_REQUEST).send()
+  }
+
   const tokens = await authService.refreshAuth(token)
   req.session.touch()
   authCookie(tokens, res).status(httpStatus.NO_CONTENT).send()
