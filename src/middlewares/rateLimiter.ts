@@ -1,11 +1,18 @@
-import rateLimit, { Options } from "express-rate-limit"
+import rateLimit, { ipKeyGenerator, Options } from "express-rate-limit"
 import { Request } from "express"
 import config from "../config/config"
+import { cookieExtractor } from "../utils/authCookie"
+import { JwtCookie } from "../types"
 
 const keyGenerator = (req: Request): string => {
   const xForwardedFor = req.headers["x-forwarded-for"]
   const xRealIp = req.headers["x-real-ip"]
   let clientIp: string | undefined
+
+  const accessCookie = cookieExtractor(req, JwtCookie.access)
+  if (accessCookie) {
+    return accessCookie
+  }
 
   if (Array.isArray(xForwardedFor)) {
     clientIp = xForwardedFor[0]?.trim() || (typeof xRealIp === "string" ? xRealIp.trim() : req.ip)
@@ -16,7 +23,7 @@ const keyGenerator = (req: Request): string => {
     clientIp = typeof xRealIp === "string" ? xRealIp.trim() : req.ip
   }
 
-  return clientIp || "unknown"
+  return ipKeyGenerator(clientIp || "unknown")
 }
 
 const BASE_LIMITER: Partial<Options> = {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import request from "supertest"
 import { Server } from "http"
 import { initializeApp } from "../../src/server"

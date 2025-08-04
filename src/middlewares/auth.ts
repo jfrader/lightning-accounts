@@ -1,9 +1,11 @@
+import { Request, Response, NextFunction } from "express"
 import passport from "passport"
 import httpStatus from "http-status"
 import ApiError from "../utils/ApiError"
 import { UserPermission, roleRights } from "../config/roles"
-import { NextFunction, Request, Response } from "express"
 import { User } from "@prisma/client"
+import { cookieExtractor } from "../utils/authCookie"
+import { JwtCookie } from "../types"
 
 const verifyCallback =
   (
@@ -12,9 +14,16 @@ const verifyCallback =
     reject: (reason?: unknown) => void,
     requiredRights: UserPermission[]
   ) =>
-  async (err: any, user: User | false, info: unknown) => {
-    if (err || info || !user) {
-      return reject(new ApiError(httpStatus.UNAUTHORIZED, err?.message || "Please authenticate"))
+  async (err: any, user: User | false, _info: unknown) => {
+    if (err) {
+      return reject(new ApiError(httpStatus.UNAUTHORIZED, "Authentication error: " + err.message))
+    }
+    if (!user) {
+      const token = cookieExtractor(req, JwtCookie.refresh)
+      if (!token) {
+        return reject(new ApiError(httpStatus.BAD_REQUEST, "No authentication token provided"))
+      }
+      return reject(new ApiError(httpStatus.UNAUTHORIZED, "Invalid or expired token"))
     }
     req.user = user
 
@@ -42,9 +51,8 @@ const auth =
           verifyCallback(req, resolve, reject, requiredRights)
         )(req, res, next)
       })
-
       return next()
-    } catch (e) {
+    } catch {
       // noop
     }
 
@@ -56,13 +64,10 @@ const auth =
           verifyCallback(req, resolve, reject, requiredRights)
         )(req, res, next)
       })
-
       return next()
-    } catch (err: any) {
-      // noop
+    } catch (error) {
+      return next(error)
     }
-
-    next(new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate"))
   }
 
 export default auth
