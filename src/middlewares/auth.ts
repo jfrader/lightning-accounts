@@ -44,7 +44,7 @@ const auth =
       })
 
       return next()
-    } catch (e) {
+    } catch {
       // noop
     }
 
@@ -58,7 +58,7 @@ const auth =
       })
 
       return next()
-    } catch (err: any) {
+    } catch {
       // noop
     }
 
