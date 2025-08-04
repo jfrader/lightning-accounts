@@ -33,19 +33,6 @@ const app = express()
 const trustedProxies = ["loopback", ...config.trustedProxyIps]
 app.set("trust proxy", trustedProxies)
 
-// Debug logging for IP headers
-app.use((req, res, next) => {
-  console.log(
-    "Client IP:",
-    req.ip,
-    "X-Forwarded-For:",
-    req.headers["x-forwarded-for"],
-    "X-Real-IP:",
-    req.headers["x-real-ip"]
-  )
-  next()
-})
-
 passport.serializeUser(function (user, done) {
   done(null, user)
 })
@@ -74,7 +61,7 @@ app.use(compression())
 app.use(cookieParser(config.jwt.secret))
 app.use(cors(CORS_OPTS))
 
-app.options("*", cors(CORS_OPTS))
+app.options("*any", cors(CORS_OPTS))
 
 app.get("/js/autoclose.js", (req, res) => {
   res.sendFile("autoclose.js", { root: path.join(__dirname, "static") })

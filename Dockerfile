@@ -18,8 +18,7 @@ COPY tsconfig.json  /opt/app/
 COPY tsconfig.dist.json /opt/app/
 COPY jest.config.ts /opt/app/
 COPY .lintstagedrc /opt/app/
-COPY .eslintrc /opt/app/
-COPY .eslintignore /opt/app/
+COPY eslint.config.mjs /opt/app/
 COPY .env /opt/app/
 COPY .env.test /opt/app/
 COPY applications.json /opt/app/
