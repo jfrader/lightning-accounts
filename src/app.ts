@@ -8,7 +8,6 @@ import config from "./config/config"
 import morgan from "./config/morgan"
 import xss from "./middlewares/xss"
 import cookieParser from "cookie-parser"
-import { appLimiter, authLimiter } from "./middlewares/rateLimiter"
 import routes from "./routes/v1"
 import { errorConverter, errorHandler } from "./middlewares/error"
 import ApiError from "./utils/ApiError"
@@ -92,11 +91,6 @@ passport.use("application", applicationStrategy)
 passport.use("jwt", jwtStrategy)
 passport.use("twitter", twitterStrategy)
 passport.use("seed", seedStrategy)
-
-if (config.env === "production") {
-  app.use("/v1/auth", authLimiter)
-  app.use("/v1", appLimiter)
-}
 
 app.use("/v1", routes)
 

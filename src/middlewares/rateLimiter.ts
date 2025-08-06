@@ -26,26 +26,39 @@ const keyGenerator = (req: Request): string => {
   return ipKeyGenerator(clientIp || "unknown")
 }
 
+const skipTrustedIps = (req: Request): boolean => {
+  const key = keyGenerator(req)
+  const isTrusted = config.trustedProxyIps.includes(key)
+  console.log(`Rate limit check - Key: ${key}, Trusted: ${isTrusted}`)
+  return isTrusted
+}
+
 const BASE_LIMITER: Partial<Options> = {
   message: { message: "Too many requests, please try again later." },
   keyGenerator,
+  skip: skipTrustedIps,
   handler: (_req, res) => {
     res.status(429).json({ message: "Too many requests, please try again later." })
   },
 }
 
-export const appLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+export const authLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 50,
   skipFailedRequests: true,
   ...BASE_LIMITER,
 })
 
-export const authLimiter = rateLimit({
-  skip: (req) => {
-    return config.trustedProxyIps.includes(keyGenerator(req))
-  },
+export const userLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 75,
+  skipFailedRequests: true,
+  ...BASE_LIMITER,
+})
+
+export const walletLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
-  max: 50,
+  max: 30,
+  skipFailedRequests: true,
   ...BASE_LIMITER,
 })

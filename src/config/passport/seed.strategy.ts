@@ -13,10 +13,10 @@ const hashSeedPhrase = (seedPhrase: string): string => {
 export const seedStrategy = new CustomStrategy(
   async (req: Request, done: (err: unknown, user: SessionUser | false) => void) => {
     try {
-      logger.info("Attempting seed phrase authentication", {})
+      logger.info("Attempting seed phrase authentication")
       const { seedPhrase } = req.body
       if (!seedPhrase || typeof seedPhrase !== "string") {
-        logger.error("Invalid seed phrase", { seedPhraseLength: seedPhrase?.length || 0 })
+        logger.error("Invalid seed phrase")
         return done(new Error("Seed phrase is required"), false)
       }
 
@@ -41,10 +41,7 @@ export const seedStrategy = new CustomStrategy(
       })
 
       if (!user) {
-        logger.error("User not found with provided seed phrase", {
-          seedPhraseLength: seedPhrase.length,
-          hashedSeed,
-        })
+        logger.error("User not found with provided seed phrase")
         return done(null, false)
       }
 

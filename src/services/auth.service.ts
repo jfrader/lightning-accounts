@@ -42,7 +42,6 @@ const loginUserWithEmailAndPassword = async (
     throw new ApiError(httpStatus.BAD_REQUEST, "Applications can't use email and password login")
   }
 
-  logger.debug("Comparing password", { email, passwordLength: password.length })
   const isMatch = await isPasswordMatch(password, user.password as string)
   if (!isMatch) {
     logger.error("Password mismatch")
