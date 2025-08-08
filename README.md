@@ -71,45 +71,7 @@ yarn prettier:fix
 
 The environment variables can be found and modified in the `.env` file. They come with these default values:
 
-```bash
-NODE_PORT=3000
-NODE_ORIGIN="*"
-NODE_DOMAIN=
-NODE_DEBUG_LEVEL=info
-
-# Postgres URL
-DATABASE_URL="postgresql://postgres:secret@localhost:5432/mydb?schema=public"
-
-# JWT
-# JWT secret key
-JWT_SECRET=thisisasamplesecret
-
-JWT_BASE64_PUBLIC_KEY="base64 encoded public key"
-JWT_BASE64_PRIVATE_KEY="base64 encoded private key"
-
-# Number of minutes after which an access token expires
-JWT_ACCESS_EXPIRATION_MINUTES=30
-# Number of days after which a refresh token expires
-JWT_REFRESH_EXPIRATION_DAYS=30
-# Number of minutes after which a reset password token expires
-JWT_RESET_PASSWORD_EXPIRATION_MINUTES=10
-# Number of minutes after which a verify email token expires
-JWT_VERIFY_EMAIL_EXPIRATION_MINUTES=10
-
-# SMTP configuration options for the email service
-# For testing, you can use a fake SMTP service like Ethereal: https://ethereal.email/create
-SMTP_HOST=email-server
-SMTP_PORT=587
-SMTP_USERNAME=email-server-username
-SMTP_PASSWORD=email-server-password
-EMAIL_FROM=support@yourapp.com
-
-# LND Lightning daemon configuration
-# For testing, you can use a lightning simulator like Polar: https://lightningpolar.com/
-LND_CERT="base 64 encoded tls.cert"
-LND_ADMIN_MACAROON="base 64 encoded admin.macaroon"
-LND_SOCKET="127.0.0.1:10001"
-```
+Check `.env.example` file
 
 ## Project Structure
 
