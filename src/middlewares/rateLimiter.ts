@@ -29,7 +29,6 @@ const keyGenerator = (req: Request): string => {
 const skipTrustedIps = (req: Request): boolean => {
   const key = keyGenerator(req)
   const isTrusted = config.trustedProxyIps.includes(key)
-  console.log(`Rate limit check - Key: ${key}, Trusted: ${isTrusted}`)
   return isTrusted
 }
 
