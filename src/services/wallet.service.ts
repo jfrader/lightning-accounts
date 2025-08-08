@@ -610,7 +610,7 @@ const payRequest = async ({ payerId, payRequestId }: { payerId: number; payReque
     }
 
     if (pr.paid) {
-      throw new ApiError(httpStatus.FORBIDDEN, "Pay request already paid")
+      throw new ApiError(httpStatus.CONFLICT, "Pay request already paid")
     }
 
     const payerWallet = await getUserWallet(payerId, true)
