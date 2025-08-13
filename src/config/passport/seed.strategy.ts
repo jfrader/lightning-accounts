@@ -20,7 +20,7 @@ export const seedStrategy = new CustomStrategy(
         return done(new Error("Seed phrase is required"), false)
       }
 
-      const hashedSeed = hashSeedPhrase(seedPhrase)
+      const hashedSeed = hashSeedPhrase(seedPhrase.toLowerCase())
 
       const user = await prisma.user.findFirst({
         where: {
