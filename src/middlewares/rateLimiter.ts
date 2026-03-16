@@ -4,32 +4,24 @@ import config from "../config/config"
 import { cookieExtractor } from "../utils/authCookie"
 import { JwtCookie } from "../types"
 
-const keyGenerator = (req: Request): string => {
-  const xForwardedFor = req.headers["x-forwarded-for"]
-  const xRealIp = req.headers["x-real-ip"]
-  let clientIp: string | undefined
+const normalizeIp = (ip: string): string => (ip.startsWith("::ffff:") ? ip.slice(7) : ip)
 
+const getClientIp = (req: Request): string => {
+  const clientIp = typeof req.ip === "string" && req.ip.length > 0 ? req.ip : "unknown"
+  return normalizeIp(clientIp)
+}
+
+const keyGenerator = (req: Request): string => {
   const accessCookie = cookieExtractor(req, JwtCookie.access)
   if (accessCookie) {
     return accessCookie
   }
 
-  if (Array.isArray(xForwardedFor)) {
-    clientIp = xForwardedFor[0]?.trim() || (typeof xRealIp === "string" ? xRealIp.trim() : req.ip)
-  } else if (typeof xForwardedFor === "string") {
-    clientIp =
-      xForwardedFor.split(",")[0]?.trim() || (typeof xRealIp === "string" ? xRealIp.trim() : req.ip)
-  } else {
-    clientIp = typeof xRealIp === "string" ? xRealIp.trim() : req.ip
-  }
-
-  return ipKeyGenerator(clientIp || "unknown")
+  return ipKeyGenerator(getClientIp(req))
 }
 
 const skipTrustedIps = (req: Request): boolean => {
-  const key = keyGenerator(req)
-  const isTrusted = config.trustedProxyIps.includes(key)
-  return isTrusted
+  return config.trustedProxyIps.includes(getClientIp(req))
 }
 
 const BASE_LIMITER: Partial<Options> = {

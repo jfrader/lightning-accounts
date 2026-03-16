@@ -19,7 +19,9 @@ const envVarsSchema = Joi.object()
     NODE_TRUSTED_PROXY_IP: Joi.string()
       .empty("")
       .default("")
-      .description("Comma-separated IP addresses of trusted proxy servers for trust proxy setting"),
+      .description(
+        "Comma-separated proxy IPs/CIDRs for Express trust proxy (e.g. 127.0.0.1,10.0.0.0/8)"
+      ),
     NODE_DEBUG_LEVEL: Joi.string().description(
       "Debug level (trace, debug, info, warning, error, fatal)"
     ),

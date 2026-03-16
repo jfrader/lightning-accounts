@@ -14,6 +14,17 @@ services:
       - ./volumes/postgres/data:/var/lib/postgresql/data
   server:
     restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        NODE_PORT: ${NODE_PORT}
+        DATABASE_URL: ${DATABASE_URL:-postgresql://user:pass@localhost:5432/db?schema=public}
+        NODE_ORIGIN: ${NODE_ORIGIN:-*}
+        JWT_SECRET: ${JWT_SECRET:-build-secret}
+        JWT_BASE64_PUBLIC_KEY: ${JWT_BASE64_PUBLIC_KEY:-ZHVtbXktcHVibGljLWtleQ==}
+        JWT_BASE64_PRIVATE_KEY: ${JWT_BASE64_PRIVATE_KEY:-ZHVtbXktcHJpdmF0ZS1rZXk=}
+        SEED_HASH_SECRET: ${SEED_HASH_SECRET:-build-seed-secret}
     command: ["yarn", "start:prod"]
     depends_on:
       postgres:

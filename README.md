@@ -73,6 +73,36 @@ The environment variables can be found and modified in the `.env` file. They com
 
 Check `.env.example` file
 
+## Reverse Proxy (nginx)
+
+If you run behind nginx, you must trust the proxy so Express derives `req.ip` and `req.secure` from
+`X-Forwarded-*` headers. Set `NODE_TRUSTED_PROXY_IP` to the nginx IP or CIDR (comma-separated).
+
+Example nginx snippet:
+
+```nginx
+location / {
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://127.0.0.1:2999;
+}
+```
+
+## Docker Builds
+
+The image build runs the Swagger generation scripts, and those import the app config. Because of
+that, the Docker build injects minimal build-time values for `DATABASE_URL`, `NODE_ORIGIN`,
+`JWT_SECRET`, `JWT_BASE64_PUBLIC_KEY`, `JWT_BASE64_PRIVATE_KEY`, and `SEED_HASH_SECRET`.
+
+`Dockerfile` is now the dev/test image and installs dev dependencies, which is required for
+`nodemon`, `jest`, and TypeScript builds in local Docker workflows.
+
+`Dockerfile.prod` is the production image used by `docker-compose.prod.yml`.
+
+Runtime behavior is unchanged: the container still reads real values from `.env` via
+`docker-compose`, and the build-time defaults are only there to let code generation run.
+
 ## Project Structure
 
 ```

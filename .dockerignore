@@ -1,0 +1,19 @@
+.git
+.github
+.gitignore
+.vscode
+node_modules
+build
+coverage
+volumes
+
+# Local secrets and env files should never be baked into images
+.env
+.env.*
+jwt.key
+jwt.key.pub
+applications.example.json
+
+# Local artifacts/logs
+yarn-error.log
+*.log

@@ -1,8 +1,9 @@
-# Dockerfile
+# Production image: keep runtime deps only, but allow the build scripts to run with
+# the minimal build-time config they expect.
 FROM node:24-alpine
 
 ARG NODE_PORT=2999
-ENV NODE_ENV=development
+ENV NODE_ENV=production
 ARG DATABASE_URL=postgresql://user:pass@localhost:5432/db?schema=public
 ENV DATABASE_URL=$DATABASE_URL
 ARG NODE_ORIGIN=*
@@ -22,13 +23,10 @@ WORKDIR /opt/app
 COPY package.json yarn.lock /opt/app/
 COPY bin /opt/app/bin/
 COPY src /opt/app/src/
-COPY tests /opt/app/tests/
 COPY dist /opt/app/dist/
 COPY scripts /opt/app/scripts/
 COPY prisma /opt/app/prisma/
-COPY nodemon.json /opt/app/
-COPY jest.config.ts /opt/app/
-COPY tsconfig.json  /opt/app/
+COPY tsconfig.json /opt/app/
 COPY tsconfig.build.json /opt/app/
 COPY tsconfig.test.json /opt/app/
 COPY tsconfig.dist.json /opt/app/
