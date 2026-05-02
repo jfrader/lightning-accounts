@@ -1,8 +1,8 @@
-# Production image: keep runtime deps only, but allow the build scripts to run with
-# the minimal build-time config they expect.
-FROM node:24-alpine
+# Production image: build with dev dependencies, then keep only runtime deps.
+FROM node:24-alpine AS base
 
 ARG NODE_PORT=2999
+ENV NODE_PORT=$NODE_PORT
 ENV NODE_ENV=production
 ARG DATABASE_URL=postgresql://user:pass@localhost:5432/db?schema=public
 ENV DATABASE_URL=$DATABASE_URL
@@ -20,6 +20,8 @@ ENV SEED_HASH_SECRET=$SEED_HASH_SECRET
 RUN mkdir -p /opt/app
 WORKDIR /opt/app
 
+FROM base AS builder
+
 COPY package.json yarn.lock /opt/app/
 COPY bin /opt/app/bin/
 COPY src /opt/app/src/
@@ -33,8 +35,21 @@ COPY tsconfig.dist.json /opt/app/
 COPY eslint.config.mjs /opt/app/
 COPY applications.json /opt/app/
 
-RUN yarn --pure-lockfile
+RUN yarn --pure-lockfile --production=false
 RUN yarn build
+
+FROM base AS runtime
+
+COPY package.json yarn.lock /opt/app/
+COPY bin /opt/app/bin/
+COPY prisma /opt/app/prisma/
+COPY applications.json /opt/app/
+COPY --from=builder /opt/app/build /opt/app/build
+COPY --from=builder /opt/app/dist /opt/app/dist
+COPY --from=builder /opt/app/src /opt/app/src/
+
+RUN yarn --pure-lockfile --production=true
+RUN yarn prisma generate
 RUN chown -R node:node /opt/app
 
 EXPOSE $NODE_PORT
