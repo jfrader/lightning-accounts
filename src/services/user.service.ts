@@ -4,7 +4,7 @@ import prisma from "../client"
 import ApiError from "../utils/ApiError"
 import { encryptPassword } from "../utils/encryption"
 import { UserWithWallet } from "../types/user"
-import { Profile } from "@superfaceai/passport-twitter-oauth2"
+import { XProfile } from "../config/passport/xOAuth2.strategy"
 import authService from "./auth.service"
 import { getRecoveryPassword } from "../utils/string/getRandomWord"
 import { createHmac } from "crypto"
@@ -70,16 +70,19 @@ const createUserWithSeed = async (name: string) => {
 }
 
 const upsertTwitterUser = async (
-  { id, displayName, username, photos, name }: Profile,
+  { id, displayName, username, photos, name }: XProfile,
   currentUser?: User | null
 ) => {
+  const avatarUrl = photos?.[0]?.value ?? null
+  const userName = name?.givenName || displayName || username || id
+
   const user = await prisma.user.upsert({
     where: currentUser ? { id: currentUser.id } : { twitterId: id },
     create: {
       twitterId: id,
       twitter: username,
-      name: name?.givenName || displayName,
-      avatarUrl: photos ? photos[0].value || null : null,
+      name: userName,
+      avatarUrl,
       role: Role.USER,
       wallet: {
         create: {
@@ -91,7 +94,7 @@ const upsertTwitterUser = async (
     update: {
       twitter: username,
       twitterId: id,
-      avatarUrl: photos ? photos[0].value || null : null,
+      avatarUrl,
     },
     select: {
       id: true,

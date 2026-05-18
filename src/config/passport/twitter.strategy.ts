@@ -2,18 +2,14 @@ import { Request } from "express"
 import { userService } from "../../services"
 import config from "../config"
 import logger from "../logger"
-import {
-  Strategy as TwitterStrategy,
-  Profile,
-  StrategyOptionsWithRequest,
-} from "@superfaceai/passport-twitter-oauth2"
+import { XOAuth2Strategy, XOAuth2StrategyOptions, XProfile } from "./xOAuth2.strategy"
 import { User } from "@prisma/client"
 import { SessionUser } from "../../types/user"
 
-const twitterOptions: StrategyOptionsWithRequest = {
+const twitterOptions: XOAuth2StrategyOptions = {
   callbackURL: config.host + "/v1/auth/twitter/callback",
-  clientID: config.twitter.clientID,
-  clientSecret: config.twitter.clientSecret,
+  clientID: config.twitter.clientID ?? "",
+  clientSecret: config.twitter.clientSecret ?? "",
   clientType: config.twitter.clientType,
   scope: ["tweet.read", "users.read", "offline.access"],
   passReqToCallback: true,
@@ -23,7 +19,7 @@ const verify = async (
   req: Request,
   _accessToken: string,
   _refreshToken: string,
-  profile: Profile,
+  profile: XProfile,
   done: (err: unknown, user: SessionUser | false) => void
 ) => {
   try {
@@ -39,4 +35,4 @@ const verify = async (
   }
 }
 
-export const twitterStrategy = new TwitterStrategy(twitterOptions, verify)
+export const twitterStrategy = new XOAuth2Strategy(twitterOptions, verify)

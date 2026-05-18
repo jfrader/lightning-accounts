@@ -1,11 +1,42 @@
 import express from "express"
+import { NextFunction, Request, Response } from "express"
 import validate from "../../middlewares/validate"
 import authValidation from "../../validations/auth.validation"
 import { authController } from "../../controllers"
 import auth from "../../middlewares/auth"
 import passport from "passport"
+import { AuthenticateOptions } from "passport"
 
 const router = express.Router()
+interface OAuthAuthenticateOptions extends AuthenticateOptions {
+  scope?: string[]
+  callbackURL?: string
+}
+const xAuthScopes = ["tweet.read", "users.read", "offline.access"]
+const xCallbackURL = "/v1/auth/x/callback"
+const twitterAuthOptions: OAuthAuthenticateOptions = {
+  scope: xAuthScopes,
+}
+const xAuthOptions: OAuthAuthenticateOptions = {
+  scope: xAuthScopes,
+  callbackURL: xCallbackURL,
+}
+const xCallbackOptions: OAuthAuthenticateOptions = {
+  callbackURL: xCallbackURL,
+}
+const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
+  auth()(req, res, () => {
+    next()
+  })
+}
+const authenticateTwitter = passport.authenticate("twitter", twitterAuthOptions)
+const authenticateX = passport.authenticate("twitter", xAuthOptions)
+const authenticateTwitterCallback = (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate("twitter")(req, res, next)
+}
+const authenticateXCallback = (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate("twitter", xCallbackOptions)(req, res, next)
+}
 
 /**
  * @swagger
@@ -397,12 +428,30 @@ router.post("/verify-email", validate(authValidation.verifyEmail), authControlle
  *       "404":
  *         $ref: '#/components/responses/NotFound'
  */
-router.get(
-  "/twitter",
-  passport.authenticate("twitter", {
-    scope: ["tweet.read", "users.read", "offline.access"],
-  })
-)
+router.get("/twitter", authenticateTwitter)
+
+/**
+ * @swagger
+ * /auth/x:
+ *   get:
+ *     summary: Initiate X authentication
+ *     operationId: initiateXAuth
+ *     tags: [Auth]
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ *       "403":
+ *         $ref: '#/components/responses/Forbidden'
+ *       "404":
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.get("/x", authenticateX)
 
 /**
  * @swagger
@@ -427,16 +476,33 @@ router.get(
  */
 router.get(
   "/twitter/callback",
-  (req, res, next) => {
-    auth()(req, res, () => {
-      next()
-    })
-  },
-  (req, res, next) => {
-    passport.authenticate("twitter")(req, res, next)
-  },
+  optionalAuth,
+  authenticateTwitterCallback,
   authController.loginTwitter
 )
+
+/**
+ * @swagger
+ * /auth/x/callback:
+ *   get:
+ *     summary: Handle X authentication callback
+ *     operationId: handleXAuthCallback
+ *     tags: [Auth]
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ *       "403":
+ *         $ref: '#/components/responses/Forbidden'
+ *       "404":
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.get("/x/callback", optionalAuth, authenticateXCallback, authController.loginTwitter)
 
 /**
  * @swagger

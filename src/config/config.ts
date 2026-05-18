@@ -30,11 +30,16 @@ const envVarsSchema = Joi.object()
       .description(
         "Address that will be accepted for applications to login, bypassing applications.json config"
       ),
-    TWITTER_CLIENT_ID: Joi.string().description("Twitter developer client ID"),
-    TWITTER_CLIENT_SECRET: Joi.string().description("Twitter developer client secret"),
-    TWITTER_CLIENT_TYPE: Joi.string().description(
-      "Twitter developer client type (confidential, private, public)"
-    ),
+    TWITTER_CLIENT_ID: Joi.string().empty("").description("Twitter developer client ID"),
+    TWITTER_CLIENT_SECRET: Joi.string().empty("").description("Twitter developer client secret"),
+    TWITTER_CLIENT_TYPE: Joi.string()
+      .empty("")
+      .description("Twitter developer client type (confidential, private, public)"),
+    X_CLIENT_ID: Joi.string().empty("").description("X developer client ID"),
+    X_CLIENT_SECRET: Joi.string().empty("").description("X developer client secret"),
+    X_CLIENT_TYPE: Joi.string()
+      .empty("")
+      .description("X developer client type (confidential, private, public)"),
     JWT_SECRET: Joi.string().required().description("JWT secret key"),
     JWT_BASE64_PUBLIC_KEY: Joi.string().required().description("Base64 encoded public key"),
     JWT_BASE64_PRIVATE_KEY: Joi.string().required().description("Base64 encoded private key"),
@@ -70,6 +75,12 @@ if (error) {
   throw new Error(`Config validation error: ${error.message}`)
 }
 
+export const resolveXOAuthConfig = (env: Record<string, string | undefined>) => ({
+  clientID: env.X_CLIENT_ID || env.TWITTER_CLIENT_ID,
+  clientSecret: env.X_CLIENT_SECRET || env.TWITTER_CLIENT_SECRET,
+  clientType: env.X_CLIENT_TYPE || env.TWITTER_CLIENT_TYPE,
+})
+
 export default {
   env: envVars.NODE_ENV,
   port: envVars.NODE_PORT,
@@ -84,9 +95,7 @@ export default {
     address: envVars.APPLICATION_ADDRESS,
   },
   twitter: {
-    clientID: envVars.TWITTER_CLIENT_ID,
-    clientSecret: envVars.TWITTER_CLIENT_SECRET,
-    clientType: envVars.TWITTER_CLIENT_TYPE,
+    ...resolveXOAuthConfig(envVars),
   },
   wallet: {
     limit: envVars.WALLET_LIMIT,
