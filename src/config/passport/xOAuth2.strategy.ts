@@ -46,6 +46,9 @@ interface XUserInfoResponse {
   detail?: string
   error_description?: string
   title?: string
+  client_id?: string
+  reason?: string
+  registration_url?: string
 }
 
 export interface XOAuth2StrategyOptions extends Omit<
@@ -104,8 +107,14 @@ const getXProfileErrorMessage = (error: any) => {
     data?.title ??
     error?.message ??
     "Failed to fetch X profile"
+  const metadata = [
+    data?.client_id ? `client_id=${data.client_id}` : null,
+    data?.reason ? `reason=${data.reason}` : null,
+    data?.registration_url ? `registration_url=${data.registration_url}` : null,
+  ].filter(Boolean)
+  const suffix = metadata.length ? ` (${metadata.join(", ")})` : ""
 
-  return status ? `X profile request failed with ${status}: ${message}` : message
+  return status ? `X profile request failed with ${status}: ${message}${suffix}` : message
 }
 
 export class XOAuth2Strategy extends OAuth2Strategy {
