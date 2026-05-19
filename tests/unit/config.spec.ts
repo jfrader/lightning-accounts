@@ -18,26 +18,7 @@ describe("resolveXOAuthConfig", () => {
     process.env = originalEnv
   })
 
-  it("prefers X env vars over legacy Twitter env vars", async () => {
-    const { resolveXOAuthConfig } = await import("../../src/config/config")
-
-    expect(
-      resolveXOAuthConfig({
-        X_CLIENT_ID: "x-client",
-        X_CLIENT_SECRET: "x-secret",
-        X_CLIENT_TYPE: "confidential",
-        TWITTER_CLIENT_ID: "twitter-client",
-        TWITTER_CLIENT_SECRET: "twitter-secret",
-        TWITTER_CLIENT_TYPE: "public",
-      })
-    ).toEqual({
-      clientID: "x-client",
-      clientSecret: "x-secret",
-      clientType: "confidential",
-    })
-  })
-
-  it("falls back to legacy Twitter env vars", async () => {
+  it("reads OAuth 2.0 credentials from Twitter env vars", async () => {
     const { resolveXOAuthConfig } = await import("../../src/config/config")
 
     expect(
@@ -50,6 +31,20 @@ describe("resolveXOAuthConfig", () => {
       clientID: "twitter-client",
       clientSecret: "twitter-secret",
       clientType: "public",
+    })
+  })
+
+  it("reads OAuth 1.0a API key credentials from Twitter env vars", async () => {
+    const { resolveXOAuth1Config } = await import("../../src/config/config")
+
+    expect(
+      resolveXOAuth1Config({
+        TWITTER_API_KEY: "twitter-api-key",
+        TWITTER_API_SECRET: "twitter-api-secret",
+      })
+    ).toEqual({
+      apiKey: "twitter-api-key",
+      apiSecret: "twitter-api-secret",
     })
   })
 })

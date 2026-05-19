@@ -14,9 +14,6 @@ interface OAuthAuthenticateOptions extends AuthenticateOptions {
 }
 const xAuthScopes = ["tweet.read", "users.read", "offline.access"]
 const xCallbackURL = "/v1/auth/x/callback"
-const twitterAuthOptions: OAuthAuthenticateOptions = {
-  scope: xAuthScopes,
-}
 const xAuthOptions: OAuthAuthenticateOptions = {
   scope: xAuthScopes,
   callbackURL: xCallbackURL,
@@ -29,13 +26,13 @@ const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
     next()
   })
 }
-const authenticateTwitter = passport.authenticate("twitter", twitterAuthOptions)
-const authenticateX = passport.authenticate("twitter", xAuthOptions)
+const authenticateTwitter = passport.authenticate("twitter")
+const authenticateX = passport.authenticate("x", xAuthOptions)
 const authenticateTwitterCallback = (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate("twitter")(req, res, next)
 }
 const authenticateXCallback = (req: Request, res: Response, next: NextFunction) => {
-  passport.authenticate("twitter", xCallbackOptions)(req, res, next)
+  passport.authenticate("x", xCallbackOptions)(req, res, next)
 }
 
 /**

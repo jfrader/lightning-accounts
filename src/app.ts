@@ -14,6 +14,7 @@ import ApiError from "./utils/ApiError"
 import { jwtStrategy } from "./config/passport/jwt.strategy"
 import { applicationStrategy } from "./config/passport/application.strategy"
 import { twitterStrategy } from "./config/passport/twitter.strategy"
+import { xStrategy } from "./config/passport/x.strategy"
 import { seedStrategy } from "./config/passport/seed.strategy"
 import session from "express-session"
 import { User } from "@prisma/client"
@@ -91,6 +92,7 @@ app.use(passport.session())
 passport.use("application", applicationStrategy)
 passport.use("jwt", jwtStrategy)
 passport.use("twitter", twitterStrategy)
+passport.use("x", xStrategy)
 passport.use("seed", seedStrategy)
 
 app.use("/v1", routes)

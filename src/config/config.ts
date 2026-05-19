@@ -35,11 +35,8 @@ const envVarsSchema = Joi.object()
     TWITTER_CLIENT_TYPE: Joi.string()
       .empty("")
       .description("Twitter developer client type (confidential, private, public)"),
-    X_CLIENT_ID: Joi.string().empty("").description("X developer client ID"),
-    X_CLIENT_SECRET: Joi.string().empty("").description("X developer client secret"),
-    X_CLIENT_TYPE: Joi.string()
-      .empty("")
-      .description("X developer client type (confidential, private, public)"),
+    TWITTER_API_KEY: Joi.string().empty("").description("Legacy Twitter/X OAuth 1.0a API key"),
+    TWITTER_API_SECRET: Joi.string().empty("").description("Twitter/X OAuth 1.0a API secret"),
     JWT_SECRET: Joi.string().required().description("JWT secret key"),
     JWT_BASE64_PUBLIC_KEY: Joi.string().required().description("Base64 encoded public key"),
     JWT_BASE64_PRIVATE_KEY: Joi.string().required().description("Base64 encoded private key"),
@@ -76,9 +73,14 @@ if (error) {
 }
 
 export const resolveXOAuthConfig = (env: Record<string, string | undefined>) => ({
-  clientID: env.X_CLIENT_ID || env.TWITTER_CLIENT_ID,
-  clientSecret: env.X_CLIENT_SECRET || env.TWITTER_CLIENT_SECRET,
-  clientType: env.X_CLIENT_TYPE || env.TWITTER_CLIENT_TYPE,
+  clientID: env.TWITTER_CLIENT_ID,
+  clientSecret: env.TWITTER_CLIENT_SECRET,
+  clientType: env.TWITTER_CLIENT_TYPE,
+})
+
+export const resolveXOAuth1Config = (env: Record<string, string | undefined>) => ({
+  apiKey: env.TWITTER_API_KEY,
+  apiSecret: env.TWITTER_API_SECRET,
 })
 
 export default {
@@ -96,6 +98,7 @@ export default {
   },
   twitter: {
     ...resolveXOAuthConfig(envVars),
+    ...resolveXOAuth1Config(envVars),
   },
   wallet: {
     limit: envVars.WALLET_LIMIT,

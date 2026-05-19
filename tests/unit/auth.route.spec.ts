@@ -32,13 +32,9 @@ describe("auth X/Twitter routes", () => {
     const authRoute = (await import("../../src/routes/v1/auth.route")).default
     app.use("/auth", authRoute)
 
-    await request(app)
-      .get("/auth/twitter")
-      .expect(200)
-      .expect({
-        strategy: "twitter",
-        scope: ["tweet.read", "users.read", "offline.access"],
-      })
+    await request(app).get("/auth/twitter").expect(200).expect({
+      strategy: "twitter",
+    })
   })
 
   it("initiates OAuth through the X alias route", async () => {
@@ -50,7 +46,7 @@ describe("auth X/Twitter routes", () => {
       .get("/auth/x")
       .expect(200)
       .expect({
-        strategy: "twitter",
+        strategy: "x",
         scope: ["tweet.read", "users.read", "offline.access"],
       })
   })
