@@ -1,7 +1,6 @@
 import httpStatus from "http-status"
 import catchAsync from "../utils/catchAsync"
 import { authService, userService, tokenService, emailService } from "../services"
-import exclude from "../utils/exclude"
 import { User } from "@prisma/client"
 import authCookie, {
   cookieExtractor,
@@ -17,14 +16,47 @@ import config from "../config/config"
 const register = catchAsync(async (req, res) => {
   const { email, password, name } = req.body
   const user = await userService.createUser(email, password, name)
-  const userWithoutPassword = exclude(user, ["password", "createdAt", "updatedAt"])
+  const userWithoutPassword = authService.serializeAuthUser(user)
   const tokens = await tokenService.generateAuthTokens(user)
   authCookie(tokens, res).status(httpStatus.CREATED).send({ user: userWithoutPassword })
 })
 
 const login = catchAsync(async (req, res) => {
   const { email, password } = req.body
+  const passwordUser = await authService.findMagicLinkUser(email)
+  if (passwordUser && !passwordUser.password) {
+    const magicLinkToken = await tokenService.generateMagicLinkToken(passwordUser)
+    await emailService.sendMagicLinkEmail(email, magicLinkToken, "profile")
+    res.status(httpStatus.ACCEPTED).send({ magicLinkSent: true })
+    return
+  }
   const user = await authService.loginUserWithEmailAndPassword(email, password)
+  const tokens = await tokenService.generateAuthTokens(user)
+  authCookie(tokens, res).send({ user })
+})
+
+const registerWithMagicLink = catchAsync(async (req, res) => {
+  const { email, name } = req.body
+  const user = await authService.registerUserWithMagicLink(email, name)
+  if (config.env === "test" || user.role !== "APPLICATION") {
+    const magicLinkToken = await tokenService.generateMagicLinkToken(user)
+    await emailService.sendMagicLinkEmail(email, magicLinkToken)
+  }
+  res.status(httpStatus.NO_CONTENT).send()
+})
+
+const loginWithMagicLink = catchAsync(async (req, res) => {
+  const { email, next } = req.body
+  const user = await authService.findMagicLinkUser(email)
+  if (user && (config.env === "test" || user.role !== "APPLICATION")) {
+    const magicLinkToken = await tokenService.generateMagicLinkToken(user)
+    await emailService.sendMagicLinkEmail(email, magicLinkToken, next)
+  }
+  res.status(httpStatus.NO_CONTENT).send()
+})
+
+const consumeMagicLink = catchAsync(async (req, res) => {
+  const user = await authService.consumeMagicLink(req.query.token as string)
   const tokens = await tokenService.generateAuthTokens(user)
   authCookie(tokens, res).send({ user })
 })
@@ -38,7 +70,7 @@ const registerWithSeed = catchAsync(async (req, res) => {
 const loginWithSeed = catchAsync(async (req, res) => {
   const user = req.user as User
   const tokens = await tokenService.generateAuthTokens(user)
-  authCookie(tokens, res).send({ user: exclude(user, ["password", "seedHash"]) })
+  authCookie(tokens, res).send({ user: authService.serializeAuthUser(user) })
 })
 
 const loginTwitter = catchAsync(async (req, res) => {
@@ -107,9 +139,23 @@ const verifyEmail = catchAsync(async (req, res) => {
 
 const getMe = catchAsync(async (req, res) => {
   const user = req.user as User
-  const userWithWallet = await userService.getUserWithWallet(user.id)
+  const userWithWallet = await userService.getUserWithWallet(user.id, [
+    "id",
+    "email",
+    "twitter",
+    "isEmailVerified",
+    "createdAt",
+    "updatedAt",
+    "hasSeed",
+    "name",
+    "role",
+    "avatarUrl",
+    "password",
+  ])
   const tokens = await tokenService.generateIdentityToken(user)
-  authCookieResponse(tokens, res).send(userWithWallet)
+  authCookieResponse(tokens, res).send(
+    userWithWallet ? authService.serializeAuthUser(userWithWallet) : userWithWallet
+  )
 })
 
 const addSeed = catchAsync(async (req, res) => {
@@ -122,6 +168,9 @@ const addSeed = catchAsync(async (req, res) => {
 export default {
   register,
   login,
+  registerWithMagicLink,
+  loginWithMagicLink,
+  consumeMagicLink,
   loginTwitter,
   logout,
   refreshTokens,

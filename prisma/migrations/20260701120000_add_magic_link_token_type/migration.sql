@@ -1,0 +1,1 @@
+ALTER TYPE "TokenType" ADD VALUE 'MAGIC_LINK';

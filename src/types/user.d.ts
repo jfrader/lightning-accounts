@@ -9,4 +9,4 @@ export type PublicUser = Pick<User, "id" | "role" | "name" | "avatarUrl">
 export type SessionUser = Pick<
   User,
   "id" | "email" | "twitter" | "role" | "name" | "avatarUrl" | "nostrPubkey" | "hasSeed"
->
+> & { hasPassword?: boolean }

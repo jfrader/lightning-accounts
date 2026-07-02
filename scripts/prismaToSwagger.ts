@@ -19,6 +19,11 @@ import path from "path"
     ...convertedSchema.definitions,
   }
 
+  swaggerDoc.components.schemas.User.properties.hasPassword = {
+    type: "boolean",
+    description: "True when the user has configured password login",
+  }
+
   const finalSwaggerPath = path.join(__dirname, "../dist/swagger.yml")
   writeFileSync(
     finalSwaggerPath,

@@ -149,6 +149,13 @@ const generateVerifyEmailToken = async (user: { id: number }): Promise<string> =
   return verifyEmailToken
 }
 
+const generateMagicLinkToken = async (user: { id: number }): Promise<string> => {
+  const expires = moment().add(config.jwt.magicLinkExpirationMinutes, "minutes")
+  const magicLinkToken = generateToken(user.id, expires, TokenType.MAGIC_LINK)
+  await saveToken(magicLinkToken, user.id, expires, TokenType.MAGIC_LINK)
+  return magicLinkToken
+}
+
 export default {
   generateToken,
   saveToken,
@@ -157,4 +164,5 @@ export default {
   generateIdentityToken,
   generateResetPasswordToken,
   generateVerifyEmailToken,
+  generateMagicLinkToken,
 }

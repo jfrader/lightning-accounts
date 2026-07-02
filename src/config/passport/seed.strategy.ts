@@ -35,6 +35,7 @@ export const seedStrategy = new CustomStrategy(
           name: true,
           role: true,
           avatarUrl: true,
+          password: true,
           seedHash: true,
           hasSeed: true,
         },
@@ -49,7 +50,11 @@ export const seedStrategy = new CustomStrategy(
         userId: user.id,
         email: user.email,
       })
-      done(null, user)
+      const hasPassword = Boolean(user.password)
+      const sessionUser = { ...user }
+      delete sessionUser.password
+      delete sessionUser.seedHash
+      done(null, { ...sessionUser, hasPassword })
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
       const errorStack = error instanceof Error ? error.stack : undefined

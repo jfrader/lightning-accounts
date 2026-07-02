@@ -115,6 +115,102 @@ router.post("/register", validate(authValidation.register), authController.regis
 
 /**
  * @swagger
+ * /auth/magic-link/register:
+ *   post:
+ *     summary: Register with email magic link
+ *     operationId: registerWithMagicLink
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       "204":
+ *         description: No content
+ */
+router.post(
+  "/magic-link/register",
+  validate(authValidation.magicLinkRegister),
+  authController.registerWithMagicLink
+)
+
+/**
+ * @swagger
+ * /auth/magic-link/login:
+ *   post:
+ *     summary: Send an email magic login link
+ *     operationId: sendMagicLoginLink
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               next:
+ *                 type: string
+ *                 enum: [profile]
+ *     responses:
+ *       "204":
+ *         description: No content
+ */
+router.post(
+  "/magic-link/login",
+  validate(authValidation.magicLinkLogin),
+  authController.loginWithMagicLink
+)
+
+/**
+ * @swagger
+ * /auth/magic-link/consume:
+ *   post:
+ *     summary: Consume an email magic login link
+ *     operationId: consumeMagicLink
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.post(
+  "/magic-link/consume",
+  validate(authValidation.magicLinkConsume),
+  authController.consumeMagicLink
+)
+
+/**
+ * @swagger
  * /auth/login:
  *   post:
  *     summary: Log in a user

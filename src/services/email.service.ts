@@ -62,9 +62,21 @@ const sendVerificationEmail = async (to: string, token: string) => {
   await sendEmail(to, subject, text)
 }
 
+const sendMagicLinkEmail = async (to: string, token: string, next?: string) => {
+  const subject = "Tu link de ingreso a Trucoshi"
+  const params = new URLSearchParams({ token })
+  if (next) {
+    params.set("next", next)
+  }
+  const magicLinkUrl = `${config.origin}/magic-link?${params.toString()}`
+  const text = `Querido usuario,\n\nPara ingresar a Trucoshi, hace click en este link: ${magicLinkUrl}\nSi no pediste ingresar, ignora este email.`
+  await sendEmail(to, subject, text)
+}
+
 export default {
   transport,
   sendEmail,
   sendResetPasswordEmail,
   sendVerificationEmail,
+  sendMagicLinkEmail,
 }

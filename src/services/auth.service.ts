@@ -6,15 +6,26 @@ import { Role, TokenType, User } from "@prisma/client"
 import prisma from "../client"
 import { encryptPassword, isPasswordMatch } from "../utils/encryption"
 import { AuthTokensResponse } from "../types/response"
-import exclude from "../utils/exclude"
 import logger from "../config/logger"
 import config from "../config/config"
 import { getRecoveryPassword } from "../utils/string/getRandomWord"
 
+const serializeAuthUser = <T extends { password?: string | null; seedHash?: string | null }>(
+  user: T
+): Omit<T, "password" | "seedHash"> & { hasPassword: boolean } => {
+  const hasPassword = Boolean(user.password)
+  const safeUser = { ...user }
+  delete safeUser.password
+  delete safeUser.seedHash
+  return { ...safeUser, hasPassword } as Omit<T, "password" | "seedHash"> & {
+    hasPassword: boolean
+  }
+}
+
 const loginUserWithEmailAndPassword = async (
   email: string,
   password: string
-): Promise<Omit<User, "password" | "seedHash">> => {
+): Promise<Omit<User, "password" | "seedHash"> & { hasPassword: boolean }> => {
   logger.info("Attempting user login", { email })
   const user = await userService.getUserByEmail(email, [
     "id",
@@ -37,6 +48,11 @@ const loginUserWithEmailAndPassword = async (
     throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password")
   }
 
+  if (!user.password) {
+    logger.info("Password login requested for user without password", { email })
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Password login is not configured")
+  }
+
   if (config.env !== "test" && user.role === Role.APPLICATION) {
     logger.error("Application user attempted email login", { email })
     throw new ApiError(httpStatus.BAD_REQUEST, "Applications can't use email and password login")
@@ -49,7 +65,80 @@ const loginUserWithEmailAndPassword = async (
   }
 
   logger.info("Login successful", { email })
-  return exclude(user, ["password"])
+  return serializeAuthUser(user)
+}
+
+const findMagicLinkUser = async (email: string) =>
+  userService.getUserByEmail(email, [
+    "id",
+    "email",
+    "name",
+    "password",
+    "role",
+    "isEmailVerified",
+    "createdAt",
+    "updatedAt",
+    "twitter",
+    "twitterId",
+    "avatarUrl",
+    "nostrPubkey",
+    "hasSeed",
+  ])
+
+const registerUserWithMagicLink = async (email: string, name: string) => {
+  const existingUser = await findMagicLinkUser(email)
+  if (existingUser) {
+    return existingUser
+  }
+  return userService.createUserWithEmail(email, name)
+}
+
+const consumeMagicLink = async (
+  magicLinkToken: string
+): Promise<Omit<User, "password" | "seedHash"> & { hasPassword: boolean }> => {
+  try {
+    logger.info("Attempting magic link login")
+    const magicLinkTokenData = await tokenService.verifyToken(magicLinkToken, TokenType.MAGIC_LINK)
+    const user = await userService.getUserById(magicLinkTokenData.userId, [
+      "id",
+      "email",
+      "name",
+      "password",
+      "role",
+      "isEmailVerified",
+      "createdAt",
+      "updatedAt",
+      "twitter",
+      "twitterId",
+      "avatarUrl",
+      "nostrPubkey",
+      "hasSeed",
+    ])
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+    }
+    if (config.env !== "test" && user.role === Role.APPLICATION) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Applications can't use magic link login")
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.token.deleteMany({
+        where: { userId: magicLinkTokenData.userId, type: TokenType.MAGIC_LINK },
+      })
+      await tx.user.update({
+        where: { id: magicLinkTokenData.userId },
+        data: { isEmailVerified: true },
+      })
+    })
+
+    logger.info("Magic link login successful", { userId: magicLinkTokenData.userId })
+    return serializeAuthUser({ ...user, isEmailVerified: true })
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const errorStack = error instanceof Error ? error.stack : undefined
+    logger.error("Magic link login failed", { error: errorMessage, stack: errorStack })
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Magic link login failed")
+  }
 }
 
 const logout = async (refreshToken: string): Promise<void> => {
@@ -232,4 +321,8 @@ export default {
   resetPassword,
   generateSeedPhrase,
   verifyEmail,
+  serializeAuthUser,
+  findMagicLinkUser,
+  registerUserWithMagicLink,
+  consumeMagicLink,
 }

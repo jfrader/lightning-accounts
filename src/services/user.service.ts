@@ -45,6 +45,21 @@ const createUser = async (
   })
 }
 
+const createUserWithEmail = async (email: string, name: string, role: Role = Role.USER) => {
+  if (await getUserByEmail(email)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken")
+  }
+
+  return prisma.user.create({
+    data: {
+      email,
+      name,
+      role,
+      wallet: { create: { balanceInSats: 0, disabled: false } },
+    },
+  })
+}
+
 const createUserWithSeed = async (name: string) => {
   const seedPhrase = getRecoveryPassword(5, " ")
   const seedHash = hashSeedPhrase(seedPhrase)
@@ -189,13 +204,30 @@ const updateUserById = async <Key extends keyof User>(
   if (updateBody.name && updateBody.name.toString().length > 16) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Name too long")
   }
+  const currentUser =
+    requirePassword && user.email && (updateBody.email || updateBody.password)
+      ? await getUserById(userId, ["id", "email", "password"])
+      : null
+
+  if (
+    requirePassword &&
+    user.email &&
+    updateBody.email &&
+    !currentUser?.password &&
+    !updateBody.password
+  ) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Password must be configured before changing email")
+  }
+
   if (requirePassword && user.email && (updateBody.email || updateBody.password)) {
-    if (!password) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Password not provided")
-    }
-    const isMatch = await authService.loginUserWithEmailAndPassword(user.email, password)
-    if (!isMatch) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Password doesn't match")
+    if (currentUser?.password) {
+      if (!password) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Password not provided")
+      }
+      const isMatch = await authService.loginUserWithEmailAndPassword(user.email, password)
+      if (!isMatch) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Password doesn't match")
+      }
     }
   }
   const updatedUser = await prisma.user.update({
@@ -277,6 +309,7 @@ const addSeedToUser = async <Key extends keyof User>(
 
 export default {
   createUser,
+  createUserWithEmail,
   createUserWithSeed,
   upsertTwitterUser,
   queryUsers,

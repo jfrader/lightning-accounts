@@ -171,6 +171,7 @@
             "IDENTITY",
             "RESET_PASSWORD",
             "VERIFY_EMAIL",
+            "MAGIC_LINK",
             "APPLICATION"
           ]
         },

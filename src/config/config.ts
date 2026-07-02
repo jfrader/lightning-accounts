@@ -52,6 +52,9 @@ const envVarsSchema = Joi.object()
     JWT_VERIFY_EMAIL_EXPIRATION_MINUTES: Joi.number()
       .default(10)
       .description("minutes after which verify email token expires"),
+    JWT_MAGIC_LINK_EXPIRATION_MINUTES: Joi.number()
+      .default(10)
+      .description("minutes after which magic login links expire"),
     SMTP_HOST: Joi.string().description("server that will send the emails"),
     SMTP_PORT: Joi.number().description("port to connect to the email server"),
     SMTP_USERNAME: Joi.string().description("username for email server"),
@@ -113,6 +116,7 @@ export default {
     refreshExpirationDays: Number(envVars.JWT_REFRESH_EXPIRATION_DAYS),
     resetPasswordExpirationMinutes: Number(envVars.JWT_RESET_PASSWORD_EXPIRATION_MINUTES),
     verifyEmailExpirationMinutes: Number(envVars.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES),
+    magicLinkExpirationMinutes: Number(envVars.JWT_MAGIC_LINK_EXPIRATION_MINUTES),
   },
   lnurl: {
     host: envVars.LNURL_HOST,

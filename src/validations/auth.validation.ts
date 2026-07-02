@@ -21,6 +21,26 @@ const login = {
   }),
 }
 
+const magicLinkRegister = {
+  body: Joi.object().keys({
+    name: Joi.string().required().max(16),
+    email: Joi.string().required().email(),
+  }),
+}
+
+const magicLinkLogin = {
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    next: Joi.string().valid("profile"),
+  }),
+}
+
+const magicLinkConsume = {
+  query: Joi.object().keys({
+    token: Joi.string().required(),
+  }),
+}
+
 const logout = {
   body: Joi.object().keys({
     refreshToken: Joi.string().required(),
@@ -67,6 +87,9 @@ const addSeed = {
 export default {
   register,
   login,
+  magicLinkRegister,
+  magicLinkLogin,
+  magicLinkConsume,
   logout,
   forgotPassword,
   resetPassword,

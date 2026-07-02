@@ -29,13 +29,15 @@ const jwtVerify: VerifyCallback = async (
         avatarUrl: true,
         nostrPubkey: true,
         hasSeed: true,
+        password: true,
       },
       where: { id: payload.sub },
     })
     if (!user) {
       return done(null, false)
     }
-    done(null, user)
+    const { password, ...sessionUser } = user
+    done(null, { ...sessionUser, hasPassword: Boolean(password) })
   } catch (error) {
     logger.error(error)
     done(error, false)
