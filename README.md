@@ -79,10 +79,10 @@ Production and staging migrations use `prisma migrate deploy`. Do not run `prism
 Admin users:
 
 ```bash
-# Promote an existing staging user by email. The staging database must already be running.
+# Promote an existing staging user by email. The staging server container must already be running.
 yarn docker:staging:make-admin --email you@example.com
 
-# Promote an existing production user by email. The production database must already be running.
+# Promote an existing production user by email. The production server container must already be running.
 yarn docker:prod:make-admin --email you@example.com
 ```
 
