@@ -25,6 +25,7 @@ import { PrismaClient } from "@prisma/client"
 import { PrismaSessionStore } from "./config/session"
 
 const secure = config.env === "production"
+const cookieDomain = secure && config.domain ? config.domain : undefined
 const prisma = new PrismaClient()
 
 const app = express()
@@ -79,7 +80,7 @@ app.use(
     cookie: {
       httpOnly: true,
       maxAge: config.jwt.refreshExpirationDays * 24 * 60 * 60 * 1000,
-      domain: secure ? config.domain : undefined,
+      domain: cookieDomain,
       sameSite: secure ? "none" : "lax",
       secure,
     },

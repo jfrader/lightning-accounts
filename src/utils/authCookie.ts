@@ -4,6 +4,7 @@ import config from "../config/config"
 import { JwtCookie, SessionCookie } from "../types/tokens"
 
 const secure = config.env === "production"
+const cookieDomain = secure && config.domain ? config.domain : undefined
 
 export function getCookieName(name: string) {
   return config.jwt.prefix + name
@@ -14,7 +15,7 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
     res.cookie(getCookieName(JwtCookie.access), access.token, {
       httpOnly: true,
       expires: access?.expires,
-      domain: secure ? config.domain : undefined,
+      domain: cookieDomain,
       sameSite: secure ? "none" : "lax",
       signed: secure,
       secure,
@@ -25,7 +26,7 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
     res.cookie(getCookieName(JwtCookie.refresh), refresh.token, {
       httpOnly: true,
       expires: refresh?.expires,
-      domain: secure ? config.domain : undefined,
+      domain: cookieDomain,
       sameSite: secure ? "none" : "lax",
       signed: secure,
       secure,
@@ -35,7 +36,7 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
   if (identity) {
     res.cookie(getCookieName(JwtCookie.identity), identity.token, {
       expires: identity.expires,
-      domain: secure ? config.domain : undefined,
+      domain: cookieDomain,
       sameSite: secure ? "none" : "lax",
       secure,
     })
@@ -47,22 +48,22 @@ const authCookieResponse = ({ access, refresh, identity }: AuthTokensResponse, r
 export const deauthCookieResponse = (res: Response) => {
   res.clearCookie(getCookieName(SessionCookie.sid), {
     path: "/",
-    domain: secure ? config.domain : undefined,
+    domain: cookieDomain,
   })
 
   res.clearCookie(getCookieName(JwtCookie.access), {
     path: "/",
-    domain: secure ? config.domain : undefined,
+    domain: cookieDomain,
   })
 
   res.clearCookie(getCookieName(JwtCookie.refresh), {
     path: "/",
-    domain: secure ? config.domain : undefined,
+    domain: cookieDomain,
   })
 
   res.clearCookie(getCookieName(JwtCookie.identity), {
     path: "/",
-    domain: secure ? config.domain : undefined,
+    domain: cookieDomain,
   })
 }
 

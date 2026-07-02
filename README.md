@@ -314,7 +314,7 @@ Note: API request information (request url, response code, timestamp, etc.) are 
 
 # Donations
 
-Donate Bitcoin at [jfrader.com](https://jfrader.com)
+Donate Bitcoin at [jfrader.com/tips](https://jfrader.com/tips)
 
 ## Inspirations
 
