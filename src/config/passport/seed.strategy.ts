@@ -50,10 +50,9 @@ export const seedStrategy = new CustomStrategy(
         userId: user.id,
         email: user.email,
       })
-      const hasPassword = Boolean(user.password)
-      const sessionUser = { ...user }
-      delete sessionUser.password
-      delete sessionUser.seedHash
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, seedHash, ...sessionUser } = user
+      const hasPassword = Boolean(password)
       done(null, { ...sessionUser, hasPassword })
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
