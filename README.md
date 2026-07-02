@@ -51,6 +51,44 @@ yarn db:push
 yarn db:studio
 ```
 
+Docker tests:
+
+```bash
+# Run the Lightning Accounts Docker Jest/e2e suite.
+NODE_ENV=test ./init-test.sh
+
+# Start the persistent API/regtest backend used by Trucoshi e2e tests.
+NODE_ENV=test ./init-e2e.sh
+```
+
+Docker migrations:
+
+```bash
+# Staging: run after building the new image and starting postgres, before starting server.
+docker compose -f docker-compose.staging.yml --env-file .env build server
+docker compose -f docker-compose.staging.yml --env-file .env up -d postgres
+yarn docker:staging:migrate
+docker compose -f docker-compose.staging.yml --env-file .env up -d --build server
+
+# Production uses the same sequence with docker-compose.prod.yml and yarn docker:prod:migrate.
+```
+
+Production and staging migrations use `prisma migrate deploy`. Do not run `prisma db seed` or
+`start:migrate` against staging or production data.
+
+Admin users:
+
+```bash
+# Promote an existing staging user by email. The staging database must already be running.
+yarn docker:staging:make-admin --email you@example.com
+
+# Promote an existing production user by email. The production database must already be running.
+yarn docker:prod:make-admin --email you@example.com
+```
+
+These commands only update an existing non-`APPLICATION` user to `ADMIN`; they do not create users
+or run seeds.
+
 Linting:
 
 ```bash

@@ -24,9 +24,11 @@ const register = catchAsync(async (req, res) => {
 const login = catchAsync(async (req, res) => {
   const { email, password } = req.body
   const passwordUser = await authService.findMagicLinkUser(email)
-  if (passwordUser && !passwordUser.password) {
-    const magicLinkToken = await tokenService.generateMagicLinkToken(passwordUser)
-    await emailService.sendMagicLinkEmail(email, magicLinkToken, "profile")
+  if (!passwordUser || !passwordUser.password) {
+    if (passwordUser && passwordUser.role !== "APPLICATION") {
+      const magicLinkToken = await tokenService.generateMagicLinkToken(passwordUser)
+      await emailService.sendMagicLinkEmail(email, magicLinkToken, "profile")
+    }
     res.status(httpStatus.ACCEPTED).send({ magicLinkSent: true })
     return
   }

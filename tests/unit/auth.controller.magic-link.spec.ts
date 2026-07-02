@@ -41,6 +41,14 @@ const runHandler = async (handler: any, req: any, res: any) => {
   expect(next).not.toHaveBeenCalled()
 }
 
+const runHandlerExpectError = async (handler: any, req: any, res: any) => {
+  const next = jest.fn()
+  handler(req, res, next)
+  await new Promise((resolve) => setImmediate(resolve))
+  expect(next).toHaveBeenCalled()
+  return next.mock.calls[0][0]
+}
+
 describe("auth controller magic link flows", () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -122,5 +130,90 @@ describe("auth controller magic link flows", () => {
     )
     expect(res.status).toHaveBeenCalledWith(202)
     expect(res.send).toHaveBeenCalledWith({ magicLinkSent: true })
+  })
+
+  it("does not reveal missing users when password login is attempted", async () => {
+    mockServices.authService.findMagicLinkUser.mockResolvedValue(null)
+    const res = buildResponse()
+
+    await runHandler(
+      authController.login,
+      { body: { email: "missing@example.com", password: "password1" } },
+      res
+    )
+
+    expect(mockServices.authService.loginUserWithEmailAndPassword).not.toHaveBeenCalled()
+    expect(mockServices.tokenService.generateMagicLinkToken).not.toHaveBeenCalled()
+    expect(mockServices.emailService.sendMagicLinkEmail).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(202)
+    expect(res.send).toHaveBeenCalledWith({ magicLinkSent: true })
+  })
+
+  it("does not send magic links to application users from password login", async () => {
+    const user = { id: 1, email: "app@example.com", password: null, role: "APPLICATION" }
+    mockServices.authService.findMagicLinkUser.mockResolvedValue(user)
+    const res = buildResponse()
+
+    await runHandler(
+      authController.login,
+      { body: { email: user.email, password: "password1" } },
+      res
+    )
+
+    expect(mockServices.authService.loginUserWithEmailAndPassword).not.toHaveBeenCalled()
+    expect(mockServices.tokenService.generateMagicLinkToken).not.toHaveBeenCalled()
+    expect(mockServices.emailService.sendMagicLinkEmail).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(202)
+    expect(res.send).toHaveBeenCalledWith({ magicLinkSent: true })
+  })
+
+  it("uses password login for users with a password", async () => {
+    const passwordUser = {
+      id: 1,
+      email: "player@example.com",
+      password: "hashed-password",
+      role: "USER",
+    }
+    const safeUser = { id: 1, email: passwordUser.email, hasPassword: true }
+    mockServices.authService.findMagicLinkUser.mockResolvedValue(passwordUser)
+    mockServices.authService.loginUserWithEmailAndPassword.mockResolvedValue(safeUser)
+    const res = buildResponse()
+
+    await runHandler(
+      authController.login,
+      { body: { email: passwordUser.email, password: "password1" } },
+      res
+    )
+
+    expect(mockServices.authService.loginUserWithEmailAndPassword).toHaveBeenCalledWith(
+      passwordUser.email,
+      "password1"
+    )
+    expect(mockServices.emailService.sendMagicLinkEmail).not.toHaveBeenCalled()
+    expect(mockServices.tokenService.generateAuthTokens).toHaveBeenCalledWith(safeUser)
+    expect(res.send).toHaveBeenCalledWith({ user: safeUser })
+  })
+
+  it("does not convert bad password errors into magic links for password users", async () => {
+    const passwordUser = {
+      id: 1,
+      email: "player@example.com",
+      password: "hashed-password",
+      role: "USER",
+    }
+    const error = new Error("Incorrect email or password")
+    mockServices.authService.findMagicLinkUser.mockResolvedValue(passwordUser)
+    mockServices.authService.loginUserWithEmailAndPassword.mockRejectedValue(error)
+    const res = buildResponse()
+
+    const receivedError = await runHandlerExpectError(
+      authController.login,
+      { body: { email: passwordUser.email, password: "wrongpass1" } },
+      res
+    )
+
+    expect(receivedError).toBe(error)
+    expect(mockServices.emailService.sendMagicLinkEmail).not.toHaveBeenCalled()
+    expect(mockServices.tokenService.generateMagicLinkToken).not.toHaveBeenCalled()
   })
 })

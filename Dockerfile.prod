@@ -42,6 +42,7 @@ FROM base AS runtime
 
 COPY package.json yarn.lock /opt/app/
 COPY bin /opt/app/bin/
+COPY scripts /opt/app/scripts/
 COPY prisma /opt/app/prisma/
 COPY applications.json /opt/app/
 COPY --from=builder /opt/app/build /opt/app/build
