@@ -4,7 +4,7 @@ import httpStatus from "http-status"
 import ApiError from "../utils/ApiError"
 import { UserPermission, roleRights } from "../config/roles"
 import { User } from "@prisma/client"
-import { cookieExtractor } from "../utils/authCookie"
+import { cookieExtractor, getCookieName } from "../utils/authCookie"
 import { JwtCookie } from "../types"
 
 const verifyCallback =
@@ -19,7 +19,7 @@ const verifyCallback =
       return reject(new ApiError(httpStatus.UNAUTHORIZED, "Authentication error: " + err.message))
     }
     if (!user) {
-      const token = cookieExtractor(req, JwtCookie.refresh)
+      const token = cookieExtractor(req, getCookieName(JwtCookie.refresh))
       if (!token) {
         return reject(new ApiError(httpStatus.BAD_REQUEST, "No authentication token provided"))
       }

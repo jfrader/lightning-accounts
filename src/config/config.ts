@@ -41,9 +41,11 @@ const envVarsSchema = Joi.object()
     JWT_BASE64_PUBLIC_KEY: Joi.string().required().description("Base64 encoded public key"),
     JWT_BASE64_PRIVATE_KEY: Joi.string().required().description("Base64 encoded private key"),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number()
+      .min(1)
       .default(30)
       .description("minutes after which access tokens expire"),
     JWT_REFRESH_EXPIRATION_DAYS: Joi.number()
+      .min(1)
       .default(30)
       .description("days after which refresh tokens expire"),
     JWT_RESET_PASSWORD_EXPIRATION_MINUTES: Joi.number()
