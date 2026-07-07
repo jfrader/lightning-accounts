@@ -149,7 +149,7 @@ router.post(
  * @swagger
  * /auth/magic-link/login:
  *   post:
- *     summary: Send an email magic login link
+ *     summary: Send an email magic login link, creating the account if needed
  *     operationId: sendMagicLoginLink
  *     tags: [Auth]
  *     requestBody:

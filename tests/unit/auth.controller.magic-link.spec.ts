@@ -2,6 +2,7 @@ const mockServices = {
   authService: {
     consumeMagicLink: jest.fn(),
     findMagicLinkUser: jest.fn(),
+    getOrCreateMagicLinkUser: jest.fn(),
     loginUserWithEmailAndPassword: jest.fn(),
     registerUserWithMagicLink: jest.fn(),
     serializeAuthUser: jest.fn((user) => ({
@@ -83,16 +84,52 @@ describe("auth controller magic link flows", () => {
     expect(res.status).toHaveBeenCalledWith(204)
   })
 
-  it("does not reveal missing users when requesting a magic login link", async () => {
-    mockServices.authService.findMagicLinkUser.mockResolvedValue(null)
+  it("creates a missing email user and sends a magic login link", async () => {
+    const user = { id: 2, email: "new@example.com", name: "new", role: "USER" }
+    mockServices.authService.getOrCreateMagicLinkUser.mockResolvedValue(user)
+    const res = buildResponse()
+
+    await runHandler(authController.loginWithMagicLink, { body: { email: user.email } }, res)
+
+    expect(mockServices.authService.getOrCreateMagicLinkUser).toHaveBeenCalledWith(user.email)
+    expect(mockServices.tokenService.generateMagicLinkToken).toHaveBeenCalledWith(user)
+    expect(mockServices.emailService.sendMagicLinkEmail).toHaveBeenCalledWith(
+      user.email,
+      "magic-token",
+      undefined
+    )
+    expect(res.status).toHaveBeenCalledWith(204)
+  })
+
+  it("sends a magic login link to an existing email user", async () => {
+    const user = { id: 1, email: "player@example.com", name: "Player", role: "USER" }
+    mockServices.authService.getOrCreateMagicLinkUser.mockResolvedValue(user)
     const res = buildResponse()
 
     await runHandler(
       authController.loginWithMagicLink,
-      { body: { email: "missing@example.com" } },
+      { body: { email: user.email, next: "profile" } },
       res
     )
 
+    expect(mockServices.authService.getOrCreateMagicLinkUser).toHaveBeenCalledWith(user.email)
+    expect(mockServices.tokenService.generateMagicLinkToken).toHaveBeenCalledWith(user)
+    expect(mockServices.emailService.sendMagicLinkEmail).toHaveBeenCalledWith(
+      user.email,
+      "magic-token",
+      "profile"
+    )
+    expect(res.status).toHaveBeenCalledWith(204)
+  })
+
+  it("does not send magic login links to application users", async () => {
+    const user = { id: 1, email: "app@example.com", name: "App", role: "APPLICATION" }
+    mockServices.authService.getOrCreateMagicLinkUser.mockResolvedValue(user)
+    const res = buildResponse()
+
+    await runHandler(authController.loginWithMagicLink, { body: { email: user.email } }, res)
+
+    expect(mockServices.authService.getOrCreateMagicLinkUser).toHaveBeenCalledWith(user.email)
     expect(mockServices.tokenService.generateMagicLinkToken).not.toHaveBeenCalled()
     expect(mockServices.emailService.sendMagicLinkEmail).not.toHaveBeenCalled()
     expect(res.status).toHaveBeenCalledWith(204)

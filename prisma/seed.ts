@@ -6,6 +6,8 @@ const options = {
   environment: { type: "string" },
   appEmail: { type: "string" },
   appPassword: { type: "string" },
+  adminEmail: { type: "string" },
+  adminPassword: { type: "string" },
 }
 
 const prisma = new PrismaClient()
@@ -22,6 +24,29 @@ const defaultCase = async (email: string, password: string) => {
       email: email,
       name: "Trucoshi",
       role: "APPLICATION",
+      wallet: {
+        create: {
+          balanceInSats: 24000,
+          disabled: false,
+        },
+      },
+    },
+  })
+  console.log({ alice })
+}
+
+const adminCase = async (email: string, password: string) => {
+  const alice = await prisma.user.upsert({
+    where: { email: "admin_test@trucoshi.com" },
+    update: {
+      password: await encryptPassword(password),
+      email: email,
+    },
+    create: {
+      password: await encryptPassword(password),
+      email: email,
+      name: "Admin",
+      role: "ADMIN",
       wallet: {
         create: {
           balanceInSats: 24000,
@@ -62,13 +87,15 @@ const e2eCase = async () => {
 
 async function main() {
   const {
-    values: { environment, appEmail, appPassword },
+    values: { environment, appEmail, appPassword, adminEmail, adminPassword },
   } = parseArgs({ options } as any)
   const password = (appPassword as string) || "trucoshi123aaklsjdlaksdjlkas2ll2j2mmmcjkj1n2n3nn123"
+  const admPwd = (adminPassword as string) || "trucoshi123aaklsjdlaksdjlkas2ll2j2m12312313dddd"
 
   switch (environment) {
     default:
       await defaultCase((appEmail as string) || "admin@trucoshi.com", password)
+      await adminCase((adminEmail as string) || "admin_test@trucoshi.com", admPwd)
       await e2eCase()
       break
   }

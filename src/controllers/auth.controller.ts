@@ -49,8 +49,8 @@ const registerWithMagicLink = catchAsync(async (req, res) => {
 
 const loginWithMagicLink = catchAsync(async (req, res) => {
   const { email, next } = req.body
-  const user = await authService.findMagicLinkUser(email)
-  if (user && (config.env === "test" || user.role !== "APPLICATION")) {
+  const user = await authService.getOrCreateMagicLinkUser(email)
+  if (user.role !== "APPLICATION") {
     const magicLinkToken = await tokenService.generateMagicLinkToken(user)
     await emailService.sendMagicLinkEmail(email, magicLinkToken, next)
   }

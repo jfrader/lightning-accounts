@@ -2,7 +2,7 @@ import httpStatus from "http-status"
 import tokenService from "./token.service"
 import userService from "./user.service"
 import ApiError from "../utils/ApiError"
-import { Role, TokenType, User } from "@prisma/client"
+import { Prisma, Role, TokenType, User } from "@prisma/client"
 import prisma from "../client"
 import { encryptPassword, isPasswordMatch } from "../utils/encryption"
 import { AuthTokensResponse } from "../types/response"
@@ -84,6 +84,36 @@ const findMagicLinkUser = async (email: string) =>
     "nostrPubkey",
     "hasSeed",
   ])
+
+export const getMagicLinkRegistrationName = (email: string) => {
+  const name = email.split("@")[0]?.trim() || "jugador"
+  return name.slice(0, 16)
+}
+
+const isDuplicateEmailError = (error: unknown) =>
+  (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") ||
+  (error instanceof ApiError &&
+    error.statusCode === httpStatus.BAD_REQUEST &&
+    error.message === "Email already taken")
+
+const getOrCreateMagicLinkUser = async (email: string) => {
+  const existingUser = await findMagicLinkUser(email)
+  if (existingUser) {
+    return existingUser
+  }
+
+  try {
+    return await userService.createUserWithEmail(email, getMagicLinkRegistrationName(email))
+  } catch (error) {
+    if (isDuplicateEmailError(error)) {
+      const user = await findMagicLinkUser(email)
+      if (user) {
+        return user
+      }
+    }
+    throw error
+  }
+}
 
 const registerUserWithMagicLink = async (email: string, name: string) => {
   const existingUser = await findMagicLinkUser(email)
@@ -323,6 +353,7 @@ export default {
   verifyEmail,
   serializeAuthUser,
   findMagicLinkUser,
+  getOrCreateMagicLinkUser,
   registerUserWithMagicLink,
   consumeMagicLink,
 }
