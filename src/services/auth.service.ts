@@ -172,7 +172,7 @@ const consumeMagicLink = async (
 }
 
 const logout = async (refreshToken: string): Promise<void> => {
-  logger.info("Attempting logout", { refreshToken })
+  logger.info("Attempting logout")
   const refreshTokenData = await prisma.token.findFirst({
     where: {
       token: refreshToken,
@@ -210,7 +210,7 @@ const refreshAuth = async (refreshToken: string): Promise<AuthTokensResponse> =>
 
 const resetPassword = async (resetPasswordToken: string, newPassword: string): Promise<void> => {
   try {
-    logger.info("Attempting password reset", { resetPasswordToken })
+    logger.info("Attempting password reset")
     const resetPasswordTokenData = await tokenService.verifyToken(
       resetPasswordToken,
       TokenType.RESET_PASSWORD
@@ -302,7 +302,7 @@ const generateSeedPhrase = async (userId: number): Promise<string> => {
 
 const verifyEmail = async (verifyEmailToken: string): Promise<void> => {
   try {
-    logger.info("Attempting email verification", { verifyEmailToken })
+    logger.info("Attempting email verification")
     const verifyEmailTokenData = await tokenService.verifyToken(
       verifyEmailToken,
       TokenType.VERIFY_EMAIL
