@@ -3,9 +3,31 @@ const mockUserService = {
   getUserByEmail: jest.fn(),
 }
 
+const mockTokenService = {
+  verifyToken: jest.fn(),
+  generateAuthTokens: jest.fn(),
+}
+
+const mockPrisma = {
+  token: {
+    updateMany: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+}
+
 jest.mock("../../src/services/user.service", () => ({
   __esModule: true,
   default: mockUserService,
+}))
+
+jest.mock("../../src/services/token.service", () => ({
+  __esModule: true,
+  default: mockTokenService,
+}))
+
+jest.mock("../../src/client", () => ({
+  __esModule: true,
+  default: mockPrisma,
 }))
 
 import { Prisma } from "@prisma/client"
@@ -56,5 +78,39 @@ describe("auth service magic link registration", () => {
     )
 
     await expect(authService.getOrCreateMagicLinkUser(user.email)).resolves.toBe(user)
+  })
+})
+
+describe("auth service refresh rotation", () => {
+  beforeEach(() => {
+    jest.resetAllMocks()
+  })
+
+  it("consumes a refresh token before issuing its replacement", async () => {
+    const tokens = { access: { token: "access" }, refresh: { token: "next" } }
+    mockTokenService.verifyToken.mockResolvedValue({ id: 10, userId: 1 })
+    mockPrisma.token.updateMany.mockResolvedValue({ count: 1 })
+    mockPrisma.token.deleteMany.mockResolvedValue({ count: 0 })
+    mockTokenService.generateAuthTokens.mockResolvedValue(tokens)
+
+    await expect(authService.refreshAuth("refresh")).resolves.toBe(tokens)
+
+    expect(mockPrisma.token.updateMany).toHaveBeenCalledWith({
+      where: { id: 10, type: "REFRESH", blacklisted: false },
+      data: { blacklisted: true },
+    })
+    expect(mockPrisma.token.updateMany.mock.invocationCallOrder[0]).toBeLessThan(
+      mockTokenService.generateAuthTokens.mock.invocationCallOrder[0]
+    )
+  })
+
+  it("rejects a replayed refresh token", async () => {
+    mockTokenService.verifyToken.mockResolvedValue({ id: 10, userId: 1 })
+    mockPrisma.token.updateMany.mockResolvedValue({ count: 0 })
+
+    await expect(authService.refreshAuth("refresh")).rejects.toMatchObject({
+      statusCode: httpStatus.FORBIDDEN,
+    })
+    expect(mockTokenService.generateAuthTokens).not.toHaveBeenCalled()
   })
 })

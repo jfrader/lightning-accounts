@@ -7,15 +7,19 @@ const transport: nodemailer.Transporter = nodemailer.createTransport({
   secure: false,
 })
 
-// Verify SMTP connection
-transport
-  .verify()
-  .then(() => logger.info("Connected to email server"))
-  .catch((error) =>
-    logger.warn(
-      `Unable to connect to email server: ${error.message}. Make sure you have configured the SMTP options in .env`
-    )
-  )
+const smtpConfigured = Boolean(
+  config.email.smtp.host &&
+  config.email.smtp.port &&
+  config.email.smtp.auth.user &&
+  config.email.smtp.auth.pass
+)
+
+if (config.env !== "test" && smtpConfigured) {
+  transport
+    .verify()
+    .then(() => logger.info("Connected to email server"))
+    .catch(() => logger.warn("Unable to connect to configured email server"))
+}
 
 /**
  * Send an email
@@ -28,10 +32,10 @@ const sendEmail = async (to: string, subject: string, text: string) => {
   try {
     const msg = { from: config.email.from, to, subject, text }
     const info = await transport.sendMail(msg)
-    logger.info(`Email sent to ${to}: ${info.messageId}`)
+    logger.info("Email sent", { messageId: info.messageId })
     return info
   } catch (error: any) {
-    logger.error(`Failed to send email to ${to}: ${error.message}`)
+    logger.error("Failed to send email")
     throw error
   }
 }

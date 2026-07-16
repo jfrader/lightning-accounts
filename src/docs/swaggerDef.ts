@@ -1,5 +1,6 @@
 import { name, version, repository } from "../../package.json"
-import config from "../config/config"
+
+const port = process.env.PORT ?? process.env.NODE_PORT ?? "3000"
 
 const swaggerDef = {
   openapi: "3.0.0",
@@ -13,7 +14,7 @@ const swaggerDef = {
   },
   servers: [
     {
-      url: `http://localhost:${config.port}/v1`,
+      url: `http://localhost:${port}/v1`,
     },
   ],
 }

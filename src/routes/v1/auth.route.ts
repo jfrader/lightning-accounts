@@ -31,6 +31,7 @@ const authenticateX = passport.authenticate("x", xAuthOptions)
 const authenticateTwitterCallback = (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate("twitter")(req, res, next)
 }
+const authenticateNostr = passport.authenticate("nostr", { session: false })
 const authenticateXCallback = (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate("x", xCallbackOptions)(req, res, next)
 }
@@ -256,6 +257,55 @@ router.post(
  *               message: Invalid email or password
  */
 router.post("/login", validate(authValidation.login), authController.login)
+
+/**
+ * @swagger
+ * /auth/login-nostr:
+ *   post:
+ *     summary: Log in a user with a Nostr signed token
+ *     operationId: loginWithNostr
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Base64 encoded NIP-98 token
+ *             example:
+ *               token: Nostr eyJraW...
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       "401":
+ *         description: Invalid Nostr token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               code: 401
+ *               message: Invalid Nostr token
+ */
+router.post(
+  "/login-nostr",
+  optionalAuth,
+  validate(authValidation.loginWithNostr),
+  authenticateNostr,
+  authController.loginWithNostr
+)
 
 /**
  * @swagger

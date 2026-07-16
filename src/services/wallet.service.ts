@@ -4,12 +4,18 @@ import { Prisma, TransactionType, Transaction, Wallet, PayRequest } from "@prism
 import prisma from "../client"
 import { SubscribeToInvoiceInvoiceUpdatedEvent } from "lightning"
 import lightningService, { LND_TIMEOUT } from "./lightning.service"
-import userService from "./user.service"
 import logger from "../config/logger"
 import config from "../config/config"
 import { setWalletBusy, clearWalletBusy, isWalletBusy } from "./lock.service"
 
 const PRISMA_TRANSACTION_OPTS = { maxWait: 10000, timeout: LND_TIMEOUT + 5000 }
+const MAX_WALLET_SATS = 2_147_483_647
+
+const assertPositiveSats = (amountInSats: number) => {
+  if (!Number.isSafeInteger(amountInSats) || amountInSats <= 0 || amountInSats > MAX_WALLET_SATS) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Amount must be a positive integer number of sats")
+  }
+}
 
 /**
  * Check for inconsistent transactions (walletImpacted !== invoiceSettled) and attempt to reconcile
@@ -325,13 +331,17 @@ const getUserWallet = async (
  * @returns {Promise<Transaction>}
  */
 const createDepositInvoice = async (userId: number, sats: number): Promise<Transaction> => {
+  assertPositiveSats(sats)
+
   return prisma.$transaction(async (tx) => {
     const wallet = await getUserWallet(userId, true)
 
-    if (config.wallet.limit > 0 && wallet.balanceInSats + sats > config.wallet.limit) {
+    const walletLimit = config.wallet.limit > 0 ? config.wallet.limit : MAX_WALLET_SATS
+
+    if (wallet.balanceInSats > walletLimit - sats) {
       throw new ApiError(
         httpStatus.BAD_REQUEST,
-        `Not allowed to deposit more than ${config.wallet.limit} sats`
+        `Not allowed to hold more than ${walletLimit} sats`
       )
     }
 
@@ -364,30 +374,48 @@ const _impactDeposit = async (
   invoice: SubscribeToInvoiceInvoiceUpdatedEvent,
   walletTransaction: Transaction
 ) => {
+  assertPositiveSats(invoice.tokens)
+  if (invoice.tokens !== walletTransaction.amountInSats) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Settled invoice amount does not match transaction")
+  }
+
   return prisma.$transaction(async (tx) => {
-    if (walletTransaction.walletImpacted || !invoice.is_confirmed) {
+    if (!invoice.is_confirmed) {
       logger.info(
-        `Transaction ${walletTransaction.id}: Skipping impact (already impacted or not confirmed)`
+        `Transaction ${walletTransaction.id}: Skipping impact because invoice is not confirmed`
       )
       return
     }
 
-    const wallet = await tx.wallet.findUnique({
-      where: { id: walletTransaction.walletId },
+    const claimedTransaction = await tx.transaction.updateMany({
+      where: {
+        id: walletTransaction.id,
+        walletId: walletTransaction.walletId,
+        walletImpacted: false,
+      },
+      data: { walletImpacted: true, invoiceSettled: true },
     })
 
-    if (!wallet) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Wallet not found")
+    if (claimedTransaction.count !== 1) {
+      logger.info(`Transaction ${walletTransaction.id}: Deposit already impacted`)
+      return
     }
 
-    await tx.wallet.update({
-      where: { id: wallet.id },
-      data: { balanceInSats: wallet.balanceInSats + invoice.tokens },
+    const creditedWallet = await tx.wallet.updateMany({
+      where: {
+        id: walletTransaction.walletId,
+        balanceInSats: { lte: MAX_WALLET_SATS - invoice.tokens },
+      },
+      data: { balanceInSats: { increment: invoice.tokens } },
     })
+
+    if (creditedWallet.count !== 1) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Wallet balance limit exceeded")
+    }
 
     await tx.transaction.update({
       where: { id: walletTransaction.id },
-      data: { walletImpacted: true, invoiceSettled: invoice.is_confirmed, invoice },
+      data: { invoice },
     })
 
     logger.info(`Transaction ${walletTransaction.id}: Deposited ${invoice.tokens} satoshis`)
@@ -411,13 +439,22 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
   try {
     const payment = await lightningService.decodeInvoice(invoice)
 
+    if (!Number.isSafeInteger(payment.tokens) || payment.tokens < 0) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invoice amount is invalid")
+    }
+
     const balanceInSats = wallet.balanceInSats
     const isZeroValue = payment.tokens === 0
     const amountInSats = isZeroValue
       ? balanceInSats - Math.round(balanceInSats / 20)
       : payment.tokens
+    assertPositiveSats(amountInSats)
     const feeReserve = Math.round(amountInSats / 20)
     const total = amountInSats + feeReserve
+
+    if (!Number.isSafeInteger(total) || total > MAX_WALLET_SATS) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invoice amount is too large")
+    }
 
     logger.info(
       `Transaction for withdrawal: amount=${amountInSats}, fee=${feeReserve}, total=${total}, wallet balance=${balanceInSats}`
@@ -431,6 +468,19 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
     }
 
     const transaction = await prisma.$transaction(async (tx) => {
+      const debitedWallet = await tx.wallet.updateMany({
+        where: {
+          id: wallet.id,
+          disabled: false,
+          balanceInSats: { gte: total },
+        },
+        data: { balanceInSats: { decrement: total } },
+      })
+
+      if (debitedWallet.count !== 1) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
+      }
+
       const newTransaction = await tx.transaction.create({
         data: {
           amountInSats,
@@ -444,10 +494,6 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
 
       try {
         await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
-        await tx.wallet.update({
-          where: { id: wallet.id },
-          data: { balanceInSats: { decrement: total } },
-        })
         await tx.transaction.update({
           where: { id: newTransaction.id },
           data: { invoiceSettled: true, walletImpacted: true },
@@ -485,26 +531,40 @@ const payUser = async ({
   amountInSats: number
   description?: string
 }) => {
+  assertPositiveSats(amountInSats)
+  if (payerId === receiverId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Cannot pay the same wallet")
+  }
+
   return prisma.$transaction(async (tx) => {
     const payerWallet = await getUserWallet(payerId, true)
+    const payeeWallet = await getUserWallet(receiverId, true)
 
-    if (payerWallet.balanceInSats < amountInSats) {
+    const debitedWallet = await tx.wallet.updateMany({
+      where: {
+        id: payerWallet.id,
+        disabled: false,
+        balanceInSats: { gte: amountInSats },
+      },
+      data: { balanceInSats: { decrement: amountInSats } },
+    })
+
+    if (debitedWallet.count !== 1) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
     }
 
-    const payeeWallet = await getUserWallet(receiverId, true)
-
-    await tx.wallet.update({
-      where: { id: payerWallet.id },
-      data: { balanceInSats: { decrement: amountInSats } },
-      select: { id: true },
-    })
-
-    await tx.wallet.update({
-      where: { id: payeeWallet.id },
+    const creditedWallet = await tx.wallet.updateMany({
+      where: {
+        id: payeeWallet.id,
+        disabled: false,
+        balanceInSats: { lte: MAX_WALLET_SATS - amountInSats },
+      },
       data: { balanceInSats: { increment: amountInSats } },
-      select: { id: true },
     })
+
+    if (creditedWallet.count !== 1) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Receiver wallet balance limit exceeded")
+    }
 
     await tx.transaction.create({
       data: {
@@ -545,6 +605,14 @@ const createPayRequests = async ({
 }: Pick<PayRequest, "amountInSats" | "creatorId" | "description" | "meta"> & {
   receiverIds: Array<PayRequest["id"]>
 }) => {
+  assertPositiveSats(amountInSats)
+  if (receiverIds.length === 0 || new Set(receiverIds).size !== receiverIds.length) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Receivers must be a non-empty unique list")
+  }
+  if (receiverIds.includes(creatorId)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Cannot request payment from the same wallet")
+  }
+
   return prisma.$transaction(async (tx) => {
     const prs = []
     for (const receiverId of receiverIds) {
@@ -579,6 +647,11 @@ const createPayRequest = async ({
   description,
   meta,
 }: Pick<PayRequest, "amountInSats" | "creatorId" | "receiverId" | "description" | "meta">) => {
+  assertPositiveSats(amountInSats)
+  if (creatorId === receiverId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Cannot request payment from the same wallet")
+  }
+
   return prisma.payRequest.create({
     data: {
       amountInSats,
@@ -601,11 +674,11 @@ const createPayRequest = async ({
  */
 const payRequest = async ({ payerId, payRequestId }: { payerId: number; payRequestId: number }) => {
   return prisma.$transaction(async (tx) => {
-    const pr = await prisma.payRequest.findUnique({
-      where: { id: payRequestId, receiverId: payerId },
+    const pr = await tx.payRequest.findUnique({
+      where: { id: payRequestId },
     })
 
-    if (!pr) {
+    if (!pr || pr.receiverId !== payerId) {
       throw new ApiError(httpStatus.NOT_FOUND, "Pay request not found")
     }
 
@@ -613,29 +686,48 @@ const payRequest = async ({ payerId, payRequestId }: { payerId: number; payReque
       throw new ApiError(httpStatus.CONFLICT, "Pay request already paid")
     }
 
-    const payerWallet = await getUserWallet(payerId, true)
+    assertPositiveSats(pr.amountInSats)
 
-    if (payerWallet.balanceInSats < pr.amountInSats) {
+    const payerWallet = await getUserWallet(payerId, true)
+    const payeeWallet = await getUserWallet(pr.creatorId, true)
+
+    const claimedRequest = await tx.payRequest.updateMany({
+      where: { id: pr.id, receiverId: payerId, paid: false },
+      data: { paid: true },
+    })
+
+    if (claimedRequest.count !== 1) {
+      throw new ApiError(httpStatus.CONFLICT, "Pay request already paid")
+    }
+
+    const debitedWallet = await tx.wallet.updateMany({
+      where: {
+        id: payerWallet.id,
+        disabled: false,
+        balanceInSats: { gte: pr.amountInSats },
+      },
+      data: { balanceInSats: { decrement: pr.amountInSats } },
+    })
+
+    if (debitedWallet.count !== 1) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
     }
 
-    const payeeWallet = await getUserWallet(pr.creatorId, true)
-
-    await tx.wallet.update({
-      where: { id: payerWallet.id },
-      data: { balanceInSats: { decrement: pr.amountInSats } },
-      select: { id: true },
-    })
-
-    await tx.wallet.update({
-      where: { id: payeeWallet.id },
+    const creditedWallet = await tx.wallet.updateMany({
+      where: {
+        id: payeeWallet.id,
+        disabled: false,
+        balanceInSats: { lte: MAX_WALLET_SATS - pr.amountInSats },
+      },
       data: { balanceInSats: { increment: pr.amountInSats } },
-      select: { id: true },
     })
 
-    const updatedPr = await tx.payRequest.update({
+    if (creditedWallet.count !== 1) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Receiver wallet balance limit exceeded")
+    }
+
+    const updatedPr = await tx.payRequest.findUniqueOrThrow({
       where: { id: pr.id },
-      data: { paid: true },
       include: {
         creator: { select: { id: true } },
         receiver: { select: { id: true } },
@@ -675,9 +767,9 @@ const payRequest = async ({ payerId, payRequestId }: { payerId: number; payReque
  * @param id - Pay request ID
  * @returns {Promise<PayRequest | null>}
  */
-const getPayRequest = async (id: PayRequest["id"]) => {
-  return prisma.payRequest.findUnique({
-    where: { id },
+const getPayRequest = async (id: PayRequest["id"], userId: number) => {
+  return prisma.payRequest.findFirst({
+    where: { id, OR: [{ creatorId: userId }, { receiverId: userId }] },
     include: {
       receiver: { select: { id: true, email: true, name: true, role: true } },
       creator: { select: { id: true, email: true, name: true, role: true } },
@@ -690,9 +782,12 @@ const getPayRequest = async (id: PayRequest["id"]) => {
  * @param ids - Array of pay request IDs
  * @returns {Promise<PayRequest[]>}
  */
-const getPayRequests = async (ids: Array<PayRequest["id"]>) => {
+const getPayRequests = async (ids: Array<PayRequest["id"]>, userId: number) => {
   return prisma.payRequest.findMany({
-    where: { OR: ids.map((id) => ({ id })) },
+    where: {
+      id: { in: ids },
+      OR: [{ creatorId: userId }, { receiverId: userId }],
+    },
     include: {
       creator: { select: { id: true, name: true, email: true } },
       receiver: { select: { id: true, name: true, email: true } },
@@ -707,16 +802,10 @@ const getPayRequests = async (ids: Array<PayRequest["id"]>) => {
  * @returns {Promise<Transaction>}
  */
 const getTransaction = async (txId: number, userId?: number) => {
-  const walletId = userId ? (await userService.getUserWithWallet(userId))?.id : undefined
-
-  if (!walletId && userId) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Wallet not found")
-  }
-
-  const transaction = await prisma.transaction.findUnique({
+  const transaction = await prisma.transaction.findFirst({
     where: {
       id: txId,
-      ...(walletId ? { walletId } : {}),
+      ...(userId ? { wallet: { userId } } : {}),
     },
   })
 

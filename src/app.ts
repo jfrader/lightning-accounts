@@ -16,24 +16,25 @@ import { applicationStrategy } from "./config/passport/application.strategy"
 import { twitterStrategy } from "./config/passport/twitter.strategy"
 import { xStrategy } from "./config/passport/x.strategy"
 import { seedStrategy } from "./config/passport/seed.strategy"
+import { nostrStrategy } from "./config/passport/nostr.strategy"
 import session from "express-session"
 import { User } from "@prisma/client"
 import path from "node:path"
 import { SessionCookie } from "./types/tokens"
 import { getCookieName } from "./utils/authCookie"
-import { PrismaClient } from "@prisma/client"
 import { PrismaSessionStore } from "./config/session"
+import prisma from "./client"
+import healthRoutes from "./health"
+import { configureTrustProxy } from "./config/trustProxy"
+import requestOrigin from "./middlewares/requestOrigin"
 
 const secure = config.env === "production"
 const cookieDomain = secure && config.domain ? config.domain : undefined
-const prisma = new PrismaClient()
 
 const app = express()
 app.disable("x-powered-by")
 
-// Set trust proxy based on config
-const trustedProxies = ["loopback", ...config.trustedProxyIps]
-app.set("trust proxy", trustedProxies)
+configureTrustProxy(app, config.trustProxyHops, config.trustedProxyIps)
 
 passport.serializeUser(function (user, done) {
   done(null, user)
@@ -44,9 +45,9 @@ passport.deserializeUser<User>(function (user, done) {
 })
 
 const CORS_OPTS: CorsOptions = {
-  origin: config.origin ? config.origin.split(",") : "*",
+  origin: config.origins.includes("*") ? true : config.origins,
   methods: ["GET", "POST", "PATCH", "DELETE"],
-  allowedHeaders: ["Content-Type"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }
 
@@ -62,6 +63,8 @@ app.use(xss())
 app.use(compression())
 app.use(cookieParser(config.jwt.secret))
 app.use(cors(CORS_OPTS))
+app.use(requestOrigin(config.origins))
+app.use("/health", healthRoutes)
 
 app.options("*any", cors(CORS_OPTS))
 
@@ -81,7 +84,7 @@ app.use(
       httpOnly: true,
       maxAge: config.jwt.refreshExpirationDays * 24 * 60 * 60 * 1000,
       domain: cookieDomain,
-      sameSite: secure ? "none" : "lax",
+      sameSite: "lax",
       secure,
     },
   })
@@ -95,6 +98,7 @@ passport.use("jwt", jwtStrategy)
 passport.use("twitter", twitterStrategy)
 passport.use("x", xStrategy)
 passport.use("seed", seedStrategy)
+passport.use("nostr", nostrStrategy)
 
 app.use("/v1", routes)
 

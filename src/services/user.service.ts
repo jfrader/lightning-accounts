@@ -24,6 +24,11 @@ export const USER_PRIVATE_FIELDS = [
   "hasSeed",
 ]
 
+export const getNewWalletData = () => ({
+  balanceInSats: 0,
+  disabled: !config.wallet.enabled,
+})
+
 const createUser = async (
   email: string,
   password: string,
@@ -40,7 +45,7 @@ const createUser = async (
       name,
       password: await encryptPassword(password),
       role,
-      wallet: { create: { balanceInSats: 0, disabled: false } },
+      wallet: { create: getNewWalletData() },
     },
   })
 }
@@ -55,7 +60,7 @@ const createUserWithEmail = async (email: string, name: string, role: Role = Rol
       email,
       name,
       role,
-      wallet: { create: { balanceInSats: 0, disabled: false } },
+      wallet: { create: getNewWalletData() },
     },
   })
 }
@@ -69,7 +74,7 @@ const createUserWithSeed = async (name: string) => {
       seedHash,
       hasSeed: true,
       role: Role.USER,
-      wallet: { create: { balanceInSats: 0, disabled: false } },
+      wallet: { create: getNewWalletData() },
     },
     select: {
       id: true,
@@ -100,10 +105,7 @@ const upsertTwitterUser = async (
       avatarUrl,
       role: Role.USER,
       wallet: {
-        create: {
-          balanceInSats: 0,
-          disabled: false,
-        },
+        create: getNewWalletData(),
       },
     },
     update: {

@@ -12,6 +12,7 @@ volumes
 .env.*
 jwt.key
 jwt.key.pub
+applications.json
 applications.example.json
 
 # Local artifacts/logs

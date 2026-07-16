@@ -75,6 +75,12 @@ const loginWithSeed = catchAsync(async (req, res) => {
   authCookie(tokens, res).send({ user: authService.serializeAuthUser(user) })
 })
 
+const loginWithNostr = catchAsync(async (req, res) => {
+  const user = req.user as User
+  const tokens = await tokenService.generateAuthTokens(user)
+  authCookie(tokens, res).send({ user: authService.serializeAuthUser(user) })
+})
+
 const loginTwitter = catchAsync(async (req, res) => {
   const user = req.user as User | void
   if (!user) {
@@ -88,10 +94,12 @@ const logout = catchAsync(async (req, res) => {
   const token = cookieExtractor(req, getCookieName(JwtCookie.refresh))
   deauthCookieResponse(res)
   req.user = undefined
-  try {
-    await authService.logout(token)
-  } catch (e: any) {
-    logger.error(e.message)
+  if (token) {
+    try {
+      await authService.logout(token)
+    } catch {
+      logger.warn("Unable to revoke refresh token during logout")
+    }
   }
   res.status(httpStatus.NO_CONTENT).send()
 })
@@ -101,6 +109,7 @@ const refreshTokens = catchAsync(async (req, res) => {
 
   if (!token) {
     res.status(httpStatus.BAD_REQUEST).send()
+    return
   }
 
   const tokens = await authService.refreshAuth(token)
@@ -149,6 +158,7 @@ const getMe = catchAsync(async (req, res) => {
     "createdAt",
     "updatedAt",
     "hasSeed",
+    "nostrPubkey",
     "name",
     "role",
     "avatarUrl",
@@ -183,5 +193,6 @@ export default {
   getMe,
   registerWithSeed,
   loginWithSeed,
+  loginWithNostr,
   addSeed,
 }

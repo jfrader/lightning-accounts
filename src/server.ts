@@ -4,10 +4,18 @@ import logger from "./config/logger"
 import lightningService from "./services/lightning.service"
 import walletService from "./services/wallet.service"
 import app from "./app"
+import { setReady } from "./health"
 
 export const initializeApp = async () => {
+  setReady(false)
   await prisma.$connect()
+  setReady(true)
   logger.info("Connected to SQL Database")
+
+  if (!config.wallet.enabled) {
+    logger.warn("Lightning wallet and payment functionality is disabled")
+    return app
+  }
 
   const dryRun = config.wallet.reconcileDryRun
   logger.info(`Starting reconciliation with dryRun=${dryRun}`)

@@ -5,6 +5,7 @@ import userService from "./user.service"
 import { Token, TokenType } from "@prisma/client"
 import prisma from "../client"
 import { AuthTokensResponse } from "../types/response"
+import { randomUUID } from "node:crypto"
 
 /**
  * Generate token
@@ -25,6 +26,7 @@ const generateToken = (
     iat: moment().unix(),
     exp: expires.unix(),
     type,
+    jti: randomUUID(),
   }
   return jwt.sign(payload, secret, { algorithm: "RS256" })
 }
@@ -68,7 +70,7 @@ const verifyToken = async (token: string, type: TokenType): Promise<Token> => {
   const payload = jwt.verify(token, config.jwt.publicKey, { algorithms: ["RS256"] })
   const userId = Number(payload.sub)
   const tokenData = await prisma.token.findFirst({
-    where: { token, type, userId, blacklisted: false },
+    where: { token, type, userId, blacklisted: false, expires: { gt: new Date() } },
   })
   if (!tokenData) {
     throw new Error("Token not found")

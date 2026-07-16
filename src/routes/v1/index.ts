@@ -2,9 +2,15 @@ import express from "express"
 import authRoute from "./auth.route"
 import userRoute from "./user.route"
 import walletRoute from "./wallet.route"
+import supportRoute from "./support.route"
 import docsRoute from "./docs.route"
 import config from "../../config/config"
-import { authLimiter, userLimiter, walletLimiter } from "../../middlewares/rateLimiter"
+import {
+  authLimiter,
+  feedbackLimiter,
+  userLimiter,
+  walletLimiter,
+} from "../../middlewares/rateLimiter"
 
 const router = express.Router()
 
@@ -20,11 +26,19 @@ const defaultRoutes = [
     route: userRoute,
   },
   {
+    path: "/support",
+    middleware: config.env === "production" ? feedbackLimiter : null,
+    route: supportRoute,
+  },
+]
+
+if (config.wallet.enabled) {
+  defaultRoutes.push({
     path: "/wallet",
     middleware: config.env === "production" ? walletLimiter : null,
     route: walletRoute,
-  },
-]
+  })
+}
 
 const devRoutes = [
   {

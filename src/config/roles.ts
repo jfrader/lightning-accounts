@@ -1,6 +1,7 @@
 import { Role } from "@prisma/client"
 
 export enum UserPermission {
+  feedback_send = "feedback_send",
   users_read = "users_read",
   users_write = "users_write",
   wallet_invoice = "wallet_read",
@@ -11,6 +12,7 @@ export enum UserPermission {
 
 const allRoles = {
   [Role.APPLICATION]: [
+    UserPermission.feedback_send,
     UserPermission.users_read,
     UserPermission.wallet_invoice,
     UserPermission.wallet_pay_user,

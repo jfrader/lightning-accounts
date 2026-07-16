@@ -152,6 +152,12 @@ const consumeMagicLink = async (
     }
 
     await prisma.$transaction(async (tx) => {
+      const consumedToken = await tx.token.deleteMany({
+        where: { id: magicLinkTokenData.id, type: TokenType.MAGIC_LINK, blacklisted: false },
+      })
+      if (consumedToken.count !== 1) {
+        throw new Error("Magic link token already consumed")
+      }
       await tx.token.deleteMany({
         where: { userId: magicLinkTokenData.userId, type: TokenType.MAGIC_LINK },
       })
@@ -184,7 +190,7 @@ const logout = async (refreshToken: string): Promise<void> => {
     logger.error("Refresh token not found")
     throw new ApiError(httpStatus.NOT_FOUND, "Not found")
   }
-  await prisma.token.delete({ where: { id: refreshTokenData.id } })
+  await prisma.token.deleteMany({ where: { token: refreshToken, type: TokenType.REFRESH } })
   logger.info("Logout successful")
 }
 
@@ -195,6 +201,15 @@ const refreshAuth = async (refreshToken: string): Promise<AuthTokensResponse> =>
     const refreshTokenData = await tokenService.verifyToken(refreshToken, TokenType.REFRESH)
     const { userId } = refreshTokenData
     logger.debug("Refresh token verified", { userId })
+
+    const consumedToken = await prisma.token.updateMany({
+      where: { id: refreshTokenData.id, type: TokenType.REFRESH, blacklisted: false },
+      data: { blacklisted: true },
+    })
+    if (consumedToken.count !== 1) {
+      throw new Error("Refresh token already consumed")
+    }
+
     await prisma.token.deleteMany({ where: { expires: { lte: new Date() }, userId } })
     logger.debug("Expired tokens deleted", { userId })
     const tokens = await tokenService.generateAuthTokens({ id: userId })
@@ -226,6 +241,17 @@ const resetPassword = async (resetPasswordToken: string, newPassword: string): P
     logger.debug("Updating user password")
 
     await prisma.$transaction(async (tx) => {
+      const consumedToken = await tx.token.deleteMany({
+        where: {
+          id: resetPasswordTokenData.id,
+          type: TokenType.RESET_PASSWORD,
+          blacklisted: false,
+        },
+      })
+      if (consumedToken.count !== 1) {
+        throw new Error("Reset password token already consumed")
+      }
+
       const updatedUser = await tx.user.update({
         where: { id: user.id },
         data: { password: encryptedPassword },
@@ -246,8 +272,13 @@ const resetPassword = async (resetPasswordToken: string, newPassword: string): P
       }
       logger.debug("Password update verified", { userId: user.id })
 
-      await tx.token.deleteMany({ where: { userId: user.id, type: TokenType.RESET_PASSWORD } })
-      logger.debug("Reset tokens deleted")
+      await tx.token.deleteMany({
+        where: {
+          userId: user.id,
+          type: { in: [TokenType.RESET_PASSWORD, TokenType.REFRESH] },
+        },
+      })
+      logger.debug("Reset and refresh tokens deleted")
     })
     logger.info("Password reset successful")
   } catch (error: unknown) {

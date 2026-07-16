@@ -4,6 +4,7 @@ import validate from "../../middlewares/validate"
 import { userValidation } from "../../validations"
 import { userController } from "../../controllers"
 import { UserPermission } from "../../config/roles"
+import config from "../../config/config"
 
 const router = express.Router()
 
@@ -267,41 +268,43 @@ router
     userController.deleteUser
   )
 
-router
-  .route("/:userId/wallet")
-  /**
-   * @swagger
-   * /users/{id}/wallet:
-   *   get:
-   *     summary: Get a user's wallet
-   *     description: Get user wallet (only yourself if not admin).
-   *     operationId: getUserWallet
-   *     tags: [Users]
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema:
-   *           type: string
-   *         description: User ID
-   *     responses:
-   *       "200":
-   *         description: OK
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/Wallet'
-   *       "401":
-   *         $ref: '#/components/responses/Unauthorized'
-   *       "403":
-   *         $ref: '#/components/responses/Forbidden'
-   *       "404":
-   *         $ref: '#/components/responses/NotFound'
-   */
-  .get(
-    auth(UserPermission.users_read),
-    validate(userValidation.getUser),
-    userController.getUserWallet
-  )
+if (config.wallet.enabled) {
+  router
+    .route("/:userId/wallet")
+    /**
+     * @swagger
+     * /users/{id}/wallet:
+     *   get:
+     *     summary: Get a user's wallet
+     *     description: Get user wallet (only yourself if not admin).
+     *     operationId: getUserWallet
+     *     tags: [Users]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: User ID
+     *     responses:
+     *       "200":
+     *         description: OK
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Wallet'
+     *       "401":
+     *         $ref: '#/components/responses/Unauthorized'
+     *       "403":
+     *         $ref: '#/components/responses/Forbidden'
+     *       "404":
+     *         $ref: '#/components/responses/NotFound'
+     */
+    .get(
+      auth(UserPermission.users_read),
+      validate(userValidation.getUser),
+      userController.getUserWallet
+    )
+}
 
 export default router

@@ -1,20 +1,10 @@
 # Dockerfile
-FROM node:24-alpine
+FROM node:24.18.0-alpine
+
+RUN test "$(yarn --version)" = "1.22.22"
 
 ARG NODE_PORT=2999
 ENV NODE_ENV=development
-ARG DATABASE_URL=postgresql://user:pass@localhost:5432/db?schema=public
-ENV DATABASE_URL=$DATABASE_URL
-ARG NODE_ORIGIN=*
-ENV NODE_ORIGIN=$NODE_ORIGIN
-ARG JWT_SECRET=build-secret
-ENV JWT_SECRET=$JWT_SECRET
-ARG JWT_BASE64_PUBLIC_KEY=ZHVtbXktcHVibGljLWtleQ==
-ENV JWT_BASE64_PUBLIC_KEY=$JWT_BASE64_PUBLIC_KEY
-ARG JWT_BASE64_PRIVATE_KEY=ZHVtbXktcHJpdmF0ZS1rZXk=
-ENV JWT_BASE64_PRIVATE_KEY=$JWT_BASE64_PRIVATE_KEY
-ARG SEED_HASH_SECRET=build-seed-secret
-ENV SEED_HASH_SECRET=$SEED_HASH_SECRET
 
 RUN mkdir -p /opt/app
 WORKDIR /opt/app
@@ -33,10 +23,9 @@ COPY tsconfig.build.json /opt/app/
 COPY tsconfig.test.json /opt/app/
 COPY tsconfig.dist.json /opt/app/
 COPY eslint.config.mjs /opt/app/
-COPY applications.json /opt/app/
 
-RUN yarn --pure-lockfile
-RUN yarn build
+RUN yarn install --frozen-lockfile
+RUN DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public yarn build
 RUN chown -R node:node /opt/app
 
 EXPOSE $NODE_PORT

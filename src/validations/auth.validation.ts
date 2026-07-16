@@ -80,6 +80,12 @@ const loginWithSeed = {
   }),
 }
 
+const loginWithNostr = {
+  body: Joi.object().keys({
+    token: Joi.string().required(),
+  }),
+}
+
 const addSeed = {
   body: Joi.object().keys({}).optional(),
 }
@@ -96,5 +102,6 @@ export default {
   verifyEmail,
   registerWithSeed,
   loginWithSeed,
+  loginWithNostr,
   addSeed,
 }

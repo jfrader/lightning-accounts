@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  development-docker-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build development image
+        run: docker build --file Dockerfile --tag lightning-accounts-development:ci .
+      - name: Verify bundled Yarn
+        run: |
+          actual_version="$(docker run --rm --entrypoint yarn lightning-accounts-development:ci --version)"
+          echo "Bundled Yarn: ${actual_version}"
+          test "${actual_version}" = "1.22.22"
+
+  unit-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Enable pinned Yarn
+        run: |
+          corepack enable
+          yarn --version
+      - run: yarn install --frozen-lockfile --production=false
+      - run: yarn lint
+      - run: yarn prettier
+      - name: Run unit tests
+        run: yarn test:unit
+        env:
+          NODE_ENV: test
+          NODE_ORIGIN: http://localhost:3000
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
+          JWT_SECRET: ci-jwt-secret
+          JWT_BASE64_PUBLIC_KEY: Y2ktcHVibGljLWtleQ==
+          JWT_BASE64_PRIVATE_KEY: Y2ktcHJpdmF0ZS1rZXk=
+          SEED_HASH_SECRET: ci-seed-secret
+          WALLET_ENABLED: "0"
+      - run: yarn build
+
+# The transaction E2E suite provisions PostgreSQL plus Bitcoin/LND and remains in docker:test.

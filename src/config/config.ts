@@ -6,9 +6,18 @@ dotenv.config({ path: path.join(process.cwd(), ".env") })
 
 const envVarsSchema = Joi.object()
   .keys({
-    WALLET_LIMIT: Joi.string().description("Maximum allowed sats per wallet"),
+    WALLET_ENABLED: Joi.string()
+      .valid("0", "1")
+      .description("Enable Lightning wallet and payment functionality"),
+    WALLET_LIMIT: Joi.number()
+      .integer()
+      .min(0)
+      .max(2_147_483_647)
+      .default(0)
+      .description("Maximum allowed sats per wallet; 0 uses the database integer limit"),
     WALLET_RECONCILE_DRY_RUN: Joi.string().description("Dry run reconciliation on startup"),
     NODE_ENV: Joi.string().valid("production", "development", "test").required(),
+    PORT: Joi.number().description("Platform-provided HTTP port"),
     NODE_PORT: Joi.number().default(3000),
     NODE_ORIGIN: Joi.string().required().description("Allowed origin"),
     NODE_DOMAIN: Joi.string()
@@ -16,6 +25,11 @@ const envVarsSchema = Joi.object()
       .default("")
       .description("The domain for cookie like '.example.com'"),
     NODE_HOST: Joi.string().description("The host URL of the API for twitter.strategy"),
+    NODE_TRUST_PROXY_HOPS: Joi.number()
+      .integer()
+      .min(0)
+      .default(0)
+      .description("Number of trusted reverse-proxy hops"),
     NODE_TRUSTED_PROXY_IP: Joi.string()
       .empty("")
       .default("")
@@ -25,11 +39,14 @@ const envVarsSchema = Joi.object()
     NODE_DEBUG_LEVEL: Joi.string().description(
       "Debug level (trace, debug, info, warning, error, fatal)"
     ),
+    APPLICATION_EMAILS: Joi.string()
+      .empty("")
+      .default("")
+      .description("Comma-separated application service-account email allowlist"),
     APPLICATION_ADDRESS: Joi.string()
-      .optional()
-      .description(
-        "Address that will be accepted for applications to login, bypassing applications.json config"
-      ),
+      .empty("")
+      .default("")
+      .description("Optional additional source address for allowlisted applications"),
     TWITTER_CLIENT_ID: Joi.string().empty("").description("Twitter developer client ID"),
     TWITTER_CLIENT_SECRET: Joi.string().empty("").description("Twitter developer client secret"),
     TWITTER_CLIENT_TYPE: Joi.string()
@@ -38,6 +55,7 @@ const envVarsSchema = Joi.object()
     TWITTER_API_KEY: Joi.string().empty("").description("Legacy Twitter/X OAuth 1.0a API key"),
     TWITTER_API_SECRET: Joi.string().empty("").description("Twitter/X OAuth 1.0a API secret"),
     JWT_SECRET: Joi.string().required().description("JWT secret key"),
+    JWT_COOKIE_PREFIX: Joi.string().allow("").default(""),
     JWT_BASE64_PUBLIC_KEY: Joi.string().required().description("Base64 encoded public key"),
     JWT_BASE64_PRIVATE_KEY: Joi.string().required().description("Base64 encoded private key"),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number()
@@ -57,6 +75,12 @@ const envVarsSchema = Joi.object()
     JWT_MAGIC_LINK_EXPIRATION_MINUTES: Joi.number()
       .default(10)
       .description("minutes after which magic login links expire"),
+    BCRYPT_ROUNDS: Joi.number()
+      .integer()
+      .min(10)
+      .max(15)
+      .default(12)
+      .description("bcrypt work factor for newly hashed credentials"),
     SMTP_HOST: Joi.string().description("server that will send the emails"),
     SMTP_PORT: Joi.number().description("port to connect to the email server"),
     SMTP_USERNAME: Joi.string().description("username for email server"),
@@ -77,6 +101,16 @@ if (error) {
   throw new Error(`Config validation error: ${error.message}`)
 }
 
+const origins = String(envVars.NODE_ORIGIN)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+  .map((origin) => (origin === "*" ? origin : new URL(origin).origin))
+
+if (envVars.NODE_ENV === "production" && origins.includes("*")) {
+  throw new Error("Config validation error: NODE_ORIGIN cannot contain '*' in production")
+}
+
 export const resolveXOAuthConfig = (env: Record<string, string | undefined>) => ({
   clientID: env.TWITTER_CLIENT_ID,
   clientSecret: env.TWITTER_CLIENT_SECRET,
@@ -90,23 +124,33 @@ export const resolveXOAuth1Config = (env: Record<string, string | undefined>) =>
 
 export default {
   env: envVars.NODE_ENV,
-  port: envVars.NODE_PORT,
-  origin: envVars.NODE_ORIGIN,
+  port: envVars.PORT ?? envVars.NODE_PORT,
+  origin: origins[0],
+  origins,
   host: envVars.NODE_HOST,
   domain: envVars.NODE_DOMAIN,
+  trustProxyHops: envVars.NODE_TRUST_PROXY_HOPS,
   trustedProxyIps: envVars.NODE_TRUSTED_PROXY_IP
     ? envVars.NODE_TRUSTED_PROXY_IP.split(",").map((ip: string) => ip.trim())
     : [],
   debug_level: envVars.NODE_DEBUG_LEVEL,
   application: {
     address: envVars.APPLICATION_ADDRESS,
+    emails: envVars.APPLICATION_EMAILS
+      ? envVars.APPLICATION_EMAILS.split(",")
+          .map((email: string) => email.trim())
+          .filter(Boolean)
+      : [],
   },
   twitter: {
     ...resolveXOAuthConfig(envVars),
     ...resolveXOAuth1Config(envVars),
   },
   wallet: {
-    limit: envVars.WALLET_LIMIT,
+    enabled:
+      envVars.WALLET_ENABLED === "1" ||
+      (!process.env.WALLET_ENABLED && envVars.NODE_ENV !== "production"),
+    limit: Number(envVars.WALLET_LIMIT),
     reconcileDryRun: process.env.WALLET_RECONCILE_DRY_RUN === "1",
   },
   jwt: {
@@ -120,6 +164,7 @@ export default {
     verifyEmailExpirationMinutes: Number(envVars.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES),
     magicLinkExpirationMinutes: Number(envVars.JWT_MAGIC_LINK_EXPIRATION_MINUTES),
   },
+  bcryptRounds: Number(envVars.BCRYPT_ROUNDS),
   lnurl: {
     host: envVars.LNURL_HOST,
     port: envVars.LNURL_PORT,

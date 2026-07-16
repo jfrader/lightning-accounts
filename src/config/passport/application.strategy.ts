@@ -1,11 +1,16 @@
 import { Strategy as CookieStrategy } from "passport-cookie"
-import * as appsJson from "../../../applications.json"
 import { isPasswordMatch } from "../../utils/encryption"
 import { userService } from "../../services"
 import { Request } from "express"
 import logger from "../logger"
 import exclude from "../../utils/exclude"
 import config from "../config"
+import {
+  applications,
+  isApplicationSourceAllowed,
+  parseApplicationCredential,
+  resolveApplicationAuthorization,
+} from "../applications"
 
 export const APPLICATION_STRATEGY_COOKIE = "Lightning-Application-Token"
 
@@ -17,18 +22,21 @@ const options = {
 
 const verify = async (req: Request, cookie: string, done: (e: unknown, u: any) => void) => {
   try {
-    const [email, token] = cookie.split(":")
-    const app = appsJson.applications.find((a) => a.email === email)
+    const { email, token } = parseApplicationCredential(cookie)
+    const authorization = resolveApplicationAuthorization(
+      email,
+      config.application.emails,
+      applications,
+      config.application.address
+    )
 
-    if (!app) {
+    if (!authorization.allowed) {
       throw new Error("Application not found")
     }
 
-    if (
-      req.socket.remoteAddress !== app.remoteAddress &&
-      req.socket.remoteAddress !== config.application.address
-    ) {
-      throw new Error("Unknown application host " + req.socket.remoteAddress)
+    const sourceAddress = req.ip || req.socket.remoteAddress
+    if (!isApplicationSourceAllowed(sourceAddress, authorization)) {
+      throw new Error("Unknown application host")
     }
 
     const user = await userService.getUserByEmail(email, [

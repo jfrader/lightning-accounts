@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs"
+import config from "../config/config"
 
 export const encryptPassword = async (password: string) => {
-  const encryptedPassword = await bcrypt.hash(password, 8)
+  const encryptedPassword = await bcrypt.hash(password, config.bcryptRounds)
   return encryptedPassword
 }
 

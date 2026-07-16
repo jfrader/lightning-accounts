@@ -1,0 +1,79 @@
+services:
+  - type: web
+    name: lightning-accounts
+    runtime: node
+    region: virginia
+    plan: starter
+    numInstances: 1
+    buildCommand: npx --yes yarn@1.22.22 install --frozen-lockfile --production=false && npx --yes yarn@1.22.22 build
+    preDeployCommand: ./node_modules/.bin/prisma migrate deploy
+    startCommand: node bin/lightning-accounts-server
+    autoDeployTrigger: off
+    healthCheckPath: /health/ready
+    maxShutdownDelaySeconds: 300
+    domains:
+      - accounts.trucoshi.com
+    envVars:
+      - key: NODE_VERSION
+        value: "24.18.0"
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
+      - key: NODE_ENV
+        value: production
+      - key: WALLET_ENABLED
+        value: "0"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lightning-accounts-db
+          property: connectionString
+      - key: NODE_ORIGIN
+        value: https://trucoshi.com
+      - key: NODE_DOMAIN
+        value: .trucoshi.com
+      - key: NODE_HOST
+        value: https://accounts.trucoshi.com
+      - key: NODE_TRUST_PROXY_HOPS
+        value: "1"
+      - key: APPLICATION_EMAILS
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_BASE64_PUBLIC_KEY
+        sync: false
+      - key: JWT_BASE64_PRIVATE_KEY
+        sync: false
+      - key: SEED_HASH_SECRET
+        sync: false
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: TWITTER_API_KEY
+        sync: false
+      - key: TWITTER_API_SECRET
+        sync: false
+      - key: TWITTER_CLIENT_ID
+        sync: false
+      - key: TWITTER_CLIENT_SECRET
+        sync: false
+      - key: TWITTER_CLIENT_TYPE
+        sync: false
+
+databases:
+  - name: lightning-accounts-db
+    databaseName: lightning_accounts
+    user: lightning_accounts
+    region: virginia
+    plan: basic-256mb
+    diskSizeGB: 15
+    connectionPool: none
+    postgresMajorVersion: "16"
+    ipAllowList: []

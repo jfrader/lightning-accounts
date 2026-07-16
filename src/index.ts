@@ -2,24 +2,55 @@ import { Server } from "http"
 import config from "./config/config"
 import logger from "./config/logger"
 import { initializeApp } from "./server"
+import prisma from "./client"
+import { setReady } from "./health"
 
 export default () => {
-  let server: Server
+  let server: Server | undefined
+  let shuttingDown = false
 
-  const exitHandler = () => {
-    if (server) {
-      server.close(() => {
-        logger.info("Server closed")
-        process.exit(0)
-      })
-    } else {
-      process.exit(0)
+  const exitHandler = async (requestedExitCode = 0) => {
+    if (shuttingDown) {
+      return
     }
+
+    shuttingDown = true
+    setReady(false)
+    let exitCode = requestedExitCode
+
+    if (server) {
+      try {
+        const activeServer = server
+        await new Promise<void>((resolve, reject) => {
+          activeServer.close((error) => {
+            if (error) {
+              reject(error)
+              return
+            }
+            resolve()
+          })
+        })
+        logger.info("Server closed")
+      } catch (error) {
+        exitCode = 1
+        logger.error(error)
+      }
+    }
+
+    try {
+      await prisma.$disconnect()
+      logger.info("Disconnected from SQL Database")
+    } catch (error) {
+      exitCode = 1
+      logger.error(error)
+    }
+
+    process.exit(exitCode)
   }
 
   const unexpectedErrorHandler = (error: unknown) => {
     logger.error(error)
-    exitHandler()
+    void exitHandler(1)
   }
 
   initializeApp()
@@ -30,12 +61,12 @@ export default () => {
         })
         .on("error", (error: NodeJS.ErrnoException) => {
           logger.error(`Failed to listen on port ${config.port}: ${error.message}`)
-          exitHandler()
+          void exitHandler(1)
         })
     })
     .catch((error) => {
       logger.error(error)
-      exitHandler()
+      void exitHandler(1)
     })
 
   process.on("uncaughtException", unexpectedErrorHandler)
@@ -43,6 +74,11 @@ export default () => {
 
   process.on("SIGTERM", () => {
     logger.info("SIGTERM received")
-    exitHandler()
+    void exitHandler()
+  })
+
+  process.on("SIGINT", () => {
+    logger.info("SIGINT received")
+    void exitHandler()
   })
 }

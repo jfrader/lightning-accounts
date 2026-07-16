@@ -85,23 +85,25 @@ const createPayRequests = catchAsync(async (req, res) => {
 
 const getPayRequest = catchAsync(async (req, res) => {
   const id = parseInt(req.params.payRequestId)
+  const user = req.user as User
 
   if (!id) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Need to supply an id")
   }
 
-  const pr = await walletService.getPayRequest(id)
+  const pr = await walletService.getPayRequest(id, user.id)
   res.status(httpStatus.OK).json(pr)
 })
 
 const getPayRequests = catchAsync(async (req, res) => {
   const ids = req.body.payRequestIds
+  const user = req.user as User
 
   if (!ids || !ids.length) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Need to supply at least one id")
   }
 
-  const pr = await walletService.getPayRequests(ids)
+  const pr = await walletService.getPayRequests(ids, user.id)
   res.status(httpStatus.OK).json(pr)
 })
 

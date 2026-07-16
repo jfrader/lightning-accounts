@@ -1,57 +1,47 @@
-# Production image: build with dev dependencies, then keep only runtime deps.
-FROM node:24-alpine AS base
+# Build the TypeScript server and generated API artifacts with pinned tooling.
+FROM node:24.18.0-alpine AS builder
 
-ARG NODE_PORT=2999
-ENV NODE_PORT=$NODE_PORT
-ENV NODE_ENV=production
-ARG DATABASE_URL=postgresql://user:pass@localhost:5432/db?schema=public
-ENV DATABASE_URL=$DATABASE_URL
-ARG NODE_ORIGIN=*
-ENV NODE_ORIGIN=$NODE_ORIGIN
-ARG JWT_SECRET=build-secret
-ENV JWT_SECRET=$JWT_SECRET
-ARG JWT_BASE64_PUBLIC_KEY=ZHVtbXktcHVibGljLWtleQ==
-ENV JWT_BASE64_PUBLIC_KEY=$JWT_BASE64_PUBLIC_KEY
-ARG JWT_BASE64_PRIVATE_KEY=ZHVtbXktcHJpdmF0ZS1rZXk=
-ENV JWT_BASE64_PRIVATE_KEY=$JWT_BASE64_PRIVATE_KEY
-ARG SEED_HASH_SECRET=build-seed-secret
-ENV SEED_HASH_SECRET=$SEED_HASH_SECRET
-
-RUN mkdir -p /opt/app
 WORKDIR /opt/app
 
-FROM base AS builder
+RUN test "$(yarn --version)" = "1.22.22"
 
-COPY package.json yarn.lock /opt/app/
-COPY bin /opt/app/bin/
-COPY src /opt/app/src/
-COPY dist /opt/app/dist/
-COPY scripts /opt/app/scripts/
-COPY prisma /opt/app/prisma/
-COPY tsconfig.json /opt/app/
-COPY tsconfig.build.json /opt/app/
-COPY tsconfig.test.json /opt/app/
-COPY tsconfig.dist.json /opt/app/
-COPY eslint.config.mjs /opt/app/
-COPY applications.json /opt/app/
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --production=false
 
-RUN yarn --pure-lockfile --production=false
-RUN yarn build
+COPY prisma ./prisma
+COPY scripts ./scripts
+COPY src ./src
+COPY tsconfig.json tsconfig.build.json tsconfig.test.json tsconfig.dist.json ./
 
-FROM base AS runtime
+RUN mkdir -p dist
+RUN DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public yarn build
 
-COPY package.json yarn.lock /opt/app/
-COPY bin /opt/app/bin/
-COPY scripts /opt/app/scripts/
-COPY prisma /opt/app/prisma/
-COPY applications.json /opt/app/
-COPY --from=builder /opt/app/build /opt/app/build
-COPY --from=builder /opt/app/dist /opt/app/dist
-COPY --from=builder /opt/app/src /opt/app/src/
+# Install only runtime dependencies and copy the compiled output into the final image.
+FROM node:24.18.0-alpine AS runtime
 
-RUN yarn --pure-lockfile --production=true
-RUN yarn prisma generate
+ENV NODE_ENV=production
+WORKDIR /opt/app
+
+RUN test "$(yarn --version)" = "1.22.22"
+
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --production=true --ignore-scripts
+
+COPY prisma ./prisma
+RUN DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public ./node_modules/.bin/prisma generate
+
+COPY bin ./bin
+COPY --from=builder /opt/app/build ./build
+COPY --from=builder /opt/app/dist ./dist
+COPY --from=builder /opt/app/src ./src
+
 RUN chown -R node:node /opt/app
 
-EXPOSE $NODE_PORT
 USER node
+EXPOSE 2999
+STOPSIGNAL SIGTERM
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD node -e "const http=require('node:http');const request=http.get({host:'127.0.0.1',port:process.env.PORT||process.env.NODE_PORT||2999,path:'/health/ready'},response=>{response.resume();process.exit(response.statusCode===200?0:1)});request.on('error',()=>process.exit(1));request.setTimeout(4000,()=>{request.destroy();process.exit(1)})"
+
+CMD ["node", "bin/lightning-accounts-server"]

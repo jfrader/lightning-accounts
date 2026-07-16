@@ -1,16 +1,16 @@
 {
-    "workbench.colorCustomizations": {
-        "statusBar.background": "#031c00",
-        "statusBar.foreground": "#ffffff",
-        "statusBar.noFolderBackground": "#031c00",
-        "statusBar.noFolderForeground": "#ffffff",
-        "statusBar.debuggingBackground": "#031c00",
-        "statusBar.debuggingForeground": "#ffffff",
-        "titleBar.activeBackground": "#031c00",
-        "titleBar.activeForeground": "#ffffff",
-        "titleBar.inactiveBackground": "#031c00",
-        "titleBar.inactiveForeground": "#ffffff",
-        "titleBar.border": "#031c00"
-    },
-    "workbench.statusBar.visible": true
+  "workbench.colorCustomizations": {
+    "statusBar.background": "#0c2a10",
+    "statusBar.foreground": "#ffffff",
+    "statusBar.noFolderBackground": "#0c2a10",
+    "statusBar.noFolderForeground": "#ffffff",
+    "statusBar.debuggingBackground": "#0c2a10",
+    "statusBar.debuggingForeground": "#ffffff",
+    "titleBar.activeBackground": "#16502a",
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#16502a",
+    "titleBar.inactiveForeground": "#ffffff",
+    "titleBar.border": "#16502a"
+  },
+  "workbench.statusBar.visible": true
 }

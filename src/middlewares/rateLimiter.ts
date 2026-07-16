@@ -53,3 +53,10 @@ export const walletLimiter = rateLimit({
   skipFailedRequests: true,
   ...BASE_LIMITER,
 })
+
+export const feedbackLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 100,
+  skipFailedRequests: true,
+  ...BASE_LIMITER,
+})
