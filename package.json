@@ -1,6 +1,6 @@
 {
   "name": "lightning-accounts",
-  "version": "6.4.1",
+  "version": "7.0.0-rc.0",
   "description": "Lightning Accounts Server",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/index.js",
