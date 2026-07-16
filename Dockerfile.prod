@@ -28,7 +28,9 @@ COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --production=true --ignore-scripts
 
 COPY prisma ./prisma
-RUN DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public ./node_modules/.bin/prisma generate
+# The JSON-schema generator is build-only and therefore is not installed in this
+# production-dependencies-only stage. Generate just the runtime Prisma client.
+RUN DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public ./node_modules/.bin/prisma generate --generator client
 
 COPY bin ./bin
 COPY --from=builder /opt/app/build ./build

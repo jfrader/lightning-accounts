@@ -138,6 +138,10 @@ that, the Docker build injects minimal build-time values for `DATABASE_URL`, `NO
 
 `Dockerfile.prod` is the production image used by `docker-compose.prod.yml`.
 
+`yarn docker:staging` and `yarn docker:prod` build the replacement server image before Compose
+recreates any running containers. A failed build therefore leaves the currently running version
+in place. These commands intentionally do not run `docker compose down`.
+
 Runtime behavior is unchanged: the container still reads real values from `.env` via
 `docker-compose`, and the build-time defaults are only there to let code generation run.
 
