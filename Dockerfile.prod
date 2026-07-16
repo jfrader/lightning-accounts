@@ -37,6 +37,19 @@ COPY --from=builder /opt/app/build ./build
 COPY --from=builder /opt/app/dist ./dist
 COPY --from=builder /opt/app/src ./src
 
+# Load the production application without starting the HTTP server. This catches
+# build-only dependencies that accidentally leak into the runtime import graph.
+RUN NODE_ENV=production \
+  NODE_ORIGIN=https://build.invalid \
+  NODE_PORT=2999 \
+  WALLET_ENABLED=0 \
+  JWT_SECRET=build-check \
+  JWT_BASE64_PUBLIC_KEY=eA== \
+  JWT_BASE64_PRIVATE_KEY=eA== \
+  SEED_HASH_SECRET=build-check \
+  DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public \
+  node -e "require('./build/src/app.js')"
+
 RUN chown -R node:node /opt/app
 
 USER node
