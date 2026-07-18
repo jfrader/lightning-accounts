@@ -11,14 +11,14 @@ permissions:
   id-token: write
 
 concurrency:
-  group: publish-lightning-accounts-7.0.0
+  group: publish-lightning-accounts-7.0.1
   cancel-in-progress: false
 
 env:
-  ARTIFACT: .release/lightning-accounts-7.0.0.tgz
-  PACKAGE_SPEC: lightning-accounts@7.0.0
-  EXPECTED_SHA256: ee8ad8a492acd4c61f0c973ffe82af5c4d8a57789f694436605a11934e838bf1
-  EXPECTED_INTEGRITY: sha512-0HqKUG+gSww0m/+IUdfOd40CxJ7k7nEtqL1yAhcvMF2IT6T/jHRbWHlPfjeFfKUJsKqUwW+9pE7+8OyrodYciQ==
+  ARTIFACT: .release/lightning-accounts-7.0.1.tgz
+  PACKAGE_SPEC: lightning-accounts@7.0.1
+  EXPECTED_SHA256: 0fec5a2d58cf568a08806621bd6d21ee8e2dcc6ced29ed835401ca021bd3416c
+  EXPECTED_INTEGRITY: sha512-aJh9TtX9v26AvrcAWwmng7Sob96QdC2RJqUhDWad4VZpCiybjl4EvUB2q2uAn9ZssWzcj/3IdodIfkAPY3QMDw==
 
 jobs:
   publish:

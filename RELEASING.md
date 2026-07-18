@@ -32,10 +32,11 @@ tokens.
 configured. Its exact registry tarball is committed as
 `.release/lightning-accounts-7.0.0.tgz`.
 
-The first workflow run verifies that the registry has the same integrity and
-then exits successfully without republishing. Provenance cannot be added to an
-existing npm version, so the first provenance-backed release must be a new
-version such as `7.0.1`.
+The first workflow run verified that the registry had the same integrity and
+exited successfully without republishing. Provenance cannot be added to an
+existing npm version. Version `7.0.1` is the first release prepared for trusted
+publishing; it also restores the original 2022 MIT copyright notice that was
+present when the project was forked.
 
 ## Preparing a new release
 

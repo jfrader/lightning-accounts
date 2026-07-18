@@ -113,7 +113,9 @@ reviewed package artifact. The workflow verifies the exact package identity,
 SHA-256, and npm integrity before it can publish; no long-lived npm write token
 is stored in GitHub.
 
-See [RELEASING.md](RELEASING.md) for the npm configuration and release steps.
+See the
+[npm release process](https://github.com/jfrader/lightning-accounts/blob/master/RELEASING.md)
+for the npm configuration and release steps.
 
 ## Environment Variables
 
