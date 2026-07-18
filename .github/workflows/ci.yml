@@ -34,6 +34,7 @@ jobs:
           corepack enable
           yarn --version
       - run: yarn install --frozen-lockfile --production=false
+      - run: yarn prisma generate
       - run: yarn lint
       - run: yarn prettier
       - name: Run unit tests

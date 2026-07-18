@@ -21,6 +21,7 @@ cp .env.example .env
 ## Table of Contents
 
 - [Commands](#commands)
+- [npm Releases](#npm-releases)
 - [Environment Variables](#environment-variables)
 - [Project Structure](#project-structure)
 - [API Documentation](#api-documentation)
@@ -104,6 +105,15 @@ yarn prettier
 # fix prettier errors
 yarn prettier:fix
 ```
+
+## npm Releases
+
+Public npm releases use GitHub Actions trusted publishing and a committed,
+reviewed package artifact. The workflow verifies the exact package identity,
+SHA-256, and npm integrity before it can publish; no long-lived npm write token
+is stored in GitHub.
+
+See [RELEASING.md](RELEASING.md) for the npm configuration and release steps.
 
 ## Environment Variables
 
