@@ -2,6 +2,7 @@ services:
   - type: web
     name: lightning-accounts
     runtime: node
+    branch: master
     region: virginia
     plan: starter
     numInstances: 1

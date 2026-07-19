@@ -1,6 +1,7 @@
 import dotenv from "dotenv"
 import path from "path"
 import Joi from "joi"
+import { createPrivateKey, createPublicKey } from "node:crypto"
 
 dotenv.config({ path: path.join(process.cwd(), ".env") })
 
@@ -101,6 +102,158 @@ if (error) {
   throw new Error(`Config validation error: ${error.message}`)
 }
 
+const PLACEHOLDER_PATTERN =
+  /(?:change me|replace[- ]with|base64[- ]encoded|example\.com|placeholder|local[- ]dev|not[- ]for[- ]production)/i
+
+const valueOf = (environment: NodeJS.ProcessEnv, key: string) => environment[key]?.trim() || ""
+
+const validateHttpsOrigin = (key: string, value: string, errors: string[]): URL | undefined => {
+  try {
+    const url = new URL(value)
+    if (
+      url.protocol !== "https:" ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      url.href !== `${url.origin}/`
+    ) {
+      errors.push(`${key} must be an exact HTTPS origin`)
+      return undefined
+    }
+    return url
+  } catch {
+    errors.push(`${key} must be an exact HTTPS origin`)
+    return undefined
+  }
+}
+
+const requireStrongSecret = (key: string, value: string, errors: string[]) => {
+  if (value.length < 32 || PLACEHOLDER_PATTERN.test(value)) {
+    errors.push(`${key} must be a non-placeholder secret of at least 32 characters`)
+  }
+}
+
+export const getProductionEnvironmentErrors = (
+  environment: NodeJS.ProcessEnv = process.env
+): string[] => {
+  if (environment.NODE_ENV !== "production") return []
+
+  const errors: string[] = []
+  const originValues = valueOf(environment, "NODE_ORIGIN")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+  if (!originValues.length) {
+    errors.push("NODE_ORIGIN must contain at least one exact HTTPS origin")
+  } else {
+    originValues.forEach((origin) => validateHttpsOrigin("NODE_ORIGIN", origin, errors))
+  }
+
+  const nodeHost = validateHttpsOrigin("NODE_HOST", valueOf(environment, "NODE_HOST"), errors)
+  const cookieDomain = valueOf(environment, "NODE_DOMAIN")
+  if (
+    !cookieDomain.startsWith(".") ||
+    cookieDomain.length < 4 ||
+    cookieDomain.includes("/") ||
+    (nodeHost && !nodeHost.hostname.endsWith(cookieDomain))
+  ) {
+    errors.push("NODE_DOMAIN must be a parent cookie domain for NODE_HOST")
+  }
+
+  try {
+    const databaseUrl = new URL(valueOf(environment, "DATABASE_URL"))
+    if (
+      !["postgres:", "postgresql:"].includes(databaseUrl.protocol) ||
+      !databaseUrl.hostname ||
+      !databaseUrl.pathname.slice(1)
+    ) {
+      errors.push("DATABASE_URL must be a PostgreSQL connection URL")
+    }
+  } catch {
+    errors.push("DATABASE_URL must be a PostgreSQL connection URL")
+  }
+
+  const applicationEmails = valueOf(environment, "APPLICATION_EMAILS")
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean)
+  if (
+    !applicationEmails.length ||
+    applicationEmails.some(
+      (email) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || PLACEHOLDER_PATTERN.test(email)
+    )
+  ) {
+    errors.push("APPLICATION_EMAILS must contain valid non-placeholder service-account emails")
+  }
+
+  requireStrongSecret("JWT_SECRET", valueOf(environment, "JWT_SECRET"), errors)
+  requireStrongSecret("SEED_HASH_SECRET", valueOf(environment, "SEED_HASH_SECRET"), errors)
+
+  try {
+    const privateKey = createPrivateKey(
+      Buffer.from(valueOf(environment, "JWT_BASE64_PRIVATE_KEY"), "base64").toString("utf8")
+    )
+    const publicKey = createPublicKey(
+      Buffer.from(valueOf(environment, "JWT_BASE64_PUBLIC_KEY"), "base64").toString("utf8")
+    )
+    if (
+      privateKey.asymmetricKeyType !== "rsa" ||
+      publicKey.asymmetricKeyType !== "rsa" ||
+      (privateKey.asymmetricKeyDetails?.modulusLength || 0) < 2048
+    ) {
+      throw new Error("RSA key pair is too weak")
+    }
+    const configuredPublicKey = publicKey.export({ type: "spki", format: "der" })
+    const derivedPublicKey = createPublicKey(privateKey).export({ type: "spki", format: "der" })
+    if (!configuredPublicKey.equals(derivedPublicKey)) {
+      errors.push("JWT_BASE64_PUBLIC_KEY and JWT_BASE64_PRIVATE_KEY must be a matching key pair")
+    }
+  } catch {
+    errors.push("JWT_BASE64_PUBLIC_KEY and JWT_BASE64_PRIVATE_KEY must be valid RSA keys")
+  }
+
+  for (const key of ["SMTP_HOST", "SMTP_PORT", "SMTP_USERNAME", "SMTP_PASSWORD", "EMAIL_FROM"]) {
+    if (!valueOf(environment, key) || PLACEHOLDER_PATTERN.test(valueOf(environment, key))) {
+      errors.push(`${key} must be configured for production email flows`)
+    }
+  }
+  if (!/^\d+$/.test(valueOf(environment, "SMTP_PORT"))) {
+    errors.push("SMTP_PORT must be an integer")
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valueOf(environment, "EMAIL_FROM"))) {
+    errors.push("EMAIL_FROM must be a valid email address")
+  }
+
+  const trustProxyHops = Number(valueOf(environment, "NODE_TRUST_PROXY_HOPS"))
+  if (!Number.isSafeInteger(trustProxyHops) || trustProxyHops < 0 || trustProxyHops > 5) {
+    errors.push("NODE_TRUST_PROXY_HOPS must be an integer between 0 and 5")
+  }
+
+  const configuredPort = environment.PORT ?? environment.NODE_PORT
+  if (configuredPort !== undefined) {
+    const port = Number(configuredPort)
+    if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) {
+      errors.push("PORT or NODE_PORT must be an integer between 1 and 65535")
+    }
+  }
+
+  if (environment.WALLET_ENABLED === "1") {
+    for (const key of ["LND_CERT", "LND_ADMIN_MACAROON", "LND_SOCKET"]) {
+      if (!valueOf(environment, key) || PLACEHOLDER_PATTERN.test(valueOf(environment, key))) {
+        errors.push(`${key} must be configured when WALLET_ENABLED=1`)
+      }
+    }
+  }
+
+  return errors
+}
+
+const productionErrors = getProductionEnvironmentErrors()
+if (productionErrors.length) {
+  throw new Error(`Invalid production environment:\n- ${productionErrors.join("\n- ")}`)
+}
+
 const origins = String(envVars.NODE_ORIGIN)
   .split(",")
   .map((origin) => origin.trim())
@@ -121,6 +274,9 @@ export const resolveXOAuth1Config = (env: Record<string, string | undefined>) =>
   apiKey: env.TWITTER_API_KEY,
   apiSecret: env.TWITTER_API_SECRET,
 })
+
+export const resolveWalletEnabled = (env: Record<string, string | undefined>) =>
+  env.WALLET_ENABLED === "1" || (!env.WALLET_ENABLED && env.NODE_ENV !== "production")
 
 export default {
   env: envVars.NODE_ENV,
@@ -147,9 +303,10 @@ export default {
     ...resolveXOAuth1Config(envVars),
   },
   wallet: {
-    enabled:
-      envVars.WALLET_ENABLED === "1" ||
-      (!process.env.WALLET_ENABLED && envVars.NODE_ENV !== "production"),
+    enabled: resolveWalletEnabled({
+      NODE_ENV: envVars.NODE_ENV,
+      WALLET_ENABLED: process.env.WALLET_ENABLED,
+    }),
     limit: Number(envVars.WALLET_LIMIT),
     reconcileDryRun: process.env.WALLET_RECONCILE_DRY_RUN === "1",
   },

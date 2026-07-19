@@ -4,10 +4,12 @@ import logger from "./config/logger"
 import { initializeApp } from "./server"
 import prisma from "./client"
 import { setReady } from "./health"
+import { createReadinessMonitor } from "./readinessMonitor"
 
 export default () => {
   let server: Server | undefined
   let shuttingDown = false
+  let readinessMonitor: ReturnType<typeof createReadinessMonitor> | undefined
 
   const exitHandler = async (requestedExitCode = 0) => {
     if (shuttingDown) {
@@ -15,6 +17,7 @@ export default () => {
     }
 
     shuttingDown = true
+    readinessMonitor?.stop()
     setReady(false)
     let exitCode = requestedExitCode
 
@@ -55,6 +58,18 @@ export default () => {
 
   initializeApp()
     .then((app) => {
+      readinessMonitor = createReadinessMonitor({
+        probe: () => prisma.$queryRaw`SELECT 1`,
+        onTransition: (status, error) => {
+          if (status === "ready") {
+            logger.info("SQL Database readiness recovered")
+          } else {
+            const errorType = error instanceof Error ? error.name : "UnknownError"
+            logger.error(`SQL Database readiness probe failed (${errorType})`)
+          }
+        },
+      })
+      readinessMonitor.start()
       server = app
         .listen(config.port, () => {
           logger.info(`Listening to port ${config.port}`)

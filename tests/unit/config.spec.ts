@@ -1,5 +1,34 @@
+import { generateKeyPairSync } from "node:crypto"
+
 describe("resolveXOAuthConfig", () => {
   const originalEnv = process.env
+  const { privateKey, publicKey } = generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+    privateKeyEncoding: { type: "pkcs8", format: "pem" },
+    publicKeyEncoding: { type: "spki", format: "pem" },
+  })
+
+  const configureValidProductionEnvironment = () => {
+    Object.assign(process.env, {
+      NODE_ENV: "production",
+      NODE_ORIGIN: "https://trucoshi.com",
+      NODE_DOMAIN: ".trucoshi.com",
+      NODE_HOST: "https://accounts.trucoshi.com",
+      NODE_TRUST_PROXY_HOPS: "1",
+      APPLICATION_EMAILS: "game@trucoshi.com",
+      DATABASE_URL: "postgresql://user:password@database.internal:5432/accounts",
+      JWT_SECRET: "a-secure-cookie-secret-with-more-than-32-characters",
+      JWT_BASE64_PUBLIC_KEY: Buffer.from(publicKey).toString("base64"),
+      JWT_BASE64_PRIVATE_KEY: Buffer.from(privateKey).toString("base64"),
+      SEED_HASH_SECRET: "a-secure-seed-hash-secret-more-than-32-characters",
+      SMTP_HOST: "smtp.example.net",
+      SMTP_PORT: "587",
+      SMTP_USERNAME: "smtp-user",
+      SMTP_PASSWORD: "smtp-password",
+      EMAIL_FROM: "support@trucoshi.com",
+      WALLET_ENABLED: "0",
+    })
+  }
 
   beforeEach(() => {
     jest.resetModules()
@@ -80,19 +109,55 @@ describe("resolveXOAuthConfig", () => {
   it.each(["test", "development"] as const)(
     "keeps wallets enabled by default in %s",
     async (environment) => {
-      delete process.env.WALLET_ENABLED
-      process.env.NODE_ENV = environment
-      const { default: config } = await import("../../src/config/config")
+      const { resolveWalletEnabled } = await import("../../src/config/config")
 
-      expect(config.wallet.enabled).toBe(true)
+      expect(resolveWalletEnabled({ NODE_ENV: environment })).toBe(true)
     }
   )
 
   it("keeps wallets disabled by default in production", async () => {
-    delete process.env.WALLET_ENABLED
-    process.env.NODE_ENV = "production"
+    const { resolveWalletEnabled } = await import("../../src/config/config")
+
+    expect(resolveWalletEnabled({ NODE_ENV: "production" })).toBe(false)
+  })
+
+  it("accepts a complete production configuration with wallets disabled", async () => {
+    configureValidProductionEnvironment()
     const { default: config } = await import("../../src/config/config")
 
     expect(config.wallet.enabled).toBe(false)
+  })
+
+  it("rejects placeholder secrets and non-HTTPS origins in production", async () => {
+    const { getProductionEnvironmentErrors } = await import("../../src/config/config")
+    const environment = {
+      NODE_ENV: "production",
+      NODE_ORIGIN: "http://trucoshi.com",
+      NODE_HOST: "https://accounts.trucoshi.com",
+      NODE_DOMAIN: ".trucoshi.com",
+      DATABASE_URL: "postgresql://user:password@database.internal:5432/accounts",
+      APPLICATION_EMAILS: "admin@example.com",
+      JWT_SECRET: "replace-with-a-long-random-cookie-signing-secret",
+      JWT_BASE64_PUBLIC_KEY: "invalid",
+      JWT_BASE64_PRIVATE_KEY: "invalid",
+      SEED_HASH_SECRET: "replace-with-a-long-random-secret",
+      NODE_TRUST_PROXY_HOPS: "1",
+      SMTP_HOST: "smtp.example.net",
+      SMTP_PORT: "587",
+      SMTP_USERNAME: "smtp-user",
+      SMTP_PASSWORD: "smtp-password",
+      EMAIL_FROM: "support@trucoshi.com",
+      WALLET_ENABLED: "0",
+    }
+
+    expect(getProductionEnvironmentErrors(environment)).toEqual(
+      expect.arrayContaining([
+        "NODE_ORIGIN must be an exact HTTPS origin",
+        "APPLICATION_EMAILS must contain valid non-placeholder service-account emails",
+        "JWT_SECRET must be a non-placeholder secret of at least 32 characters",
+        "SEED_HASH_SECRET must be a non-placeholder secret of at least 32 characters",
+        "JWT_BASE64_PUBLIC_KEY and JWT_BASE64_PRIVATE_KEY must be valid RSA keys",
+      ])
+    )
   })
 })
