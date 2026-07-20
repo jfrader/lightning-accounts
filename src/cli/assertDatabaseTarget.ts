@@ -23,7 +23,8 @@ const main = async () => {
     expectedSchema,
     expectedDatabase,
     expectedUsername,
-    10
+    10,
+    "require"
   )
 
   if (errors.length) {

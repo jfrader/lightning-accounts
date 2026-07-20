@@ -3,7 +3,8 @@ export const getDatabaseTargetErrors = (
   expectedSchema: string,
   expectedDatabase?: string,
   expectedUsername?: string,
-  expectedConnectionLimit?: number
+  expectedConnectionLimit?: number,
+  expectedSslMode?: string
 ) => {
   const errors: string[] = []
 
@@ -30,6 +31,13 @@ export const getDatabaseTargetErrors = (
         connectionLimits[0] !== String(expectedConnectionLimit)
       ) {
         errors.push(`DATABASE_URL must explicitly use connection_limit=${expectedConnectionLimit}`)
+      }
+    }
+
+    if (expectedSslMode) {
+      const sslModes = url.searchParams.getAll("sslmode")
+      if (sslModes.length !== 1 || sslModes[0] !== expectedSslMode) {
+        errors.push(`DATABASE_URL must explicitly use sslmode=${expectedSslMode}`)
       }
     }
 

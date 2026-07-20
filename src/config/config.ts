@@ -168,7 +168,8 @@ export const getProductionEnvironmentErrors = (
       "public",
       "lightning_accounts",
       "lightning_accounts_app",
-      10
+      10,
+      "require"
     )
   )
 
