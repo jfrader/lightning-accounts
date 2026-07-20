@@ -62,8 +62,8 @@
     "prepublishOnly": "yarn swagger:generate",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prettier": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\" \"prisma/**/*.ts\" \"*.ts\" render.yaml \".github/workflows/*.yml\"",
-    "prettier:fix": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\" \"prisma/**/*.ts\" \"*.ts\" render.yaml \".github/workflows/*.yml\"",
+    "prettier": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\" \"prisma/**/*.ts\" \"*.ts\" \"render*.yaml\" \".github/workflows/*.yml\"",
+    "prettier:fix": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\" \"prisma/**/*.ts\" \"*.ts\" \"render*.yaml\" \".github/workflows/*.yml\"",
     "security:audit": "yarn audit --groups dependencies"
   },
   "devDependencies": {
