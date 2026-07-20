@@ -1,3 +1,8 @@
+# The shared `trucoshi-postgres` instance and both logical databases are
+# created and restored manually before this service.
+previews:
+  generation: off
+
 services:
   - type: web
     name: lightning-accounts
@@ -7,9 +12,14 @@ services:
     plan: starter
     numInstances: 1
     buildCommand: npx --yes yarn@1.22.22 install --frozen-lockfile --production=false && npx --yes yarn@1.22.22 build
-    preDeployCommand: ./node_modules/.bin/prisma migrate deploy && node build/src/cli/provisionApplication.js
+    preDeployCommand: node build/src/cli/assertDatabaseTarget.js lightning_accounts public lightning_accounts_app && ./node_modules/.bin/prisma migrate deploy && node build/src/cli/provisionApplication.js
     startCommand: node bin/lightning-accounts-server
     autoDeployTrigger: off
+    # The first deployment happens before DNS cutover. Keep public traffic
+    # blocked while private-network health/read checks run; disable maintenance
+    # deliberately at the cutover boundary, then commit that state.
+    maintenanceMode:
+      enabled: true
     healthCheckPath: /health/ready
     maxShutdownDelaySeconds: 300
     domains:
@@ -24,8 +34,8 @@ services:
       - key: WALLET_ENABLED
         value: "0"
       - key: DATABASE_URL
-        # Use the existing shared Trucoshi Postgres internal URL with
-        # `?schema=accounts`. Enter it in the dashboard; never commit it.
+        # Internal URL for the `lightning_accounts` logical database on the
+        # shared instance, using the restricted `lightning_accounts_app` role.
         sync: false
       - key: NODE_ORIGIN
         value: https://trucoshi.com
@@ -36,19 +46,26 @@ services:
       - key: NODE_TRUST_PROXY_HOPS
         value: "1"
       - key: APPLICATION_EMAILS
-        value: game@trucoshi.com
+        # Include game@trucoshi.com and every legacy application caller that
+        # should remain authorized after the restore.
+        sync: false
       - key: APPLICATION_SERVICE_EMAIL
         value: game@trucoshi.com
       - key: APPLICATION_SERVICE_PASSWORD
         generateValue: true
       - key: JWT_SECRET
-        generateValue: true
+        # Preserve the current production value for restored sessions/tokens.
+        sync: false
+      - key: JWT_COOKIE_PREFIX
+        # Live production uses the default empty prefix; preserve it exactly.
+        value: ""
       - key: JWT_BASE64_PUBLIC_KEY
         sync: false
       - key: JWT_BASE64_PRIVATE_KEY
         sync: false
       - key: SEED_HASH_SECRET
-        generateValue: true
+        # Preserve the current production value for restored seed-based access.
+        sync: false
       - key: BCRYPT_ROUNDS
         value: "12"
       - key: SMTP_HOST

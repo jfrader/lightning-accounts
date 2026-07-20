@@ -16,7 +16,8 @@ describe("resolveXOAuthConfig", () => {
       NODE_HOST: "https://accounts.trucoshi.com",
       NODE_TRUST_PROXY_HOPS: "1",
       APPLICATION_EMAILS: "game@trucoshi.com",
-      DATABASE_URL: "postgresql://user:password@database.internal:5432/accounts",
+      DATABASE_URL:
+        "postgresql://lightning_accounts_app:password@database.internal:5432/lightning_accounts?schema=public&connection_limit=10",
       JWT_SECRET: "a-secure-cookie-secret-with-more-than-32-characters",
       JWT_BASE64_PUBLIC_KEY: Buffer.from(publicKey).toString("base64"),
       JWT_BASE64_PRIVATE_KEY: Buffer.from(privateKey).toString("base64"),
@@ -135,7 +136,8 @@ describe("resolveXOAuthConfig", () => {
       NODE_ORIGIN: "http://trucoshi.com",
       NODE_HOST: "https://accounts.trucoshi.com",
       NODE_DOMAIN: ".trucoshi.com",
-      DATABASE_URL: "postgresql://user:password@database.internal:5432/accounts",
+      DATABASE_URL:
+        "postgresql://lightning_accounts_app:password@database.internal:5432/lightning_accounts?schema=public&connection_limit=10",
       APPLICATION_EMAILS: "admin@example.com",
       JWT_SECRET: "replace-with-a-long-random-cookie-signing-secret",
       JWT_BASE64_PUBLIC_KEY: "invalid",

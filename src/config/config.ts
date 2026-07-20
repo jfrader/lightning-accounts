@@ -2,6 +2,7 @@ import dotenv from "dotenv"
 import path from "path"
 import Joi from "joi"
 import { createPrivateKey, createPublicKey } from "node:crypto"
+import { getDatabaseTargetErrors } from "./databaseTarget"
 
 dotenv.config({ path: path.join(process.cwd(), ".env") })
 
@@ -161,18 +162,15 @@ export const getProductionEnvironmentErrors = (
     errors.push("NODE_DOMAIN must be a parent cookie domain for NODE_HOST")
   }
 
-  try {
-    const databaseUrl = new URL(valueOf(environment, "DATABASE_URL"))
-    if (
-      !["postgres:", "postgresql:"].includes(databaseUrl.protocol) ||
-      !databaseUrl.hostname ||
-      !databaseUrl.pathname.slice(1)
-    ) {
-      errors.push("DATABASE_URL must be a PostgreSQL connection URL")
-    }
-  } catch {
-    errors.push("DATABASE_URL must be a PostgreSQL connection URL")
-  }
+  errors.push(
+    ...getDatabaseTargetErrors(
+      valueOf(environment, "DATABASE_URL"),
+      "public",
+      "lightning_accounts",
+      "lightning_accounts_app",
+      10
+    )
+  )
 
   const applicationEmails = valueOf(environment, "APPLICATION_EMAILS")
     .split(",")
