@@ -129,6 +129,31 @@ describe("resolveXOAuthConfig", () => {
     expect(config.wallet.enabled).toBe(false)
   })
 
+  it.each([
+    ["a plain mailbox", "support@trucoshi.com"],
+    ["a display-name mailbox", "Trucoshi <support@trucoshi.com>"],
+    ["a quoted display-name mailbox", '"Trucoshi Support" <support@trucoshi.com>'],
+    ["a display name containing a comma", "Trucoshi, Inc. <support@trucoshi.com>"],
+  ])("accepts %s in EMAIL_FROM", async (_description, emailFrom) => {
+    const { isValidEmailFrom } = await import("../../src/config/config")
+
+    expect(isValidEmailFrom(emailFrom)).toBe(true)
+  })
+
+  it.each([
+    ["multiple mailboxes", "support@trucoshi.com, attacker@evil.test"],
+    ["header injection", "Trucoshi <support@trucoshi.com>\r\nBcc: attacker@evil.test"],
+    ["an unterminated mailbox", "Trucoshi <support@trucoshi.com"],
+    ["trailing text", "Trucoshi <support@trucoshi.com> garbage"],
+    ["a group", "Support: support@trucoshi.com;"],
+    ["display text without angle brackets", "Trucoshi support@trucoshi.com"],
+  ])("rejects %s in EMAIL_FROM", async (_description, emailFrom) => {
+    configureValidProductionEnvironment()
+    const { isValidEmailFrom } = await import("../../src/config/config")
+
+    expect(isValidEmailFrom(emailFrom)).toBe(false)
+  })
+
   it("rejects placeholder secrets and non-HTTPS origins in production", async () => {
     const { getProductionEnvironmentErrors } = await import("../../src/config/config")
     const environment = {

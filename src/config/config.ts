@@ -2,6 +2,7 @@ import dotenv from "dotenv"
 import path from "path"
 import Joi from "joi"
 import { createPrivateKey, createPublicKey } from "node:crypto"
+import addressparser from "nodemailer/lib/addressparser"
 import { getDatabaseTargetErrors } from "./databaseTarget"
 
 dotenv.config({ path: path.join(process.cwd(), ".env") })
@@ -135,6 +136,45 @@ const requireStrongSecret = (key: string, value: string, errors: string[]) => {
   }
 }
 
+const EMAIL_ADDRESS_SCHEMA = Joi.string().email({ tlds: false }).required()
+
+const isValidDisplayName = (name: string): boolean => {
+  const value = name.trim()
+  if (!value || /[\u0000-\u001f\u007f<>]/u.test(value)) return false
+
+  if (value.startsWith('"') || value.endsWith('"')) {
+    return /^"(?:[^"\\\r\n]|\\[^\r\n])+"$/u.test(value)
+  }
+
+  return (
+    !value.includes('"') && !value.includes("\\") && !value.includes(":") && !value.includes(";")
+  )
+}
+
+export const isValidEmailFrom = (input: string): boolean => {
+  const value = input.trim()
+  if (!value || /[\u0000-\u001f\u007f]/u.test(value)) return false
+
+  let parsed: ReturnType<typeof addressparser>
+  try {
+    parsed = addressparser(value)
+  } catch {
+    return false
+  }
+
+  if (parsed.length !== 1 || !("address" in parsed[0])) return false
+
+  const mailbox = parsed[0]
+  if (EMAIL_ADDRESS_SCHEMA.validate(mailbox.address).error) return false
+  if (value === mailbox.address) return true
+
+  const displayMailbox = value.match(/^(.+?)\s*<([^<>]+)>$/u)
+  if (!displayMailbox) return false
+
+  const [, displayName, address] = displayMailbox
+  return address.trim() === mailbox.address && isValidDisplayName(displayName)
+}
+
 export const getProductionEnvironmentErrors = (
   environment: NodeJS.ProcessEnv = process.env
 ): string[] => {
@@ -220,8 +260,8 @@ export const getProductionEnvironmentErrors = (
   if (!/^\d+$/.test(valueOf(environment, "SMTP_PORT"))) {
     errors.push("SMTP_PORT must be an integer")
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valueOf(environment, "EMAIL_FROM"))) {
-    errors.push("EMAIL_FROM must be a valid email address")
+  if (!isValidEmailFrom(valueOf(environment, "EMAIL_FROM"))) {
+    errors.push("EMAIL_FROM must contain exactly one valid mailbox")
   }
 
   const trustProxyHops = Number(valueOf(environment, "NODE_TRUST_PROXY_HOPS"))

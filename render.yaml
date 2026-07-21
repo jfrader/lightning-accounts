@@ -46,9 +46,15 @@ services:
       - key: NODE_TRUST_PROXY_HOPS
         value: "1"
       - key: APPLICATION_EMAILS
-        # Include game@trucoshi.com and every legacy application caller that
-        # should remain authorized after the restore.
+        # The audited production migration uses only the newly provisioned
+        # game@trucoshi.com identity. Do not carry the legacy source caller into
+        # Render without a separate credential review.
         sync: false
+      - key: APPLICATION_ADDRESS
+        # The source value is tied to its Docker bridge. Render private-service
+        # addresses are not stable, so authentication relies on the allowlist
+        # and generated service password instead of an obsolete source IP.
+        value: ""
       - key: APPLICATION_SERVICE_EMAIL
         value: game@trucoshi.com
       - key: APPLICATION_SERVICE_PASSWORD
@@ -59,6 +65,10 @@ services:
       - key: JWT_COOKIE_PREFIX
         # Live production uses the default empty prefix; preserve it exactly.
         value: ""
+      - key: JWT_VERIFY_EMAIL_EXPIRATION_MINUTES
+        # Live production uses a nondefault value. Copy it exactly without
+        # exposing it in source control or migration logs.
+        sync: false
       - key: JWT_BASE64_PUBLIC_KEY
         sync: false
       - key: JWT_BASE64_PRIVATE_KEY
