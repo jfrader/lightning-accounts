@@ -14,12 +14,13 @@ services:
     buildCommand: npx --yes yarn@1.22.22 install --frozen-lockfile --production=false && npx --yes yarn@1.22.22 build
     preDeployCommand: node build/src/cli/assertDatabaseTarget.js lightning_accounts public lightning_accounts_app && ./node_modules/.bin/prisma migrate deploy && node build/src/cli/provisionApplication.js
     startCommand: node bin/lightning-accounts-server
-    autoDeployTrigger: off
-    # The first deployment happens before DNS cutover. Keep public traffic
-    # blocked while private-network health/read checks run; disable maintenance
-    # deliberately at the cutover boundary, then commit that state.
+    # Production follows master only after GitHub CI succeeds. Use a separate
+    # branch and Render environment for testnet changes.
+    autoDeployTrigger: checksPass
+    # Cutover completed on 2026-07-21. Keep the committed state aligned with the
+    # live service so a later Blueprint sync cannot re-enable maintenance.
     maintenanceMode:
-      enabled: true
+      enabled: false
     healthCheckPath: /health/ready
     maxShutdownDelaySeconds: 300
     domains:
