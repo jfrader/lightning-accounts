@@ -1,5 +1,6 @@
-# Fresh, disposable replacement for the existing testnet identity service.
-# Production resources and secrets are intentionally not referenced.
+# Cheap CI-gated testnet identity service. Production resources and secrets are
+# intentionally not referenced. Testnet runs in Ohio so a Hobby workspace's
+# shared private network cannot reach Virginia production resources.
 previews:
   generation: off
 
@@ -7,15 +8,15 @@ services:
   - type: web
     name: lightning-accounts-testnet
     runtime: node
-    branch: master
-    region: virginia
-    plan: starter
+    branch: testnet
+    region: ohio
+    plan: free
     numInstances: 1
     buildCommand: npx --yes yarn@1.22.22 install --frozen-lockfile --production=false && npx --yes yarn@1.22.22 build
-    preDeployCommand: ./node_modules/.bin/prisma migrate deploy
-    initialDeployHook: yarn application:provision
-    startCommand: node bin/lightning-accounts-server
-    autoDeployTrigger: off
+    # Free web services do not support a pre-deploy command. The target guard,
+    # idempotent migration, and application provisioning run on each cold start.
+    startCommand: node build/src/cli/assertDatabaseTarget.js lightning_accounts_testnet public lightning_accounts_testnet_app && ./node_modules/.bin/prisma migrate deploy && node build/src/cli/provisionApplication.js && exec node bin/lightning-accounts-server
+    autoDeployTrigger: checksPass
     healthCheckPath: /health/ready
     maxShutdownDelaySeconds: 300
     domains:
@@ -30,9 +31,10 @@ services:
       - key: WALLET_ENABLED
         value: "0"
       - key: DATABASE_URL
-        fromDatabase:
-          name: lightning-accounts-db-testnet
-          property: connectionString
+        # Enter the internal URL for the `lightning_accounts_testnet` logical
+        # database on the separate Testnet PostgreSQL instance. It must use the
+        # restricted `lightning_accounts_testnet_app` role and `schema=public`.
+        sync: false
       - key: NODE_ORIGIN
         value: https://testnet.trucoshi.com
       - key: NODE_DOMAIN
@@ -45,6 +47,8 @@ services:
         value: testnet_
       - key: APPLICATION_EMAILS
         value: game-testnet@trucoshi.com
+      - key: APPLICATION_ADDRESS
+        value: ""
       - key: APPLICATION_SERVICE_EMAIL
         value: game-testnet@trucoshi.com
       - key: APPLICATION_SERVICE_PASSWORD
@@ -79,14 +83,3 @@ services:
         sync: false
       - key: TWITTER_CLIENT_TYPE
         sync: false
-
-databases:
-  - name: lightning-accounts-db-testnet
-    databaseName: lightning_accounts_testnet
-    user: lightning_accounts_testnet
-    region: virginia
-    plan: basic-256mb
-    diskSizeGB: 15
-    connectionPool: none
-    postgresMajorVersion: "16"
-    ipAllowList: []
