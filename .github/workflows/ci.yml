@@ -21,6 +21,14 @@ jobs:
           echo "Bundled Yarn: ${actual_version}"
           test "${actual_version}" = "1.22.22"
 
+  production-docker-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build --file Dockerfile.prod --tag lightning-accounts-production:ci .
+
   unit-and-build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
