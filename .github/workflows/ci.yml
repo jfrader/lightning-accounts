@@ -58,4 +58,96 @@ jobs:
           WALLET_ENABLED: "0"
       - run: yarn build
 
+  build-testnet-image:
+    name: Build exact testnet image
+    needs:
+      - development-docker-image
+      - production-docker-image
+      - unit-and-build
+    if: >-
+      success() &&
+      github.repository == 'jfrader/lightning-accounts' &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/testnet' &&
+      vars.TESTNET_AUTO_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PACKAGE: ghcr.io/jfrader/lightning-accounts-testnet
+    outputs:
+      image-ref: ${{ steps.image-ref.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish exact testnet image
+        id: build
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: Dockerfile.prod
+          push: true
+          platforms: linux/amd64
+          tags: ${{ env.PACKAGE }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=la-testnet
+          cache-to: type=gha,mode=max,scope=la-testnet
+
+      - name: Export immutable image reference
+        id: image-ref
+        run: >-
+          printf 'value=%s:%s@%s\n'
+          "$PACKAGE" "$GITHUB_SHA" "${{ steps.build.outputs.digest }}"
+          >> "$GITHUB_OUTPUT"
+
+  deploy-testnet:
+    name: Deploy veronica testnet
+    needs: build-testnet-image
+    if: >-
+      success() &&
+      github.repository == 'jfrader/lightning-accounts' &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/testnet' &&
+      vars.TESTNET_AUTO_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    environment:
+      name: testnet
+      url: https://accounts.testnet.trucoshi.com
+    steps:
+      - name: Deploy exact testnet image to veronica
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_REF: ${{ needs.build-testnet-image.outputs.image-ref }}
+          REGISTRY_USER: ${{ github.actor }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          umask 077
+          printf '%s\n' "$DEPLOY_KEY" > "$RUNNER_TEMP/deploy_key"
+          chmod 600 "$RUNNER_TEMP/deploy_key"
+          printf '%s\n' "$GHCR_TOKEN" |
+            ssh -i "$RUNNER_TEMP/deploy_key" \
+              -o StrictHostKeyChecking=accept-new \
+              -o IdentitiesOnly=yes \
+              -p 11122 la-testnet-deploy@jfrader.com \
+              "$RELEASE_SHA $IMAGE_REF $REGISTRY_USER"
+
 # The transaction E2E suite provisions PostgreSQL plus Bitcoin/LND and remains in docker:test.
