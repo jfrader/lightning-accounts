@@ -9,8 +9,7 @@ permissions:
 
 jobs:
   development-docker-image:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, linux, x64, lightning-accounts-ci]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -23,8 +22,7 @@ jobs:
           test "${actual_version}" = "1.22.22"
 
   unit-and-build:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, linux, x64, lightning-accounts-ci]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
