@@ -28,6 +28,7 @@ COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --production=true --ignore-scripts
 
 COPY prisma ./prisma
+COPY scripts/smokeProductionImport.cjs ./scripts/smokeProductionImport.cjs
 # The JSON-schema generator is build-only and therefore is not installed in this
 # production-dependencies-only stage. Generate just the runtime Prisma client.
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public ./node_modules/.bin/prisma generate --generator client
@@ -39,27 +40,7 @@ COPY --from=builder /opt/app/src ./src
 
 # Load the production application without starting the HTTP server. This catches
 # build-only dependencies that accidentally leak into the runtime import graph.
-RUN node -e "const fs=require('node:fs');const {generateKeyPairSync}=require('node:crypto');const {publicKey,privateKey}=generateKeyPairSync('rsa',{modulusLength:2048,publicKeyEncoding:{type:'spki',format:'pem'},privateKeyEncoding:{type:'pkcs8',format:'pem'}});fs.writeFileSync('/tmp/jwt-public.b64',Buffer.from(publicKey).toString('base64'));fs.writeFileSync('/tmp/jwt-private.b64',Buffer.from(privateKey).toString('base64'))" \
-  && NODE_ENV=production \
-  NODE_ORIGIN=https://web.build.invalid \
-  NODE_HOST=https://accounts.build.invalid \
-  NODE_DOMAIN=.build.invalid \
-  NODE_TRUST_PROXY_HOPS=0 \
-  NODE_PORT=2999 \
-  WALLET_ENABLED=0 \
-  APPLICATION_EMAILS=game-build@build.invalid \
-  JWT_SECRET=0123456789abcdef0123456789abcdef \
-  JWT_BASE64_PUBLIC_KEY="$(cat /tmp/jwt-public.b64)" \
-  JWT_BASE64_PRIVATE_KEY="$(cat /tmp/jwt-private.b64)" \
-  SEED_HASH_SECRET=fedcba9876543210fedcba9876543210 \
-  SMTP_HOST=smtp.build.invalid \
-  SMTP_PORT=587 \
-  SMTP_USERNAME=build-user \
-  SMTP_PASSWORD=abcdef0123456789abcdef0123456789 \
-  EMAIL_FROM=build@build.invalid \
-  DATABASE_URL='postgresql://lightning_accounts_app:build@localhost:5432/lightning_accounts?schema=public&connection_limit=10&sslmode=require' \
-  node -e "require('./build/src/app.js')" \
-  && rm -f /tmp/jwt-public.b64 /tmp/jwt-private.b64
+RUN node scripts/smokeProductionImport.cjs
 
 RUN chown -R node:node /opt/app
 
