@@ -5,11 +5,17 @@ import { initializeApp } from "./server"
 import prisma from "./client"
 import { setReady } from "./health"
 import { createReadinessMonitor } from "./readinessMonitor"
+import { captureFatalException, FatalErrorOrigin, observability } from "./observability"
 
 export default () => {
   let server: Server | undefined
   let shuttingDown = false
   let readinessMonitor: ReturnType<typeof createReadinessMonitor> | undefined
+
+  const reportFailure = (error: unknown, phase: "startup" | "runtime" | "shutdown") => {
+    logger.error(error)
+    observability.captureException(error, { tags: { phase } })
+  }
 
   const exitHandler = async (requestedExitCode = 0) => {
     if (shuttingDown) {
@@ -21,7 +27,7 @@ export default () => {
     setReady(false)
     let exitCode = requestedExitCode
 
-    if (server) {
+    if (server?.listening) {
       try {
         const activeServer = server
         await new Promise<void>((resolve, reject) => {
@@ -36,7 +42,7 @@ export default () => {
         logger.info("Server closed")
       } catch (error) {
         exitCode = 1
-        logger.error(error)
+        reportFailure(error, "shutdown")
       }
     }
 
@@ -45,19 +51,31 @@ export default () => {
       logger.info("Disconnected from SQL Database")
     } catch (error) {
       exitCode = 1
+      reportFailure(error, "shutdown")
+    }
+
+    try {
+      await observability.flush()
+    } catch (error) {
       logger.error(error)
     }
 
     process.exit(exitCode)
   }
 
-  const unexpectedErrorHandler = (error: unknown) => {
+  const unexpectedErrorHandler = (origin: FatalErrorOrigin) => (error: unknown) => {
     logger.error(error)
+    captureFatalException(error, origin)
     void exitHandler(1)
   }
 
   initializeApp()
     .then((app) => {
+      if (shuttingDown) {
+        setReady(false)
+        return
+      }
+
       readinessMonitor = createReadinessMonitor({
         probe: () => prisma.$queryRaw`SELECT 1`,
         onTransition: (status, error) => {
@@ -76,16 +94,21 @@ export default () => {
         })
         .on("error", (error: NodeJS.ErrnoException) => {
           logger.error(`Failed to listen on port ${config.port}: ${error.message}`)
+          observability.captureException(error, { tags: { phase: "startup" } })
           void exitHandler(1)
         })
     })
     .catch((error) => {
-      logger.error(error)
+      if (shuttingDown) {
+        return
+      }
+
+      reportFailure(error, "startup")
       void exitHandler(1)
     })
 
-  process.on("uncaughtException", unexpectedErrorHandler)
-  process.on("unhandledRejection", unexpectedErrorHandler)
+  process.on("uncaughtException", unexpectedErrorHandler("uncaughtException"))
+  process.on("unhandledRejection", unexpectedErrorHandler("unhandledRejection"))
 
   process.on("SIGTERM", () => {
     logger.info("SIGTERM received")
