@@ -9,7 +9,7 @@ import morgan from "./config/morgan"
 import xss from "./middlewares/xss"
 import cookieParser from "cookie-parser"
 import routes from "./routes/v1"
-import { errorConverter, errorHandler } from "./middlewares/error"
+import { captureRouteBase, errorConverter, errorHandler } from "./middlewares/error"
 import ApiError from "./utils/ApiError"
 import { jwtStrategy } from "./config/passport/jwt.strategy"
 import { applicationStrategy } from "./config/passport/application.strategy"
@@ -100,7 +100,7 @@ passport.use("x", xStrategy)
 passport.use("seed", seedStrategy)
 passport.use("nostr", nostrStrategy)
 
-app.use("/v1", routes)
+app.use("/v1", captureRouteBase("/v1"), routes)
 
 app.use((_req, _res, next) => {
   next(new ApiError(httpStatus.NOT_FOUND, "Not found"))
