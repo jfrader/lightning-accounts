@@ -1,4 +1,30 @@
 #!/usr/bin/env node
-const server = require("../build/src/index")
+const path = require("node:path")
+const dotenv = require("dotenv")
 
-server.default()
+dotenv.config({ path: path.join(process.cwd(), ".env") })
+
+let observability
+
+const reportStartupFailure = async (error) => {
+  console.error(error)
+
+  if (observability) {
+    try {
+      observability.captureException(error, { tags: { phase: "startup" } })
+      await observability.flush()
+    } catch (reportingError) {
+      console.error(reportingError)
+    }
+  }
+
+  process.exitCode = 1
+}
+
+try {
+  observability = require("../build/src/observability").observability
+  const server = require("../build/src/index")
+  server.default()
+} catch (error) {
+  void reportStartupFailure(error)
+}
