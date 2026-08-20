@@ -1,8 +1,10 @@
 module.exports = {
   preset: "ts-jest",
   transform: {
-    "^.+\\.tsx?$": ["ts-jest", { tsconfig: "tsconfig.test.json" }],
+    "^.+\\.[tj]sx?$": ["ts-jest", { tsconfig: "tsconfig.test.json" }],
   },
+  transformIgnorePatterns: ["/node_modules/(?!@jfrader/observability/)"],
+  setupFiles: ["<rootDir>/tests/setup-env.ts"],
   testEnvironment: "node",
   testEnvironmentOptions: {
     NODE_ENV: "test",

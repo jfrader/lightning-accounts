@@ -27,6 +27,8 @@ services:
         value: "true"
       - key: NODE_ENV
         value: production
+      - key: SENTRY_DSN
+        sync: false
       - key: WALLET_ENABLED
         value: "0"
       - key: DATABASE_URL
