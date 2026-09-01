@@ -5,6 +5,7 @@ import logger from "../config/logger"
 const transport: nodemailer.Transporter = nodemailer.createTransport({
   ...config.email.smtp,
   secure: false,
+  requireTLS: true,
 })
 
 const smtpConfigured = Boolean(
