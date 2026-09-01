@@ -6,6 +6,7 @@ const mockLogger = {
 
 const mockSendMail = jest.fn()
 const mockVerify = jest.fn(() => Promise.resolve())
+let mockTransportOptions: Record<string, unknown> | undefined
 
 jest.mock("../../src/config/config", () => ({
   __esModule: true,
@@ -27,19 +28,29 @@ jest.mock("../../src/config/logger", () => ({
 jest.mock("nodemailer", () => ({
   __esModule: true,
   default: {
-    createTransport: jest.fn(() => ({
-      sendMail: mockSendMail,
-      verify: mockVerify,
-    })),
+    createTransport: jest.fn((options: Record<string, unknown>) => {
+      mockTransportOptions = options
+      return {
+        sendMail: mockSendMail,
+        verify: mockVerify,
+      }
+    }),
   },
 }))
 
 import emailService from "../../src/services/email.service"
 
-describe("email service magic links", () => {
+describe("email service", () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockVerify.mockResolvedValue(undefined)
+  })
+
+  it("requires STARTTLS for SMTP submission", () => {
+    expect(mockTransportOptions).toEqual({
+      secure: false,
+      requireTLS: true,
+    })
   })
 
   it("logs magic links in development without sending email", async () => {
