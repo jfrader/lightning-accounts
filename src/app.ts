@@ -27,7 +27,6 @@ import prisma from "./client"
 import healthRoutes from "./health"
 import { configureTrustProxy } from "./config/trustProxy"
 import requestOrigin from "./middlewares/requestOrigin"
-import { noIndexHeader, robotsTxt } from "./middlewares/robots"
 
 const secure = config.env === "production"
 const cookieDomain = secure && config.domain ? config.domain : undefined
@@ -58,7 +57,6 @@ if (config.env !== "test") {
 }
 
 app.use(helmet())
-app.use(noIndexHeader)
 app.use(express.json({ limit: "100kb" }))
 app.use(express.urlencoded({ extended: true, limit: "100kb", parameterLimit: 1000 }))
 app.use(xss())
@@ -67,7 +65,6 @@ app.use(cookieParser(config.jwt.secret))
 app.use(cors(CORS_OPTS))
 app.use(requestOrigin(config.origins))
 app.use("/health", healthRoutes)
-app.get("/robots.txt", robotsTxt)
 
 app.options("*any", cors(CORS_OPTS))
 

@@ -1,0 +1,1573 @@
+{
+  "communities": {
+    "0": [
+      "ref_dist_index_ts",
+      "ref_dom",
+      "ref_es5",
+      "ref_es6",
+      "tsconfig",
+      "tsconfig_compileroptions",
+      "tsconfig_compileroptions_declaration",
+      "tsconfig_compileroptions_esmoduleinterop",
+      "tsconfig_compileroptions_forceconsistentcasinginfilenames",
+      "tsconfig_compileroptions_module",
+      "tsconfig_compileroptions_outdir",
+      "tsconfig_compileroptions_resolvejsonmodule",
+      "tsconfig_compileroptions_skiplibcheck",
+      "tsconfig_compileroptions_strict",
+      "tsconfig_compileroptions_strictnullchecks",
+      "tsconfig_compileroptions_target",
+      "tsconfig_compileroptions_types",
+      "tsconfig_dist",
+      "tsconfig_dist_compileroptions",
+      "tsconfig_dist_compileroptions_allowjs",
+      "tsconfig_dist_compileroptions_declaration",
+      "tsconfig_dist_compileroptions_declarationmap",
+      "tsconfig_dist_compileroptions_downleveliteration",
+      "tsconfig_dist_compileroptions_esmoduleinterop",
+      "tsconfig_dist_compileroptions_forceconsistentcasinginfilenames",
+      "tsconfig_dist_compileroptions_jsx",
+      "tsconfig_dist_compileroptions_lib",
+      "tsconfig_dist_compileroptions_module",
+      "tsconfig_dist_compileroptions_outdir",
+      "tsconfig_dist_compileroptions_resolvejsonmodule",
+      "tsconfig_dist_compileroptions_skiplibcheck",
+      "tsconfig_dist_compileroptions_sourcemap",
+      "tsconfig_dist_compileroptions_strict",
+      "tsconfig_dist_compileroptions_strictnullchecks",
+      "tsconfig_dist_compileroptions_target",
+      "tsconfig_dist_compileroptions_types",
+      "tsconfig_dist_exclude",
+      "tsconfig_dist_files",
+      "tsconfig_dist_json_ref_build",
+      "tsconfig_dist_json_ref_dist",
+      "tsconfig_dist_json_ref_node",
+      "tsconfig_exclude",
+      "tsconfig_json_ref_build",
+      "tsconfig_json_ref_dist",
+      "tsconfig_json_ref_node",
+      "tsconfig_json_ref_scripts",
+      "tsconfig_json_ref_tests"
+    ],
+    "1": [
+      "prisma_seed",
+      "prisma_seed_admincase",
+      "prisma_seed_defaultcase",
+      "prisma_seed_e2ecase",
+      "prisma_seed_main",
+      "prisma_seed_options",
+      "prisma_seed_player",
+      "prisma_seed_prisma",
+      "scripts_encryptpassword",
+      "src_cli_provisionapplication",
+      "src_cli_provisionapplication_main",
+      "src_cli_provisionapplication_prisma",
+      "src_config_applications",
+      "src_config_applications_applicationauthorization",
+      "src_config_applications_applicationconfig",
+      "src_config_applications_applicationcredential",
+      "src_config_applications_applications",
+      "src_config_applications_applicationsconfig",
+      "src_config_applications_isapplicationsourceallowed",
+      "src_config_applications_loadapplications",
+      "src_config_applications_parseapplicationcredential",
+      "src_config_applications_resolveapplicationauthorization",
+      "src_config_passport_application_strategy",
+      "src_config_passport_application_strategy_application_strategy_cookie",
+      "src_config_passport_application_strategy_applicationstrategy",
+      "src_config_passport_application_strategy_options",
+      "src_config_passport_application_strategy_verify",
+      "src_services_applicationprovisioning",
+      "src_services_applicationprovisioning_applicationprovisioningerror",
+      "src_services_applicationprovisioning_applicationprovisioningerror_constructor",
+      "src_services_applicationprovisioning_normalizeemail",
+      "src_services_applicationprovisioning_provisionapplicationoptions",
+      "src_services_applicationprovisioning_provisionapplicationserviceaccount",
+      "src_services_applicationprovisioning_provisioningclient",
+      "src_services_applicationprovisioning_validatepassword",
+      "src_utils_encryption",
+      "src_utils_encryption_encryptpassword",
+      "src_utils_encryption_ispasswordmatch",
+      "src_utils_exclude",
+      "src_utils_exclude_exclude",
+      "tests_unit_applicationprovisioning_spec",
+      "tests_unit_applications_spec"
+    ],
+    "2": [
+      "package_scripts",
+      "package_scripts_admin_make",
+      "package_scripts_application_provision",
+      "package_scripts_build",
+      "package_scripts_db_migrate",
+      "package_scripts_db_push",
+      "package_scripts_db_studio",
+      "package_scripts_docker",
+      "package_scripts_docker_e2e",
+      "package_scripts_docker_exec",
+      "package_scripts_docker_prod",
+      "package_scripts_docker_prod_make_admin",
+      "package_scripts_docker_prod_migrate",
+      "package_scripts_docker_staging",
+      "package_scripts_docker_staging_make_admin",
+      "package_scripts_docker_staging_migrate",
+      "package_scripts_docker_test",
+      "package_scripts_lightning_payinvoice",
+      "package_scripts_lint",
+      "package_scripts_lint_fix",
+      "package_scripts_prepare",
+      "package_scripts_prepublishonly",
+      "package_scripts_prettier",
+      "package_scripts_prettier_fix",
+      "package_scripts_security_audit",
+      "package_scripts_start",
+      "package_scripts_start_e2e",
+      "package_scripts_start_migrate",
+      "package_scripts_start_prod",
+      "package_scripts_start_prod_migrate",
+      "package_scripts_start_test",
+      "package_scripts_swagger_client",
+      "package_scripts_swagger_generate",
+      "package_scripts_swagger_specs",
+      "package_scripts_test_unit"
+    ],
+    "3": [
+      "src_cli_assertdatabasetarget",
+      "src_cli_assertdatabasetarget_expecteddatabase_expectedschema_expectedusername",
+      "src_cli_assertdatabasetarget_main",
+      "src_cli_assertdatabasetarget_refuse",
+      "src_config_config",
+      "src_config_config_email_address_schema",
+      "src_config_config_envvarsschema",
+      "src_config_config_getproductionenvironmenterrors",
+      "src_config_config_isvaliddisplayname",
+      "src_config_config_isvalidemailfrom",
+      "src_config_config_origins",
+      "src_config_config_productionerrors",
+      "src_config_config_requirestrongsecret",
+      "src_config_config_resolvewalletenabled",
+      "src_config_config_resolvexoauth1config",
+      "src_config_config_resolvexoauthconfig",
+      "src_config_config_validatehttpsorigin",
+      "src_config_config_value_envvars_error",
+      "src_config_config_valueof",
+      "src_config_databasetarget",
+      "src_config_databasetarget_databasetargetidentity",
+      "src_config_databasetarget_getdatabaseidentityerrors",
+      "src_config_databasetarget_getdatabasetargeterrors",
+      "src_services_token_service",
+      "src_services_token_service_generateauthtokens",
+      "src_services_token_service_generateidentitytoken",
+      "src_services_token_service_generatemagiclinktoken",
+      "src_services_token_service_generateresetpasswordtoken",
+      "src_services_token_service_generatetoken",
+      "src_services_token_service_generateverifyemailtoken",
+      "src_services_token_service_savetoken",
+      "src_services_token_service_verifytoken",
+      "tests_unit_config_spec",
+      "tests_unit_databasetarget_spec"
+    ],
+    "4": [
+      "prisma_json_schema_definitions",
+      "prisma_json_schema_definitions_payrequest",
+      "prisma_json_schema_definitions_session",
+      "prisma_json_schema_definitions_transaction",
+      "prisma_json_schema_definitions_user",
+      "prisma_json_schema_definitions_wallet",
+      "prisma_json_schema_payrequest_required",
+      "prisma_json_schema_payrequest_type",
+      "prisma_json_schema_session_required",
+      "prisma_json_schema_session_type",
+      "prisma_json_schema_token_required",
+      "prisma_json_schema_transaction_required",
+      "prisma_json_schema_transaction_type",
+      "prisma_json_schema_user_required",
+      "prisma_json_schema_user_type",
+      "prisma_json_schema_wallet_required",
+      "prisma_json_schema_wallet_type",
+      "ref_amountinsats",
+      "ref_balanceinsats",
+      "ref_blacklisted",
+      "ref_creatorid",
+      "ref_expire",
+      "ref_expires",
+      "ref_name",
+      "ref_receiverid",
+      "ref_sid",
+      "ref_token",
+      "ref_type",
+      "ref_updatedat",
+      "ref_userid",
+      "ref_walletid"
+    ],
+    "5": [
+      "src_config_passport_twitter_strategy",
+      "src_config_passport_twitter_strategy_maptwitteroauth1profile",
+      "src_config_passport_twitter_strategy_twitteroptions",
+      "src_config_passport_twitter_strategy_twitterstrategy",
+      "src_config_passport_twitter_strategy_verify",
+      "src_config_passport_twitter_strategy_x_oauth1_access_token_url",
+      "src_config_passport_twitter_strategy_x_oauth1_authenticate_url",
+      "src_config_passport_twitter_strategy_x_oauth1_request_token_url",
+      "src_config_passport_x_strategy",
+      "src_config_passport_x_strategy_verify",
+      "src_config_passport_x_strategy_xoptions",
+      "src_config_passport_x_strategy_xstrategy",
+      "src_config_passport_xoauth2_strategy",
+      "src_config_passport_xoauth2_strategy_buildxoauth2strategyoptions",
+      "src_config_passport_xoauth2_strategy_getxprofileerrormessage",
+      "src_config_passport_xoauth2_strategy_mapxprofile",
+      "src_config_passport_xoauth2_strategy_x_oauth2_authorize_url",
+      "src_config_passport_xoauth2_strategy_x_oauth2_token_url",
+      "src_config_passport_xoauth2_strategy_x_user_profile_fallback_urls",
+      "src_config_passport_xoauth2_strategy_x_user_profile_url",
+      "src_config_passport_xoauth2_strategy_xclienttype",
+      "src_config_passport_xoauth2_strategy_xoauth2strategy",
+      "src_config_passport_xoauth2_strategy_xoauth2strategy_constructor",
+      "src_config_passport_xoauth2_strategy_xoauth2strategy_userprofile",
+      "src_config_passport_xoauth2_strategy_xoauth2strategyoptions",
+      "src_config_passport_xoauth2_strategy_xprofile",
+      "src_config_passport_xoauth2_strategy_xuser",
+      "src_config_passport_xoauth2_strategy_xuserinforesponse",
+      "tests_unit_twitter_strategy_spec",
+      "tests_unit_xoauth2_strategy_spec",
+      "tests_unit_xoauth2_strategy_spec_mockedaxios"
+    ],
+    "6": [
+      "src_controllers_auth_controller",
+      "src_controllers_auth_controller_addseed",
+      "src_controllers_auth_controller_consumemagiclink",
+      "src_controllers_auth_controller_forgotpassword",
+      "src_controllers_auth_controller_getme",
+      "src_controllers_auth_controller_login",
+      "src_controllers_auth_controller_logintwitter",
+      "src_controllers_auth_controller_loginwithmagiclink",
+      "src_controllers_auth_controller_loginwithnostr",
+      "src_controllers_auth_controller_loginwithseed",
+      "src_controllers_auth_controller_logout",
+      "src_controllers_auth_controller_refreshtokens",
+      "src_controllers_auth_controller_register",
+      "src_controllers_auth_controller_registerwithmagiclink",
+      "src_controllers_auth_controller_registerwithseed",
+      "src_controllers_auth_controller_resetpassword",
+      "src_controllers_auth_controller_sendverificationemail",
+      "src_controllers_auth_controller_verifyemail",
+      "src_middlewares_auth",
+      "src_middlewares_auth_verifycallback",
+      "src_utils_authcookie",
+      "src_utils_authcookie_authcookieresponse",
+      "src_utils_authcookie_cookieextractor",
+      "src_utils_authcookie_deauthcookieresponse",
+      "src_utils_authcookie_defaultextractorcookie",
+      "src_utils_authcookie_getcookiename"
+    ],
+    "7": [
+      "src_validations_auth_validation",
+      "src_validations_auth_validation_addseed",
+      "src_validations_auth_validation_forgotpassword",
+      "src_validations_auth_validation_login",
+      "src_validations_auth_validation_loginwithnostr",
+      "src_validations_auth_validation_loginwithseed",
+      "src_validations_auth_validation_logout",
+      "src_validations_auth_validation_magiclinkconsume",
+      "src_validations_auth_validation_magiclinklogin",
+      "src_validations_auth_validation_magiclinkregister",
+      "src_validations_auth_validation_register",
+      "src_validations_auth_validation_registerwithseed",
+      "src_validations_auth_validation_resetpassword",
+      "src_validations_auth_validation_seedphrase",
+      "src_validations_auth_validation_verifyemail",
+      "src_validations_custom_validation",
+      "src_validations_custom_validation_password",
+      "src_validations_index",
+      "src_validations_support_validation",
+      "src_validations_support_validation_feedback",
+      "src_validations_user_validation",
+      "src_validations_user_validation_createuser",
+      "src_validations_user_validation_deleteuser",
+      "src_validations_user_validation_getuser",
+      "src_validations_user_validation_getusers",
+      "src_validations_user_validation_updateuser"
+    ],
+    "8": [
+      "package_version",
+      "src_app_app",
+      "src_client",
+      "src_client_prisma",
+      "src_health",
+      "src_health_gethealthmetadata",
+      "src_health_isready",
+      "src_health_router",
+      "src_health_setready",
+      "src_index",
+      "src_readinessmonitor",
+      "src_readinessmonitor_createreadinessmonitor",
+      "src_readinessmonitor_probewithtimeout",
+      "src_readinessmonitor_readinessmonitoroptions",
+      "src_server",
+      "src_server_initializeapp",
+      "tests_e2e_transactions_spec",
+      "tests_e2e_transactions_spec_fundwallet",
+      "tests_teardown",
+      "tests_unit_health_spec",
+      "tests_unit_readinessmonitor_spec",
+      "tests_unit_readinessmonitor_spec_mocksetready",
+      "tests_unit_server_spec",
+      "tests_unit_server_spec_mockapp",
+      "tests_unit_server_spec_mockconnect"
+    ],
+    "9": [
+      "src_services_auth_service_generateseedphrase",
+      "src_services_user_service",
+      "src_services_user_service_addseedtouser",
+      "src_services_user_service_createuser",
+      "src_services_user_service_createuserwithemail",
+      "src_services_user_service_createuserwithseed",
+      "src_services_user_service_deleteuserbyid",
+      "src_services_user_service_getnewwalletdata",
+      "src_services_user_service_getuserbyemail",
+      "src_services_user_service_getuserbyid",
+      "src_services_user_service_getuserwallet",
+      "src_services_user_service_getuserwithwallet",
+      "src_services_user_service_hashseedphrase",
+      "src_services_user_service_queryusers",
+      "src_services_user_service_updateuserbyid",
+      "src_services_user_service_upserttwitteruser",
+      "src_services_user_service_user_default_fields",
+      "src_services_user_service_user_private_fields",
+      "src_utils_string_getrandomword",
+      "src_utils_string_getrandomword_getrandomword",
+      "src_utils_string_getrandomword_getrecoverypassword",
+      "tests_unit_user_service_wallet_spec",
+      "tests_unit_user_service_wallet_spec_mockconfig"
+    ],
+    "10": [
+      "prisma_json_schema_avatarurl_type",
+      "prisma_json_schema_email_type",
+      "prisma_json_schema_isemailverified_default",
+      "prisma_json_schema_isemailverified_type",
+      "prisma_json_schema_name_type",
+      "prisma_json_schema_nostrpubkey_type",
+      "prisma_json_schema_password_type",
+      "prisma_json_schema_properties_avatarurl",
+      "prisma_json_schema_properties_email",
+      "prisma_json_schema_properties_isemailverified",
+      "prisma_json_schema_properties_name",
+      "prisma_json_schema_properties_nostrpubkey",
+      "prisma_json_schema_properties_password",
+      "prisma_json_schema_properties_seedhash",
+      "prisma_json_schema_properties_twitter",
+      "prisma_json_schema_properties_twitterid",
+      "prisma_json_schema_seedhash_type",
+      "prisma_json_schema_twitter_type",
+      "prisma_json_schema_twitterid_type",
+      "prisma_json_schema_user_properties",
+      "ref_null",
+      "ref_string"
+    ],
+    "11": [
+      "src_controllers_wallet_controller",
+      "src_controllers_wallet_controller_createdeposit",
+      "src_controllers_wallet_controller_createpayrequest",
+      "src_controllers_wallet_controller_createpayrequests",
+      "src_controllers_wallet_controller_getdeposit",
+      "src_controllers_wallet_controller_getlatestblockhash",
+      "src_controllers_wallet_controller_getpayrequest",
+      "src_controllers_wallet_controller_getpayrequests",
+      "src_controllers_wallet_controller_payrequest",
+      "src_controllers_wallet_controller_payuser",
+      "src_controllers_wallet_controller_paywithdrawinvoice",
+      "src_services_lightning_service",
+      "src_services_lightning_service_checkinvoice",
+      "src_services_lightning_service_close",
+      "src_services_lightning_service_createinvoice",
+      "src_services_lightning_service_decodeinvoice",
+      "src_services_lightning_service_getlatestblockhash",
+      "src_services_lightning_service_initlightning",
+      "src_services_lightning_service_lnd_timeout",
+      "src_services_lightning_service_payinvoice",
+      "src_utils_apierror_apierror",
+      "src_utils_apierror_apierror_constructor"
+    ],
+    "12": [
+      "ref_jest",
+      "ref_prisma_ts",
+      "ref_src_ts",
+      "ref_tests_ts",
+      "tsconfig_build",
+      "tsconfig_build_compileroptions",
+      "tsconfig_build_compileroptions_types",
+      "tsconfig_build_exclude",
+      "tsconfig_build_extends",
+      "tsconfig_build_json_ref_build",
+      "tsconfig_build_json_ref_dist",
+      "tsconfig_build_json_ref_node",
+      "tsconfig_build_json_ref_tests",
+      "tsconfig_test",
+      "tsconfig_test_compileroptions",
+      "tsconfig_test_compileroptions_allowjs",
+      "tsconfig_test_compileroptions_types",
+      "tsconfig_test_extends",
+      "tsconfig_test_include",
+      "tsconfig_test_json_ref_node",
+      "tsconfig_test_json_ref_tsconfig_json"
+    ],
+    "13": [
+      "init_dev",
+      "init_dev_node_env",
+      "init_dev_sh__entry",
+      "init_e2e",
+      "init_e2e_sh__entry",
+      "init_regtest_lightning",
+      "init_regtest_lightning_check_file",
+      "init_regtest_lightning_connect_nodes",
+      "init_regtest_lightning_ensure_wallet_ready",
+      "init_regtest_lightning_fund_wallet",
+      "init_regtest_lightning_open_channel",
+      "init_regtest_lightning_rebalance_channel",
+      "init_regtest_lightning_sh__entry",
+      "init_regtest_lightning_wait_for_healthy",
+      "init_regtest_lightning_wait_for_lnd_sync",
+      "init_stop_all",
+      "init_stop_all_sh__entry",
+      "init_test",
+      "init_test_node_env",
+      "init_test_sh__entry"
+    ],
+    "14": [
+      "src_services_lock_service",
+      "src_services_lock_service_busywallets",
+      "src_services_lock_service_clearwalletbusy",
+      "src_services_lock_service_iswalletbusy",
+      "src_services_lock_service_setwalletbusy",
+      "src_services_wallet_service",
+      "src_services_wallet_service_assertpositivesats",
+      "src_services_wallet_service_checkinconsistenttransactions",
+      "src_services_wallet_service_createdepositinvoice",
+      "src_services_wallet_service_createpayrequest",
+      "src_services_wallet_service_createpayrequests",
+      "src_services_wallet_service_getpayrequest",
+      "src_services_wallet_service_getpayrequests",
+      "src_services_wallet_service_gettransaction",
+      "src_services_wallet_service_getuserwallet",
+      "src_services_wallet_service_impactdeposit",
+      "src_services_wallet_service_payrequest",
+      "src_services_wallet_service_payuser",
+      "src_services_wallet_service_paywithdrawinvoice",
+      "src_services_wallet_service_prisma_transaction_opts"
+    ],
+    "15": [
+      "prisma_json_schema_amountinsats_type",
+      "prisma_json_schema_creator_ref",
+      "prisma_json_schema_description_default",
+      "prisma_json_schema_description_type",
+      "prisma_json_schema_id_type",
+      "prisma_json_schema_paid_default",
+      "prisma_json_schema_paid_type",
+      "prisma_json_schema_payrequest_properties",
+      "prisma_json_schema_properties_amountinsats",
+      "prisma_json_schema_properties_creator",
+      "prisma_json_schema_properties_description",
+      "prisma_json_schema_properties_id",
+      "prisma_json_schema_properties_paid",
+      "prisma_json_schema_properties_receiver",
+      "prisma_json_schema_properties_updatedat",
+      "prisma_json_schema_receiver_ref",
+      "prisma_json_schema_transaction_properties",
+      "prisma_json_schema_updatedat_format",
+      "prisma_json_schema_updatedat_type"
+    ],
+    "16": [
+      "prisma_json_schema_properties_role",
+      "prisma_json_schema_role_default",
+      "prisma_json_schema_role_enum",
+      "prisma_json_schema_role_type",
+      "prisma_json_schema_type_enum",
+      "ref_access",
+      "ref_admin",
+      "ref_application",
+      "ref_deposit",
+      "ref_identity",
+      "ref_magic_link",
+      "ref_receive",
+      "ref_refresh",
+      "ref_reset_password",
+      "ref_send",
+      "ref_user",
+      "ref_verify_email",
+      "ref_withdraw"
+    ],
+    "17": [
+      "src_controllers_support_controller",
+      "src_controllers_support_controller_contextlabels",
+      "src_controllers_support_controller_feedbackbody",
+      "src_controllers_support_controller_submitfeedback",
+      "src_controllers_user_controller",
+      "src_controllers_user_controller_createuser",
+      "src_controllers_user_controller_deleteuser",
+      "src_controllers_user_controller_getuser",
+      "src_controllers_user_controller_getuserwallet",
+      "src_controllers_user_controller_updateuser",
+      "src_services_index",
+      "src_utils_catchasync",
+      "src_utils_catchasync_catchasync",
+      "src_utils_catchasync_customparamsdictionary",
+      "tests_unit_support_controller_spec",
+      "tests_unit_support_controller_spec_buildresponse",
+      "tests_unit_support_controller_spec_feedback",
+      "tests_unit_support_controller_spec_mockservices"
+    ],
+    "18": [
+      "src_config_roles",
+      "src_config_roles_allroles",
+      "src_config_roles_rolerights",
+      "src_config_roles_roles",
+      "src_config_roles_userpermission",
+      "src_config_roles_userpermission_feedback_send",
+      "src_config_roles_userpermission_root",
+      "src_config_roles_userpermission_users_read",
+      "src_config_roles_userpermission_users_write",
+      "src_config_roles_userpermission_wallet_invoice",
+      "src_config_roles_userpermission_wallet_pay",
+      "src_config_roles_userpermission_wallet_pay_user",
+      "src_middlewares_lnd",
+      "src_middlewares_lnd_lndconnected",
+      "src_routes_v1_wallet_route",
+      "src_routes_v1_wallet_route_router",
+      "tests_unit_support_permissions_spec"
+    ],
+    "19": [
+      "src_services_auth_service",
+      "src_services_auth_service_consumemagiclink",
+      "src_services_auth_service_findmagiclinkuser",
+      "src_services_auth_service_getmagiclinkregistrationname",
+      "src_services_auth_service_getorcreatemagiclinkuser",
+      "src_services_auth_service_isduplicateemailerror",
+      "src_services_auth_service_loginuserwithemailandpassword",
+      "src_services_auth_service_logout",
+      "src_services_auth_service_refreshauth",
+      "src_services_auth_service_registeruserwithmagiclink",
+      "src_services_auth_service_resetpassword",
+      "src_services_auth_service_serializeauthuser",
+      "src_services_auth_service_verifyemail",
+      "tests_unit_auth_service_spec",
+      "tests_unit_auth_service_spec_mockprisma",
+      "tests_unit_auth_service_spec_mocktokenservice",
+      "tests_unit_auth_service_spec_mockuserservice"
+    ],
+    "20": [
+      "scripts_testemail",
+      "scripts_testemail_testemail",
+      "src_config_logger",
+      "src_config_logger_enumerateerrorformat",
+      "src_config_logger_logger",
+      "src_config_morgan",
+      "src_config_morgan_errorhandler",
+      "src_config_morgan_getipformat",
+      "src_config_morgan_successhandler",
+      "src_config_passport_jwt_strategy",
+      "src_config_passport_jwt_strategy_jwtoptions",
+      "src_config_passport_jwt_strategy_jwtstrategy",
+      "src_config_passport_jwt_strategy_jwtverify",
+      "src_config_passport_seed_strategy",
+      "src_config_passport_seed_strategy_hashseedphrase",
+      "src_config_passport_seed_strategy_seedstrategy"
+    ],
+    "21": [
+      "src_app",
+      "src_app_cors_opts",
+      "src_middlewares_error",
+      "src_middlewares_error_captureroutebase",
+      "src_middlewares_error_client_prisma_error_codes",
+      "src_middlewares_error_errorconverter",
+      "src_middlewares_error_errorhandler",
+      "src_middlewares_error_getclientstatuscode",
+      "src_middlewares_error_getroutetemplate",
+      "src_middlewares_error_httperror",
+      "src_middlewares_xss",
+      "src_middlewares_xss_clean",
+      "src_middlewares_xss_middleware",
+      "src_observability_observability",
+      "src_utils_apierror",
+      "tests_unit_error_middleware_spec"
+    ],
+    "22": [
+      "package_resolutions",
+      "package_resolutions_apidevtools_json_schema_ref_parser_js_yaml",
+      "package_resolutions_axios_form_data",
+      "package_resolutions_babel_core",
+      "package_resolutions_eslint_eslintrc_js_yaml",
+      "package_resolutions_express_body_parser",
+      "package_resolutions_express_rate_limit_ip_address",
+      "package_resolutions_lightning_form_data",
+      "package_resolutions_prisma_deepmerge_ts",
+      "package_resolutions_protobufjs",
+      "package_resolutions_qs",
+      "package_resolutions_superagent_form_data",
+      "package_resolutions_swagger_jsdoc_brace_expansion",
+      "package_resolutions_swagger_jsdoc_fast_uri",
+      "package_resolutions_swagger_jsdoc_js_yaml"
+    ],
+    "23": [
+      "src_middlewares_ratelimiter",
+      "src_middlewares_ratelimiter_authlimiter",
+      "src_middlewares_ratelimiter_base_limiter",
+      "src_middlewares_ratelimiter_feedbacklimiter",
+      "src_middlewares_ratelimiter_getclientip",
+      "src_middlewares_ratelimiter_keygenerator",
+      "src_middlewares_ratelimiter_normalizeip",
+      "src_middlewares_ratelimiter_skiptrustedips",
+      "src_middlewares_ratelimiter_userlimiter",
+      "src_middlewares_ratelimiter_walletlimiter",
+      "src_routes_v1_index",
+      "src_routes_v1_index_defaultroutes",
+      "src_routes_v1_index_devroutes",
+      "src_routes_v1_index_router",
+      "src_types_index"
+    ],
+    "24": [
+      "src_middlewares_auth_auth",
+      "src_routes_v1_auth_route",
+      "src_routes_v1_auth_route_authenticatenostr",
+      "src_routes_v1_auth_route_authenticatetwitter",
+      "src_routes_v1_auth_route_authenticatetwittercallback",
+      "src_routes_v1_auth_route_authenticatex",
+      "src_routes_v1_auth_route_authenticatexcallback",
+      "src_routes_v1_auth_route_oauthauthenticateoptions",
+      "src_routes_v1_auth_route_optionalauth",
+      "src_routes_v1_auth_route_router",
+      "src_routes_v1_auth_route_xauthoptions",
+      "src_routes_v1_auth_route_xauthscopes",
+      "src_routes_v1_auth_route_xcallbackoptions",
+      "tests_unit_auth_route_spec"
+    ],
+    "25": [
+      "src_validations_wallet_validation",
+      "src_validations_wallet_validation_createdeposit",
+      "src_validations_wallet_validation_createpayrequest",
+      "src_validations_wallet_validation_createpayrequests",
+      "src_validations_wallet_validation_description",
+      "src_validations_wallet_validation_getdeposit",
+      "src_validations_wallet_validation_getpayrequest",
+      "src_validations_wallet_validation_getpayrequests",
+      "src_validations_wallet_validation_payrequest",
+      "src_validations_wallet_validation_payuser",
+      "src_validations_wallet_validation_positiveid",
+      "src_validations_wallet_validation_positivesats",
+      "src_validations_wallet_validation_withdraw",
+      "tests_unit_wallet_validation_spec"
+    ],
+    "26": [
+      "cross_env",
+      "package_devdependencies",
+      "package_devdependencies_cross_env",
+      "package_devdependencies_ts_node",
+      "package_devdependencies_types_passport",
+      "package_devdependencies_types_passport_jwt",
+      "package_devdependencies_types_passport_oauth2",
+      "package_devdependencies_types_swagger_jsdoc",
+      "ts_node",
+      "types_passport",
+      "types_passport_jwt",
+      "types_passport_oauth2",
+      "types_swagger_jsdoc"
+    ],
+    "27": [
+      "src_config_passport_nostr_strategy",
+      "src_config_passport_nostr_strategy_createnostruser",
+      "src_config_passport_nostr_strategy_getloginurl",
+      "src_config_passport_nostr_strategy_nostrauthuser",
+      "src_config_passport_nostr_strategy_nostrstrategy",
+      "src_config_passport_nostr_strategy_nostruserselect",
+      "src_config_passport_nostr_strategy_resolvenostruser",
+      "tests_unit_nostr_strategy_spec",
+      "tests_unit_nostr_strategy_spec_builduser",
+      "tests_unit_nostr_strategy_spec_create",
+      "tests_unit_nostr_strategy_spec_findunique",
+      "tests_unit_nostr_strategy_spec_update",
+      "tests_unit_nostr_strategy_spec_userselect"
+    ],
+    "28": [
+      "tests_unit_index_spec",
+      "tests_unit_index_spec_mockcaptureexception",
+      "tests_unit_index_spec_mockcapturefatalexception",
+      "tests_unit_index_spec_mockcreatereadinessmonitor",
+      "tests_unit_index_spec_mockdisconnect",
+      "tests_unit_index_spec_mockflush",
+      "tests_unit_index_spec_mockinitializeapp",
+      "tests_unit_index_spec_mocklogger",
+      "tests_unit_index_spec_mockmonitorstart",
+      "tests_unit_index_spec_mockmonitorstop",
+      "tests_unit_index_spec_mockqueryraw",
+      "tests_unit_index_spec_mocksetready",
+      "tests_unit_index_spec_settle"
+    ],
+    "29": [
+      "package",
+      "package_author",
+      "package_description",
+      "package_license",
+      "package_main",
+      "package_name",
+      "package_packagemanager",
+      "package_prisma",
+      "package_prisma_seed",
+      "package_repository",
+      "src_docs_swaggerdef",
+      "src_docs_swaggerdef_swaggerdef"
+    ],
+    "30": [
+      "prisma_json_schema_blacklisted_type",
+      "prisma_json_schema_definitions_token",
+      "prisma_json_schema_expires_format",
+      "prisma_json_schema_expires_type",
+      "prisma_json_schema_properties_blacklisted",
+      "prisma_json_schema_properties_expires",
+      "prisma_json_schema_properties_token",
+      "prisma_json_schema_properties_type",
+      "prisma_json_schema_token_properties",
+      "prisma_json_schema_token_ref",
+      "prisma_json_schema_token_type",
+      "prisma_json_schema_type_type"
+    ],
+    "31": [
+      "src_controllers_index",
+      "src_controllers_user_controller_getusers",
+      "src_middlewares_validate",
+      "src_middlewares_validate_validate",
+      "src_routes_v1_support_route",
+      "src_routes_v1_support_route_router",
+      "src_routes_v1_user_route",
+      "src_routes_v1_user_route_router",
+      "src_utils_pick",
+      "src_utils_pick_pick",
+      "tests_unit_user_route_wallet_disabled_spec",
+      "tests_unit_user_route_wallet_disabled_spec_mockgetuserwallet"
+    ],
+    "32": [
+      "src_observability",
+      "src_observability_application_owned_process_integrations",
+      "src_observability_capturefatalexception",
+      "src_observability_createappobservability",
+      "src_observability_createfatalexceptioncapture",
+      "src_observability_fatal_error_mechanisms",
+      "src_observability_fatalerrororigin",
+      "src_observability_preserveapplicationprocesshandlers",
+      "src_observability_resolveenvironment",
+      "src_observability_resolverelease",
+      "tests_unit_observability_spec",
+      "tests_unit_observability_spec_createreporter"
+    ],
+    "33": [
+      "bcryptjs",
+      "dotenv",
+      "http_status",
+      "jfrader_observability",
+      "nostr_tools",
+      "package_dependencies",
+      "package_dependencies_bcryptjs",
+      "package_dependencies_dotenv",
+      "package_dependencies_http_status",
+      "package_dependencies_jfrader_observability",
+      "package_dependencies_nostr_tools"
+    ],
+    "34": [
+      "prisma_json_schema_balanceinsats_type",
+      "prisma_json_schema_busy_default",
+      "prisma_json_schema_busy_type",
+      "prisma_json_schema_disabled_default",
+      "prisma_json_schema_disabled_type",
+      "prisma_json_schema_properties_balanceinsats",
+      "prisma_json_schema_properties_busy",
+      "prisma_json_schema_properties_disabled",
+      "prisma_json_schema_properties_user",
+      "prisma_json_schema_user_ref",
+      "prisma_json_schema_wallet_properties"
+    ],
+    "35": [
+      "prisma_json_schema_invoice_type",
+      "prisma_json_schema_invoicesettled_type",
+      "prisma_json_schema_meta_type",
+      "prisma_json_schema_properties_invoice",
+      "prisma_json_schema_properties_invoicesettled",
+      "prisma_json_schema_properties_meta",
+      "prisma_json_schema_sess_type",
+      "ref_array",
+      "ref_boolean",
+      "ref_number",
+      "ref_object"
+    ],
+    "36": [
+      "prisma_json_schema_items_ref",
+      "prisma_json_schema_payrequestscreated_items",
+      "prisma_json_schema_payrequestscreated_type",
+      "prisma_json_schema_payrequestsreceived_items",
+      "prisma_json_schema_payrequestsreceived_type",
+      "prisma_json_schema_properties_payrequestscreated",
+      "prisma_json_schema_properties_payrequestsreceived",
+      "prisma_json_schema_properties_transactions",
+      "prisma_json_schema_token_items",
+      "prisma_json_schema_transactions_items",
+      "prisma_json_schema_transactions_type"
+    ],
+    "37": [
+      "prisma_json_schema_payrequest_anyof",
+      "prisma_json_schema_payrequest_ref",
+      "prisma_json_schema_properties",
+      "prisma_json_schema_properties_payrequest",
+      "prisma_json_schema_properties_session",
+      "prisma_json_schema_properties_transaction",
+      "prisma_json_schema_properties_wallet",
+      "prisma_json_schema_session_ref",
+      "prisma_json_schema_transaction_ref",
+      "prisma_json_schema_wallet_anyof",
+      "prisma_json_schema_wallet_ref"
+    ],
+    "38": [
+      "src_services_email_service",
+      "src_services_email_service_sendemail",
+      "src_services_email_service_sendmagiclinkemail",
+      "src_services_email_service_sendresetpasswordemail",
+      "src_services_email_service_sendverificationemail",
+      "src_services_email_service_smtpconfigured",
+      "src_services_email_service_transport",
+      "tests_unit_email_service_spec",
+      "tests_unit_email_service_spec_mocklogger",
+      "tests_unit_email_service_spec_mocksendmail",
+      "tests_unit_email_service_spec_mockverify"
+    ],
+    "39": [
+      "prisma_json_schema_createdat_format",
+      "prisma_json_schema_createdat_type",
+      "prisma_json_schema_expire_format",
+      "prisma_json_schema_expire_type",
+      "prisma_json_schema_properties_createdat",
+      "prisma_json_schema_properties_expire",
+      "prisma_json_schema_properties_sess",
+      "prisma_json_schema_properties_sid",
+      "prisma_json_schema_session_properties",
+      "prisma_json_schema_sid_type"
+    ],
+    "40": [
+      "src_types_passport_oauth1_d",
+      "src_types_passport_oauth1_d_oauth1strategy",
+      "src_types_passport_oauth1_d_oauth1strategy_authenticate",
+      "src_types_passport_oauth1_d_oauth1strategy_constructor",
+      "src_types_passport_oauth1_d_passport_oauth1",
+      "src_types_passport_oauth1_d_strategyoptions",
+      "src_types_passport_oauth1_d_strategyoptionswithrequest",
+      "src_types_passport_oauth1_d_verifycallback",
+      "src_types_passport_oauth1_d_verifyfunction",
+      "src_types_passport_oauth1_d_verifyfunctionwithrequest"
+    ],
+    "41": [
+      "src_config_session",
+      "src_config_session_prismasessionstore",
+      "src_config_session_prismasessionstore_clear",
+      "src_config_session_prismasessionstore_constructor",
+      "src_config_session_prismasessionstore_destroy",
+      "src_config_session_prismasessionstore_get",
+      "src_config_session_prismasessionstore_length",
+      "src_config_session_prismasessionstore_set",
+      "src_config_session_prismasessionstore_touch"
+    ],
+    "42": [
+      "src_types_tokens_d",
+      "src_types_tokens_d_jsonwebtoken",
+      "src_types_tokens_d_jwtcookie",
+      "src_types_tokens_d_jwtcookie_access",
+      "src_types_tokens_d_jwtcookie_identity",
+      "src_types_tokens_d_jwtcookie_refresh",
+      "src_types_tokens_d_jwtpayload",
+      "src_types_tokens_d_sessioncookie",
+      "src_types_tokens_d_sessioncookie_sid"
+    ],
+    "43": [
+      "lightning",
+      "package_dependencies_lightning",
+      "package_keywords",
+      "ref_accounts",
+      "ref_api",
+      "ref_bitcoin",
+      "ref_custodial",
+      "ref_satoshi"
+    ],
+    "44": [
+      "prisma_json_schema",
+      "prisma_json_schema_properties_walletimpacted",
+      "prisma_json_schema_schema",
+      "prisma_json_schema_type",
+      "prisma_json_schema_walletimpacted_default",
+      "prisma_json_schema_walletimpacted_type",
+      "scripts_prismatoswagger",
+      "scripts_prismatoswagger_replacer"
+    ],
+    "45": [
+      "axios",
+      "form_data",
+      "package_dependencies_axios",
+      "package_dependencies_form_data",
+      "package_peerdependencies",
+      "package_peerdependencies_axios",
+      "package_peerdependencies_form_data"
+    ],
+    "46": [
+      "package_files",
+      "ref_dist_index_d_ts",
+      "ref_dist_index_js",
+      "ref_dist_index_js_map",
+      "ref_dist_swagger_json",
+      "ref_node_modules_form_data",
+      "ref_node_modules_prisma_client"
+    ],
+    "47": [
+      "prisma_migrations_20240105185738_init_migration",
+      "prisma_migrations_20240105185738_init_migration_payrequest",
+      "prisma_migrations_20240105185738_init_migration_token",
+      "prisma_migrations_20240105185738_init_migration_transaction",
+      "prisma_migrations_20240105185738_init_migration_user",
+      "prisma_migrations_20240105185738_init_migration_wallet"
+    ],
+    "48": [
+      "src_config_trustproxy",
+      "src_config_trustproxy_configuretrustproxy",
+      "src_config_trustproxy_resolvetrustproxysetting",
+      "src_config_trustproxy_trustproxysetting",
+      "tests_unit_trustproxy_spec",
+      "tests_unit_trustproxy_spec_createipapp"
+    ],
+    "49": [
+      "src_middlewares_requestorigin",
+      "src_middlewares_requestorigin_normalizeorigin",
+      "src_middlewares_requestorigin_requestorigin",
+      "src_middlewares_requestorigin_safe_methods",
+      "tests_unit_requestorigin_spec",
+      "tests_unit_requestorigin_spec_createapp"
+    ],
+    "50": [
+      "scripts_swaggertojson",
+      "src_routes_v1_docs_route",
+      "src_routes_v1_docs_route_router",
+      "src_swaggerspecs",
+      "src_swaggerspecs_specs"
+    ],
+    "51": [
+      "tests_unit_auth_controller_magic_link_spec",
+      "tests_unit_auth_controller_magic_link_spec_buildresponse",
+      "tests_unit_auth_controller_magic_link_spec_mockservices",
+      "tests_unit_auth_controller_magic_link_spec_runhandler",
+      "tests_unit_auth_controller_magic_link_spec_runhandlerexpecterror"
+    ],
+    "52": [
+      "bin_lightning_accounts_server",
+      "bin_lightning_accounts_server_dotenv",
+      "bin_lightning_accounts_server_path",
+      "bin_lightning_accounts_server_reportstartupfailure"
+    ],
+    "53": [
+      "eslint_config",
+      "eslint_config_compat",
+      "eslint_config_dirname",
+      "eslint_config_filename"
+    ],
+    "54": [
+      "scripts_makeadmin",
+      "scripts_makeadmin_main",
+      "scripts_makeadmin_options",
+      "scripts_makeadmin_prisma"
+    ],
+    "55": [
+      "src_types_user_d",
+      "src_types_user_d_publicuser",
+      "src_types_user_d_sessionuser",
+      "src_types_user_d_userwithwallet"
+    ],
+    "56": [
+      "init_extract_vars",
+      "init_extract_vars_check_file",
+      "init_extract_vars_sh__entry"
+    ],
+    "57": [
+      "package_engines",
+      "package_engines_node",
+      "package_engines_yarn"
+    ],
+    "58": [
+      "prisma_json_schema_hasseed_default",
+      "prisma_json_schema_hasseed_type",
+      "prisma_json_schema_properties_hasseed"
+    ],
+    "59": [
+      "scripts_smokeproductionimport",
+      "scripts_smokeproductionimport_generatekeypairsync_randombytes",
+      "scripts_smokeproductionimport_publickey_privatekey"
+    ],
+    "60": [
+      "src_types_response_d",
+      "src_types_response_d_authtokensresponse",
+      "src_types_response_d_tokenresponse"
+    ],
+    "61": [
+      "src_types_session_d",
+      "src_types_session_d_express_session",
+      "src_types_session_d_sessiondata"
+    ],
+    "62": [
+      "compression",
+      "package_dependencies_compression"
+    ],
+    "63": [
+      "cookie_parser",
+      "package_dependencies_cookie_parser"
+    ],
+    "64": [
+      "cors",
+      "package_dependencies_cors"
+    ],
+    "65": [
+      "dotenv_cli",
+      "package_devdependencies_dotenv_cli"
+    ],
+    "66": [
+      "eslint",
+      "package_devdependencies_eslint"
+    ],
+    "67": [
+      "eslint_config_prettier",
+      "package_devdependencies_eslint_config_prettier"
+    ],
+    "68": [
+      "eslint_eslintrc",
+      "package_devdependencies_eslint_eslintrc"
+    ],
+    "69": [
+      "eslint_js",
+      "package_devdependencies_eslint_js"
+    ],
+    "70": [
+      "eslint_plugin_prettier",
+      "package_devdependencies_eslint_plugin_prettier"
+    ],
+    "71": [
+      "express",
+      "package_dependencies_express"
+    ],
+    "72": [
+      "express_rate_limit",
+      "package_dependencies_express_rate_limit"
+    ],
+    "73": [
+      "express_session",
+      "package_dependencies_express_session"
+    ],
+    "74": [
+      "faker_js_faker",
+      "package_devdependencies_faker_js_faker"
+    ],
+    "75": [
+      "helmet",
+      "package_dependencies_helmet"
+    ],
+    "76": [
+      "husky",
+      "package_devdependencies_husky"
+    ],
+    "77": [
+      "jest",
+      "package_devdependencies_jest"
+    ],
+    "78": [
+      "jest_globals",
+      "package_devdependencies_jest_globals"
+    ],
+    "79": [
+      "joi",
+      "package_dependencies_joi"
+    ],
+    "80": [
+      "js_yaml",
+      "package_dependencies_js_yaml"
+    ],
+    "81": [
+      "lint_staged",
+      "package_devdependencies_lint_staged"
+    ],
+    "82": [
+      "moment",
+      "package_dependencies_moment"
+    ],
+    "83": [
+      "morgan",
+      "package_dependencies_morgan"
+    ],
+    "84": [
+      "node_mocks_http",
+      "package_devdependencies_node_mocks_http"
+    ],
+    "85": [
+      "nodemailer",
+      "package_dependencies_nodemailer"
+    ],
+    "86": [
+      "nodemon",
+      "package_devdependencies_nodemon"
+    ],
+    "87": [
+      "openapi_contrib_json_schema_to_openapi_schema",
+      "package_devdependencies_openapi_contrib_json_schema_to_openapi_schema"
+    ],
+    "88": [
+      "openapi_types",
+      "package_devdependencies_openapi_types"
+    ],
+    "89": [
+      "package_dependencies_passport",
+      "passport"
+    ],
+    "90": [
+      "package_dependencies_passport_cookie",
+      "passport_cookie"
+    ],
+    "91": [
+      "package_dependencies_passport_custom",
+      "passport_custom"
+    ],
+    "92": [
+      "package_dependencies_passport_jwt",
+      "passport_jwt"
+    ],
+    "93": [
+      "package_dependencies_passport_oauth1",
+      "passport_oauth1"
+    ],
+    "94": [
+      "package_dependencies_passport_oauth2",
+      "passport_oauth2"
+    ],
+    "95": [
+      "package_dependencies_passport_strategy",
+      "passport_strategy"
+    ],
+    "96": [
+      "package_dependencies_prisma",
+      "prisma"
+    ],
+    "97": [
+      "package_dependencies_prisma_client",
+      "prisma_client"
+    ],
+    "98": [
+      "package_dependencies_prisma_json_schema_generator",
+      "prisma_json_schema_generator"
+    ],
+    "99": [
+      "package_dependencies_sentry_node",
+      "sentry_node"
+    ],
+    "100": [
+      "package_dependencies_swagger_jsdoc",
+      "swagger_jsdoc"
+    ],
+    "101": [
+      "package_dependencies_swagger_ui_express",
+      "swagger_ui_express"
+    ],
+    "102": [
+      "package_dependencies_winston",
+      "winston"
+    ],
+    "103": [
+      "package_dependencies_xss_filters",
+      "xss_filters"
+    ],
+    "104": [
+      "package_devdependencies_prettier",
+      "prettier"
+    ],
+    "105": [
+      "package_devdependencies_rimraf",
+      "rimraf"
+    ],
+    "106": [
+      "package_devdependencies_supertest",
+      "supertest"
+    ],
+    "107": [
+      "package_devdependencies_swagger2openapi",
+      "swagger2openapi"
+    ],
+    "108": [
+      "package_devdependencies_swagger_typescript_api",
+      "swagger_typescript_api"
+    ],
+    "109": [
+      "package_devdependencies_ts_jest",
+      "ts_jest"
+    ],
+    "110": [
+      "package_devdependencies_types_bcryptjs",
+      "types_bcryptjs"
+    ],
+    "111": [
+      "package_devdependencies_types_compression",
+      "types_compression"
+    ],
+    "112": [
+      "package_devdependencies_types_cookie_parser",
+      "types_cookie_parser"
+    ],
+    "113": [
+      "package_devdependencies_types_cors",
+      "types_cors"
+    ],
+    "114": [
+      "package_devdependencies_types_express",
+      "types_express"
+    ],
+    "115": [
+      "package_devdependencies_types_express_session",
+      "types_express_session"
+    ],
+    "116": [
+      "package_devdependencies_types_jest",
+      "types_jest"
+    ],
+    "117": [
+      "package_devdependencies_types_js_yaml",
+      "types_js_yaml"
+    ],
+    "118": [
+      "package_devdependencies_types_json_schema",
+      "types_json_schema"
+    ],
+    "119": [
+      "package_devdependencies_types_morgan",
+      "types_morgan"
+    ],
+    "120": [
+      "package_devdependencies_types_node",
+      "types_node"
+    ],
+    "121": [
+      "package_devdependencies_types_nodemailer",
+      "types_nodemailer"
+    ],
+    "122": [
+      "package_devdependencies_types_supertest",
+      "types_supertest"
+    ],
+    "123": [
+      "package_devdependencies_types_swagger2openapi",
+      "types_swagger2openapi"
+    ],
+    "124": [
+      "package_devdependencies_types_swagger_ui_express",
+      "types_swagger_ui_express"
+    ],
+    "125": [
+      "package_devdependencies_types_xss_filters",
+      "types_xss_filters"
+    ],
+    "126": [
+      "package_devdependencies_typescript",
+      "typescript"
+    ],
+    "127": [
+      "package_devdependencies_typescript_eslint_eslint_plugin",
+      "typescript_eslint_eslint_plugin"
+    ],
+    "128": [
+      "package_devdependencies_typescript_eslint_parser",
+      "typescript_eslint_parser"
+    ],
+    "129": [
+      "prisma_migrations_20250802070517_add_session_table_migration",
+      "prisma_migrations_20250802070517_add_session_table_migration_session"
+    ],
+    "130": [
+      "src_types_lnurl_d",
+      "src_types_lnurl_d_lnurl"
+    ],
+    "131": [
+      "jest_config"
+    ],
+    "132": [
+      "prisma_migrations_20240106224909_fix_migration"
+    ],
+    "133": [
+      "prisma_migrations_20240107035509_defaults_migration"
+    ],
+    "134": [
+      "prisma_migrations_20240921004331_nostr_migration"
+    ],
+    "135": [
+      "prisma_migrations_20250730211429_add_seed_hash_migration"
+    ],
+    "136": [
+      "prisma_migrations_20250802030334_add_has_seed_migration"
+    ],
+    "137": [
+      "prisma_migrations_20260701120000_add_magic_link_token_type_migration"
+    ],
+    "138": [
+      "src_static_autoclose"
+    ],
+    "139": [
+      "tests_setup_env"
+    ]
+  },
+  "cohesion": {
+    "0": 0.0425531914893617,
+    "1": 0.09291521486643438,
+    "2": 0.05714285714285714,
+    "3": 0.10160427807486631,
+    "4": 0.07956989247311828,
+    "5": 0.09462365591397849,
+    "6": 0.12923076923076923,
+    "7": 0.08615384615384615,
+    "8": 0.16333333333333333,
+    "9": 0.15810276679841898,
+    "10": 0.14285714285714285,
+    "11": 0.1645021645021645,
+    "12": 0.09523809523809523,
+    "13": 0.15789473684210525,
+    "14": 0.19473684210526315,
+    "15": 0.12280701754385964,
+    "16": 0.1111111111111111,
+    "17": 0.13071895424836602,
+    "18": 0.14705882352941177,
+    "19": 0.16911764705882354,
+    "20": 0.16666666666666666,
+    "21": 0.23333333333333334,
+    "22": 0.13333333333333333,
+    "23": 0.2,
+    "24": 0.15384615384615385,
+    "25": 0.14285714285714285,
+    "26": 0.15384615384615385,
+    "27": 0.20512820512820512,
+    "28": 0.15384615384615385,
+    "29": 0.19696969696969696,
+    "30": 0.18181818181818182,
+    "31": 0.25757575757575757,
+    "32": 0.24242424242424243,
+    "33": 0.18181818181818182,
+    "34": 0.18181818181818182,
+    "35": 0.2909090909090909,
+    "36": 0.18181818181818182,
+    "37": 0.18181818181818182,
+    "38": 0.23636363636363636,
+    "39": 0.2,
+    "40": 0.2,
+    "41": 0.2222222222222222,
+    "42": 0.2222222222222222,
+    "43": 0.25,
+    "44": 0.25,
+    "45": 0.2857142857142857,
+    "46": 0.2857142857142857,
+    "47": 0.6666666666666666,
+    "48": 0.6,
+    "49": 0.5333333333333333,
+    "50": 0.6,
+    "51": 0.4,
+    "52": 0.5,
+    "53": 0.5,
+    "54": 0.5,
+    "55": 0.5,
+    "56": 1.0,
+    "57": 0.6666666666666666,
+    "58": 0.6666666666666666,
+    "59": 0.6666666666666666,
+    "60": 0.6666666666666666,
+    "61": 0.6666666666666666,
+    "62": 1.0,
+    "63": 1.0,
+    "64": 1.0,
+    "65": 1.0,
+    "66": 1.0,
+    "67": 1.0,
+    "68": 1.0,
+    "69": 1.0,
+    "70": 1.0,
+    "71": 1.0,
+    "72": 1.0,
+    "73": 1.0,
+    "74": 1.0,
+    "75": 1.0,
+    "76": 1.0,
+    "77": 1.0,
+    "78": 1.0,
+    "79": 1.0,
+    "80": 1.0,
+    "81": 1.0,
+    "82": 1.0,
+    "83": 1.0,
+    "84": 1.0,
+    "85": 1.0,
+    "86": 1.0,
+    "87": 1.0,
+    "88": 1.0,
+    "89": 1.0,
+    "90": 1.0,
+    "91": 1.0,
+    "92": 1.0,
+    "93": 1.0,
+    "94": 1.0,
+    "95": 1.0,
+    "96": 1.0,
+    "97": 1.0,
+    "98": 1.0,
+    "99": 1.0,
+    "100": 1.0,
+    "101": 1.0,
+    "102": 1.0,
+    "103": 1.0,
+    "104": 1.0,
+    "105": 1.0,
+    "106": 1.0,
+    "107": 1.0,
+    "108": 1.0,
+    "109": 1.0,
+    "110": 1.0,
+    "111": 1.0,
+    "112": 1.0,
+    "113": 1.0,
+    "114": 1.0,
+    "115": 1.0,
+    "116": 1.0,
+    "117": 1.0,
+    "118": 1.0,
+    "119": 1.0,
+    "120": 1.0,
+    "121": 1.0,
+    "122": 1.0,
+    "123": 1.0,
+    "124": 1.0,
+    "125": 1.0,
+    "126": 1.0,
+    "127": 1.0,
+    "128": 1.0,
+    "129": 1.0,
+    "130": 1.0,
+    "131": 1.0,
+    "132": 1.0,
+    "133": 1.0,
+    "134": 1.0,
+    "135": 1.0,
+    "136": 1.0,
+    "137": 1.0,
+    "138": 1.0,
+    "139": 1.0
+  },
+  "gods": [
+    {
+      "id": "src_utils_apierror_apierror",
+      "label": "ApiError",
+      "degree": 68
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 35
+    },
+    {
+      "id": "tsconfig_dist_compileroptions",
+      "label": "compilerOptions",
+      "degree": 18
+    },
+    {
+      "id": "src_config_logger_logger",
+      "label": "logger",
+      "degree": 17
+    },
+    {
+      "id": "src_utils_encryption_encryptpassword",
+      "label": "encryptPassword()",
+      "degree": 15
+    },
+    {
+      "id": "package_resolutions",
+      "label": "resolutions",
+      "degree": 15
+    },
+    {
+      "id": "src_config_roles_userpermission",
+      "label": "UserPermission",
+      "degree": 13
+    },
+    {
+      "id": "src_client_prisma",
+      "label": "prisma",
+      "degree": 13
+    },
+    {
+      "id": "tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 12
+    },
+    {
+      "id": "prisma_json_schema_type_enum",
+      "label": "enum",
+      "degree": 12
+    }
+  ],
+  "surprises": [
+    {
+      "source": "createIpApp()",
+      "target": "configureTrustProxy()",
+      "source_files": [
+        "tests/unit/trustProxy.spec.ts",
+        "src/config/trustProxy.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; peripheral node `createIpApp()` unexpectedly reaches hub `configureTrustProxy()`"
+    },
+    {
+      "source": "createApp()",
+      "target": "requestOrigin()",
+      "source_files": [
+        "tests/unit/requestOrigin.spec.ts",
+        "src/middlewares/requestOrigin.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; peripheral node `createApp()` unexpectedly reaches hub `requestOrigin()`"
+    },
+    {
+      "source": "exclude",
+      "target": "scripts/**/*",
+      "source_files": [
+        "tsconfig.build.json",
+        "tsconfig.json"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "extends",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "loginTwitter",
+      "target": "ApiError",
+      "source_files": [
+        "src/controllers/auth.controller.ts",
+        "src/utils/ApiError.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `loginTwitter` unexpectedly reaches hub `ApiError`"
+    },
+    {
+      "source": "sendVerificationEmail",
+      "target": "ApiError",
+      "source_files": [
+        "src/controllers/auth.controller.ts",
+        "src/utils/ApiError.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `sendVerificationEmail` unexpectedly reaches hub `ApiError`"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

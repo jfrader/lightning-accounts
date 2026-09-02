@@ -123,21 +123,6 @@ The environment variables can be found and modified in the `.env` file. They com
 
 Check `.env.example` file
 
-### SMTP security
-
-Email submission requires STARTTLS and fails rather than sending credentials or messages over a
-plaintext SMTP connection. Port 587 is recommended when the provider supports it.
-
-Authentication emails contain short-lived bearer links. Disable provider-level open and click
-tracking so those URLs are not rewritten or added to tracking metadata. Use separate SMTP
-credentials for each application and environment; changing the outbound provider does not require
-changing the domain's inbound MX records.
-
-The deployed layout: production and testnet each submit through their own isolated Mailgun
-sending subdomain with tracking disabled and message retention off, while Proton remains the
-inbound/human-mail provider for the root domain. SMTP credentials are environment secrets and
-are never committed to source.
-
 ## Reverse Proxy (nginx)
 
 If you run behind nginx, you must trust the proxy so Express derives `req.ip` and `req.secure` from
