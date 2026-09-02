@@ -53,12 +53,12 @@ describe("email service", () => {
     })
   })
 
-  it("logs magic links in development without sending email", async () => {
+  it("does not log magic-link secrets in development", async () => {
     await emailService.sendMagicLinkEmail("player@example.com", "magic-token", "profile")
 
-    expect(mockLogger.info).toHaveBeenCalledWith(
-      "Magic link for player@example.com: http://localhost:5173/magic-link?token=magic-token&next=profile"
-    )
+    expect(mockLogger.info).toHaveBeenCalledWith("Magic link email suppressed in development")
+    expect(JSON.stringify(mockLogger.info.mock.calls)).not.toContain("player@example.com")
+    expect(JSON.stringify(mockLogger.info.mock.calls)).not.toContain("magic-token")
     expect(mockSendMail).not.toHaveBeenCalled()
   })
 })
