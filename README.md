@@ -1,5 +1,11 @@
 # Lightning Accounts
 
+[![npm version](https://img.shields.io/npm/v/lightning-accounts?style=flat)](https://www.npmjs.com/package/lightning-accounts)
+[![npm downloads](https://img.shields.io/npm/dm/lightning-accounts?style=flat)](https://www.npmjs.com/package/lightning-accounts)
+[![ci](https://img.shields.io/github/actions/workflow/status/jfrader/lightning-accounts/ci.yml?branch=master&style=flat&label=ci)](https://github.com/jfrader/lightning-accounts/actions)
+[![license](https://img.shields.io/github/license/jfrader/lightning-accounts?style=flat)](./LICENSE)
+[![node](https://img.shields.io/node/v/lightning-accounts?style=flat)](https://www.npmjs.com/package/lightning-accounts)
+
 Nodejs server that allows users to register and deposit/withdraw satoshis using the Bitcoin Lightning Network.
 
 ## Quick Start
