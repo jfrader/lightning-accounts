@@ -114,40 +114,4 @@ jobs:
           "$PACKAGE" "$GITHUB_SHA" "${{ steps.build.outputs.digest }}"
           >> "$GITHUB_OUTPUT"
 
-  deploy-testnet:
-    name: Deploy testnet
-    needs: build-testnet-image
-    if: >-
-      success() &&
-      github.repository == 'jfrader/lightning-accounts' &&
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/testnet' &&
-      vars.TESTNET_AUTO_DEPLOY_ENABLED == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-      packages: read
-    environment:
-      name: testnet
-      url: https://accounts.testnet.trucoshi.com
-    steps:
-      - name: Deploy exact testnet image to testnet
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          IMAGE_REF: ${{ needs.build-testnet-image.outputs.image-ref }}
-          REGISTRY_USER: ${{ github.actor }}
-          RELEASE_SHA: ${{ github.sha }}
-        run: |
-          umask 077
-          printf '%s\n' "$DEPLOY_KEY" > "$RUNNER_TEMP/deploy_key"
-          chmod 600 "$RUNNER_TEMP/deploy_key"
-          printf '%s\n' "$GHCR_TOKEN" |
-            ssh -i "$RUNNER_TEMP/deploy_key" \
-              -o StrictHostKeyChecking=accept-new \
-              -o IdentitiesOnly=yes \
-              -p REDACTED_PORT REDACTED_HOST \
-              "$RELEASE_SHA $IMAGE_REF $REGISTRY_USER"
-
 # The transaction E2E suite provisions PostgreSQL plus Bitcoin/LND and remains in docker:test.
