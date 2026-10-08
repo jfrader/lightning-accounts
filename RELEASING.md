@@ -26,17 +26,10 @@ After the first successful OIDC release, set npm publishing access to require
 2FA and disallow traditional write tokens, then revoke any obsolete automation
 tokens.
 
-## Current migration release
+## History
 
-`lightning-accounts@7.0.0` was already published before trusted publishing was
-configured. Its exact registry tarball is committed as
-`.release/lightning-accounts-7.0.0.tgz`.
-
-The first workflow run verified that the registry had the same integrity and
-exited successfully without republishing. Provenance cannot be added to an
-existing npm version. Version `7.0.1` is the first release prepared for trusted
-publishing; it also restores the original 2022 MIT copyright notice that was
-present when the project was forked.
+`7.0.0` predates trusted publishing; its registry tarball stays in `.release/`.
+`7.0.1` is the first release prepared for trusted publishing.
 
 ## Preparing a new release
 
