@@ -1,5 +1,6 @@
 # Repository Notes
 
+- Documentation uses plain, factual language about behavior and configuration, not sales copy.
 - `yarn build` must use `tsconfig.build.json`. Keep Jest types in `tsconfig.test.json`, not `tsconfig.json`.
 - `Dockerfile` is for dev/test. `Dockerfile.prod` is for production and is used by `docker-compose.prod.yml`.
 - Docker builds run Swagger generation, which imports app config. Keep build-time defaults wired for `DATABASE_URL`, `NODE_ORIGIN`, `JWT_SECRET`, `JWT_BASE64_PUBLIC_KEY`, `JWT_BASE64_PRIVATE_KEY`, and `SEED_HASH_SECRET`.
