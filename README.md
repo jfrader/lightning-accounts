@@ -6,7 +6,16 @@
 [![license](https://img.shields.io/github/license/jfrader/lightning-accounts?style=flat)](./LICENSE)
 [![node](https://img.shields.io/node/v/lightning-accounts?style=flat)](https://www.npmjs.com/package/lightning-accounts)
 
-Nodejs server that allows users to register and deposit/withdraw satoshis using the Bitcoin Lightning Network.
+Node.js server for user authentication and custodial Bitcoin Lightning accounts.
+
+The authentication API supports email/password, email magic links, Nostr, and
+X/Twitter. It issues JWTs and supports token refresh, email verification, and
+password resets.
+
+The wallet API tracks satoshi balances and handles Lightning deposits,
+withdrawals, and transfers between users. Funds are held by the server operator.
+
+Set `WALLET_ENABLED=0` to disable the wallet API and run without a Lightning node.
 
 ## Quick Start
 
