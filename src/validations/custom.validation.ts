@@ -19,4 +19,4 @@ export const password = Joi.extend((joi) => {
 
 export const userName = Joi.string()
   .pattern(NAME_FORBIDDEN_CHARACTERS, { invert: true })
-  .message("name must not contain { or }")
+  .message("name must not contain braces")
