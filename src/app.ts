@@ -48,6 +48,7 @@ const CORS_OPTS: CorsOptions = {
   origin: config.origins.includes("*") ? true : config.origins,
   methods: ["GET", "POST", "PATCH", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Retry-After"],
   credentials: true,
 }
 
