@@ -1,6 +1,10 @@
 import request from "supertest"
 import app from "../../src/app"
-import { authLimiter } from "../../src/middlewares/rateLimiter"
+import {
+  authLimiter,
+  AUTH_RATE_LIMIT,
+  AUTH_RATE_LIMIT_WINDOW_MS,
+} from "../../src/middlewares/rateLimiter"
 import { getCookieName } from "../../src/utils/authCookie"
 import { JwtCookie } from "../../src/types/tokens"
 
@@ -43,7 +47,7 @@ describe("app CORS rate-limit headers", () => {
   })
 
   const exhaustLimit = async () => {
-    for (let attempt = 0; attempt < 50; attempt += 1) {
+    for (let attempt = 0; attempt < AUTH_RATE_LIMIT; attempt += 1) {
       await request(app)
         .get("/v1/auth/profile")
         .set("Origin", allowedOrigin)
@@ -63,7 +67,9 @@ describe("app CORS rate-limit headers", () => {
 
     expect(response.body).toEqual({ message: "Too many requests, please try again later." })
     expect(Number(response.headers["retry-after"])).toBeGreaterThan(0)
-    expect(Number(response.headers["retry-after"])).toBeLessThanOrEqual(300)
+    expect(Number(response.headers["retry-after"])).toBeLessThanOrEqual(
+      AUTH_RATE_LIMIT_WINDOW_MS / 1000
+    )
     expect(response.headers["access-control-allow-origin"]).toBe(allowedOrigin)
     expect(response.headers["access-control-allow-credentials"]).toBe("true")
     expect(response.headers["access-control-expose-headers"]).toBe("Retry-After")

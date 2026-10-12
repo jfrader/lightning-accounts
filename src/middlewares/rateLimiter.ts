@@ -33,9 +33,12 @@ const BASE_LIMITER: Partial<Options> = {
   },
 }
 
+export const AUTH_RATE_LIMIT = 50
+export const AUTH_RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000
+
 export const authLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  max: 50,
+  windowMs: AUTH_RATE_LIMIT_WINDOW_MS,
+  max: AUTH_RATE_LIMIT,
   skipFailedRequests: true,
   ...BASE_LIMITER,
 })
