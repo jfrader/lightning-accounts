@@ -1,5 +1,5 @@
 # Dockerfile
-FROM node:24.18.0-alpine
+FROM node:24.22.1-alpine
 
 RUN test "$(yarn --version)" = "1.22.22"
 
