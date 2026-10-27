@@ -1233,6 +1233,14 @@
     "@noble/hashes" "2.0.1"
     "@scure/base" "2.0.0"
 
+"@selderee/plugin-htmlparser2@~0.12.0":
+  version "0.12.0"
+  resolved "https://registry.npmjs.org/@selderee/plugin-htmlparser2/-/plugin-htmlparser2-0.12.0.tgz#2ec72ba6c6032cac142f39bec71c5ecb5f348adc"
+  integrity sha512-oELmoyA6ML9jDRMV3kgcMQFKxUfBU0yFVn6yTctVaLT5ygXnxH52I3TZEgV9EhXJC68/uFvE5Daj1/25c0Xa/A==
+  dependencies:
+    domelementtype "~2.3.0"
+    domhandler "~5.0.3"
+
 "@sentry/conventions@^0.16.0":
   version "0.16.0"
   resolved "https://registry.npmjs.org/@sentry/conventions/-/conventions-0.16.0.tgz#3b58d15714cf44dca1518496c00749eec5525009"
@@ -1519,6 +1527,14 @@
     "@types/ms" "*"
     "@types/node" "*"
 
+"@types/mailparser@^3.9.0":
+  version "3.9.0"
+  resolved "https://registry.npmjs.org/@types/mailparser/-/mailparser-3.9.0.tgz#a026214de53c9ce430a826e35aec4b6e5879bb3b"
+  integrity sha512-YnhrRiRVDiEAphFvd72hKa1n8y2b9Q3rgSQiONZQyhQz67h5g4MZHNApET3XWXVEFdInWtHqDHKEwnyjxU3QVw==
+  dependencies:
+    "@types/node" "*"
+    iconv-lite "^0.6.3"
+
 "@types/methods@^1.1.4":
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/@types/methods/-/methods-1.1.4.tgz#d3b7ac30ac47c91054ea951ce9eed07b1051e547"
@@ -1556,6 +1572,13 @@
   integrity sha512-A1sre26ke7HDIuY/M23nd9gfB+nrmhtYyMINbjI1zHJxYteKR6qSMX56FsmjMcDb3SMcjJg5BiRRgOCC/yBD0g==
   dependencies:
     undici-types "~7.16.0"
+
+"@types/nodemailer@*":
+  version "8.0.2"
+  resolved "https://registry.npmjs.org/@types/nodemailer/-/nodemailer-8.0.2.tgz#0f57798b2753dbad314f1ad9952713a4a9954f12"
+  integrity sha512-c7M5ox8p0nEOfbJ2E9Qcmt8/QCu/VzsiAhzBiZbvky2PhKZDHpKB3sQHBM5MEZNkCfBOaS6S9//AGPRTNB7IaA==
+  dependencies:
+    "@types/node" "*"
 
 "@types/nodemailer@^8.0.1":
   version "8.0.1"
@@ -1637,6 +1660,14 @@
   dependencies:
     "@types/http-errors" "*"
     "@types/node" "*"
+
+"@types/smtp-server@^3.5.13":
+  version "3.5.13"
+  resolved "https://registry.npmjs.org/@types/smtp-server/-/smtp-server-3.5.13.tgz#78dee0c47067e364fc209db2e0e80d80f52dcb92"
+  integrity sha512-S3rGl2KbViH+98/CgHipPIWgtAFnjxLsppxIRbgJHNuZL7Y+py+7kZjT7xS+wOmCxYTn4O7IqLqkvekg99MDVQ==
+  dependencies:
+    "@types/node" "*"
+    "@types/nodemailer" "*"
 
 "@types/stack-utils@^2.0.3":
   version "2.0.3"
@@ -1923,6 +1954,15 @@
   version "1.11.1"
   resolved "https://registry.yarnpkg.com/@unrs/resolver-binding-win32-x64-msvc/-/resolver-binding-win32-x64-msvc-1.11.1.tgz#538b1e103bf8d9864e7b85cc96fa8d6fb6c40777"
   integrity sha512-lrW200hZdbfRtztbygyaq/6jP6AKE8qQN2KvPcJ+x7wiD038YtnYtZ82IMNJ69GJibV7bwL3y9FgK+5w/pYt6g==
+
+"@zone-eu/mailsplit@5.4.29":
+  version "5.4.29"
+  resolved "https://registry.npmjs.org/@zone-eu/mailsplit/-/mailsplit-5.4.29.tgz#6f235b0b89cb4c9245dc9413a91017129192e87f"
+  integrity sha512-CCUNycmUjrV5M0wNf23waWAt9eOHczhjLbUQS7k0FNJvR0py9VSqHFt+tSl/D0+XI73VLG0U+PwYtq9R0zsm9Q==
+  dependencies:
+    libbase64 "1.4.1"
+    libmime "5.6.3"
+    libqp "3.0.1"
 
 accepts@^1.3.7:
   version "1.3.8"
@@ -2784,6 +2824,11 @@ deepmerge-ts@7.1.5, deepmerge-ts@8.0.0:
   resolved "https://registry.npmjs.org/deepmerge-ts/-/deepmerge-ts-8.0.0.tgz#9fde9f1122d44ab4d1de31eda3e20b55693c8e59"
   integrity sha512-ICNjaP0ML+eSdEpJYQC46XiAn/UjAdwbEl0dE8p85ZTeNDinN4Kd4+9jS4OSAuH7st6eC7rQhsqTF5zIDaUm2g==
 
+deepmerge-ts@^8.0.1:
+  version "8.0.2"
+  resolved "https://registry.npmjs.org/deepmerge-ts/-/deepmerge-ts-8.0.2.tgz#4f3e5588c3a7c59ea80d54b583948d6f404cf13e"
+  integrity sha512-uqbvqLUMrc6p0MO+WBRtTxY55hmyh94WRwI5a++PZe54X+bfVh59FSN7uWCBCW1CCVjzjnrwzfI8zidE2obMMw==
+
 deepmerge@^4.3.1:
   version "4.3.1"
   resolved "https://registry.yarnpkg.com/deepmerge/-/deepmerge-4.3.1.tgz#44b5f2147cd3b00d4b56137685966f26fd25dd4a"
@@ -2844,12 +2889,42 @@ doctrine@3.0.0:
   dependencies:
     esutils "^2.0.2"
 
+dom-serializer@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.npmjs.org/dom-serializer/-/dom-serializer-2.0.0.tgz#e41b802e1eedf9f6cae183ce5e622d789d7d8e53"
+  integrity sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg==
+  dependencies:
+    domelementtype "^2.3.0"
+    domhandler "^5.0.2"
+    entities "^4.2.0"
+
+domelementtype@^2.3.0, domelementtype@~2.3.0:
+  version "2.3.0"
+  resolved "https://registry.npmjs.org/domelementtype/-/domelementtype-2.3.0.tgz#5c45e8e869952626331d7aab326d01daf65d589d"
+  integrity sha512-OLETBj6w0OsagBwdXnPdN0cnMfF9opN69co+7ZrbfPGrdpPVNBUj02spi6B1N7wChLQiPn4CSH/zJvXw56gmHw==
+
+domhandler@^5.0.2, domhandler@^5.0.3, domhandler@~5.0.3:
+  version "5.0.3"
+  resolved "https://registry.npmjs.org/domhandler/-/domhandler-5.0.3.tgz#cc385f7f751f1d1fc650c21374804254538c7d31"
+  integrity sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==
+  dependencies:
+    domelementtype "^2.3.0"
+
 dompurify@3.4.17, dompurify@^3.4.11:
   version "3.4.17"
   resolved "https://registry.npmjs.org/dompurify/-/dompurify-3.4.17.tgz#074bbb24eaa419535ac19ffe7f663104b0e1543d"
   integrity sha512-B/pSlYVHQ58kqISD/yDjuJ1yfzI34m1gF4lAod2bwSRhiN4K5Cl3H8Af7hqB2PmTL911tdEudnnXn5FnhRoz0w==
   optionalDependencies:
     "@types/trusted-types" "^2.0.7"
+
+domutils@^3.2.2:
+  version "3.2.2"
+  resolved "https://registry.npmjs.org/domutils/-/domutils-3.2.2.tgz#edbfe2b668b0c1d97c24baf0f1062b132221bc78"
+  integrity sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==
+  dependencies:
+    dom-serializer "^2.0.0"
+    domelementtype "^2.3.0"
+    domhandler "^5.0.3"
 
 dotenv-cli@^7.3.0:
   version "7.4.4"
@@ -2949,6 +3024,21 @@ encodeurl@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/encodeurl/-/encodeurl-2.0.0.tgz#7b8ea898077d7e409d3ac45474ea38eaf0857a58"
   integrity sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg==
+
+encoding-japanese@2.4.0:
+  version "2.4.0"
+  resolved "https://registry.npmjs.org/encoding-japanese/-/encoding-japanese-2.4.0.tgz#9d19fd65d76d3d5ad7aeb1772f843674c0c2cc36"
+  integrity sha512-PE0KjlsDy9JSsoU4C2Q8NXb1kC4c+bZRac9ZvHXUE4q1Ht63gScKMdEy9jst9+Fi3M4eDkqzkEhBZvix4blP2A==
+
+entities@^4.2.0:
+  version "4.5.0"
+  resolved "https://registry.npmjs.org/entities/-/entities-4.5.0.tgz#5d268ea5e7113ec74c4d033b79ea5a35a488fb48"
+  integrity sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==
+
+entities@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.npmjs.org/entities/-/entities-7.0.1.tgz#26e8a88889db63417dcb9a1e79a3f1bc92b5976b"
+  integrity sha512-TWrgLOFUQTH994YUyl1yT4uyavY5nNB5muff+RtWaqNVCAK408b5ZnnbNAUEWLTCpum9w6arT70i1XdQ4UeOPA==
 
 environment@^1.0.0:
   version "1.1.0"
@@ -3622,6 +3712,11 @@ hasown@^2.0.4:
   dependencies:
     function-bind "^1.1.2"
 
+he@1.2.0:
+  version "1.2.0"
+  resolved "https://registry.npmjs.org/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
+  integrity sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==
+
 helmet@^8.1.0:
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/helmet/-/helmet-8.1.0.tgz#f96d23fedc89e9476ecb5198181009c804b8b38c"
@@ -3631,6 +3726,27 @@ html-escaper@^2.0.0:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/html-escaper/-/html-escaper-2.0.2.tgz#dfd60027da36a36dfcbe236262c00a5822681453"
   integrity sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==
+
+html-to-text@10.0.1:
+  version "10.0.1"
+  resolved "https://registry.npmjs.org/html-to-text/-/html-to-text-10.0.1.tgz#69ce814bf3c1a9aaf05f721f98c48f3d40fe7308"
+  integrity sha512-GiVhRI1BatGARSCmlXWNCjDT0cWrwBWoeduLoV0WSKAgaV/wa+hUWy5LiQLUs4UwiUrE52ZCMfBGiKD87TDPrg==
+  dependencies:
+    "@selderee/plugin-htmlparser2" "~0.12.0"
+    deepmerge-ts "^8.0.1"
+    dom-serializer "^2.0.0"
+    htmlparser2 "^10.1.0"
+    selderee "~0.12.0"
+
+htmlparser2@^10.1.0:
+  version "10.1.0"
+  resolved "https://registry.npmjs.org/htmlparser2/-/htmlparser2-10.1.0.tgz#fe3f2e12c73b6e462d4e10395db9c1119e4d6ae4"
+  integrity sha512-VTZkM9GWRAtEpveh7MSF6SjjrpNVNNVJfFup7xTY3UpFtm67foy9HDVXneLtFVt4pMz5kZtgNcvCniNFb1hlEQ==
+  dependencies:
+    domelementtype "^2.3.0"
+    domhandler "^5.0.3"
+    domutils "^3.2.2"
+    entities "^7.0.1"
 
 http-errors@^2.0.0, http-errors@^2.0.1, http-errors@~2.0.1:
   version "2.0.1"
@@ -3671,10 +3787,17 @@ husky@^9.1.7:
   resolved "https://registry.yarnpkg.com/husky/-/husky-9.1.7.tgz#d46a38035d101b46a70456a850ff4201344c0b2d"
   integrity sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==
 
-iconv-lite@^0.7.3:
+iconv-lite@0.7.3, iconv-lite@^0.7.3:
   version "0.7.3"
   resolved "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.7.3.tgz#84ee12f963e7de50bc01a13e160a078b3b0f415f"
   integrity sha512-IKXpvIzjnC9XTAUbVBcMfGS0EPaIXtW6v+zr+RRp+hqULEpo0owZax6wyRwPOJbWbzjYspQwusTsfVr0ifh4uQ==
+  dependencies:
+    safer-buffer ">= 2.1.2 < 3.0.0"
+
+iconv-lite@^0.6.3:
+  version "0.6.3"
+  resolved "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.6.3.tgz#a52f80bf38da1952eb5c681790719871a1a72501"
+  integrity sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==
   dependencies:
     safer-buffer ">= 2.1.2 < 3.0.0"
 
@@ -3764,6 +3887,11 @@ ipaddr.js@1.9.1:
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/ipaddr.js/-/ipaddr.js-1.9.1.tgz#bff38543eeb8984825079ff3a2a8e6cbd46781b3"
   integrity sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==
+
+ipv6-normalize@1.0.1:
+  version "1.0.1"
+  resolved "https://registry.npmjs.org/ipv6-normalize/-/ipv6-normalize-1.0.1.tgz#1b3258290d365fa83239e89907dde4592e7620a8"
+  integrity sha512-Bm6H79i01DjgGTCWjUuCjJ6QDo1HB96PT/xCYuyJUP9WFbVDrLSbG4EZCvOCun2rNswZb0c3e4Jt/ws795esHA==
 
 is-arrayish@^0.2.1:
   version "0.2.1"
@@ -4376,6 +4504,11 @@ kuler@^2.0.0:
   resolved "https://registry.yarnpkg.com/kuler/-/kuler-2.0.0.tgz#e2c570a3800388fb44407e851531c1d670b061b3"
   integrity sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==
 
+leac@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.npmjs.org/leac/-/leac-0.7.0.tgz#27632daa46e58b4fa36178bcbeb10bf1d4a1699a"
+  integrity sha512-qMrZeyEekgdRQ9o6a4NAB2EQZrv827GJdn1vnapwSJ90hWRB4TzUSunvacPkxQ2TnNqHNI1/zSt0hlo0crG8Jw==
+
 leven@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/leven/-/leven-3.1.0.tgz#77891de834064cccba82ae7842bb6b14a13ed7f2"
@@ -4388,6 +4521,26 @@ levn@^0.4.1:
   dependencies:
     prelude-ls "^1.2.1"
     type-check "~0.4.0"
+
+libbase64@1.4.1:
+  version "1.4.1"
+  resolved "https://registry.npmjs.org/libbase64/-/libbase64-1.4.1.tgz#17be19d66d9c4c51fbfb505fe2263f66e3400962"
+  integrity sha512-Nyh3H90B3gRtrcxIe56Ayy7635J0jmh6AbxbQgQae8wrSPQMH5wFqJChiMTB13yKG512L3YspbA5DzumhFTITA==
+
+libmime@5.6.3:
+  version "5.6.3"
+  resolved "https://registry.npmjs.org/libmime/-/libmime-5.6.3.tgz#69da78d8781a64d53eccf1893264969138b50258"
+  integrity sha512-cuTUW/Jybvh5O4/U9p61gyutHOjDtZyGQYuY99+bfnaFwqcDf2Nb+R6hMHY6DDen2H9wLKQSMpofWUgn2TI5JQ==
+  dependencies:
+    encoding-japanese "2.4.0"
+    iconv-lite "0.7.3"
+    libbase64 "1.4.1"
+    libqp "3.0.1"
+
+libqp@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.npmjs.org/libqp/-/libqp-3.0.1.tgz#f6f8e68a469f3b99989fb116650045ef640f1764"
+  integrity sha512-7QZxpPX25pga1WiMueduWxmrHMVBFrZPH6ZUaozGYa/H98JH6NVBSET3qVw+4NxzoraIW7rJ81YxSU9IalvCpg==
 
 lightning@^12.2.0:
   version "12.2.0"
@@ -4413,6 +4566,13 @@ lines-and-columns@^1.1.6:
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
+
+linkify-it@5.0.2:
+  version "5.0.2"
+  resolved "https://registry.npmjs.org/linkify-it/-/linkify-it-5.0.2.tgz#d3be0a693af3da9df3883f1e346a0e97461a8c19"
+  integrity sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q==
+  dependencies:
+    uc.micro "^2.0.0"
 
 lint-staged@^16.1.4:
   version "16.4.0"
@@ -4558,6 +4718,20 @@ magic-string@^0.30.21:
   integrity sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==
   dependencies:
     "@jridgewell/sourcemap-codec" "^1.5.5"
+
+mailparser@^3.12.4:
+  version "3.12.4"
+  resolved "https://registry.npmjs.org/mailparser/-/mailparser-3.12.4.tgz#2b430b6b64f557d400cf59d6c9b2462bcec1dc9e"
+  integrity sha512-FdoMF+S89/AQaJHY7StwTfABPHZ8Vey+CDyUno5j+TO0jF0UxM+la4Pe9MeqKqBO4Y9ZMB2eomdyg5i+jzpfZw==
+  dependencies:
+    "@zone-eu/mailsplit" "5.4.29"
+    he "1.2.0"
+    html-to-text "10.0.1"
+    libmime "5.6.3"
+    linkify-it "5.0.2"
+    nodemailer "10.2.1"
+    punycode.js "2.3.1"
+    tlds "1.261.0"
 
 make-dir@^4.0.0:
   version "4.0.0"
@@ -4816,6 +4990,11 @@ nodemailer@10.0.6:
   resolved "https://registry.npmjs.org/nodemailer/-/nodemailer-10.0.6.tgz#19629ba080a66c69c7e48498e18c56d8dabcb44d"
   integrity sha512-2u7OHvEQVVGvPo9Yhw/eN3xMO2Gnj2U2fGDP0BDpnRwJR//65AfGRQDiJqxix28gFRBvMqi2USA13x6RrfWuGg==
 
+nodemailer@10.2.1:
+  version "10.2.1"
+  resolved "https://registry.npmjs.org/nodemailer/-/nodemailer-10.2.1.tgz#255f4220fc401ff76ae28ef3b7e67349ea293c88"
+  integrity sha512-ZrDNsPFoDMwefNs7sJwrYiEJ/CG4ClJWDZv05iNJsEBWa8GRDry1QJHTJxsuTAY9eDDKjX4k+q3SxslXJOao7w==
+
 nodemon@^3.1.14:
   version "3.1.14"
   resolved "https://registry.yarnpkg.com/nodemon/-/nodemon-3.1.14.tgz#8487ca379c515301d221ec007f27f24ecafa2b51"
@@ -5054,6 +5233,14 @@ parse-json@^5.2.0:
     json-parse-even-better-errors "^2.3.0"
     lines-and-columns "^1.1.6"
 
+parseley@~0.13.1:
+  version "0.13.1"
+  resolved "https://registry.npmjs.org/parseley/-/parseley-0.13.1.tgz#1dfc3dd43afee3414367a548e8072f2ef77b2a52"
+  integrity sha512-uNBJZzmb60l6p6VWLTmevizNAGnE0xoSf1n0B4q3ntegDNzcS68NRCcBDZTcyXHxt2XhBChsCuqj4M+nChvE/A==
+  dependencies:
+    leac "^0.7.0"
+    peberminta "^0.10.0"
+
 parseurl@^1.3.3, parseurl@~1.3.3:
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/parseurl/-/parseurl-1.3.3.tgz#9da19e7bee8d12dff0513ed5b76957793bc2e8d4"
@@ -5160,6 +5347,11 @@ pause@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/pause/-/pause-0.0.1.tgz#1d408b3fdb76923b9543d96fb4c9dfd535d9cb5d"
   integrity sha512-KG8UEiEVkR3wGEb4m5yZkVCzigAD+cVEJck2CzYZO37ZGJfctvVptVO192MwrtPhzONn6go8ylnOdMhKqi4nfg==
+
+peberminta@^0.10.0:
+  version "0.10.0"
+  resolved "https://registry.npmjs.org/peberminta/-/peberminta-0.10.0.tgz#307eb09c747891baa4ba13bc6e896d83147da354"
+  integrity sha512-80B2AsU+I4Qdb0ZAPSfe9UwvGzwkM37IKIFEvdS3D/3Ndgv2bsuJ0bfG1+iEYO+l7Gfd4EUJmuRyq7efLgRMzQ==
 
 perfect-debounce@^1.0.0:
   version "1.0.0"
@@ -5303,6 +5495,11 @@ pstree.remy@^1.1.8:
   version "1.1.8"
   resolved "https://registry.yarnpkg.com/pstree.remy/-/pstree.remy-1.1.8.tgz#c242224f4a67c21f686839bbdb4ac282b8373d3a"
   integrity sha512-77DZwxQmxKnu3aR542U+X8FypNzbfJ+C5XQDk3uWjWxn6151aIMGthWYRXTqT1E5oJvg+ljaa2OJi+VfvCOQ8w==
+
+punycode.js@2.3.1:
+  version "2.3.1"
+  resolved "https://registry.npmjs.org/punycode.js/-/punycode.js-2.3.1.tgz#6b53e56ad75588234e79f4affa90972c7dd8cdb7"
+  integrity sha512-uxFIHU0YlHYhDQtV4R9J6a52SLx28BCjT+4ieh7IGbgwVJWO+km431c4yRlREUAsAmt/uMjQUyQHNEPf0M39CA==
 
 punycode@^2.1.0:
   version "2.3.1"
@@ -5493,6 +5690,13 @@ safe-stable-stringify@^2.3.1:
   resolved "https://registry.yarnpkg.com/safer-buffer/-/safer-buffer-2.1.2.tgz#44fa161b0187b9549dd84bb91802f9bd8385cd6a"
   integrity sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==
 
+selderee@~0.12.0:
+  version "0.12.0"
+  resolved "https://registry.npmjs.org/selderee/-/selderee-0.12.0.tgz#996d5a174814905431e849d150e6dba536bfee88"
+  integrity sha512-b1YMh3+DHZp59DLna3qVwQ5iOla/nrI6mLBNW02XxU77M3046Df6VLkoaJyFz20VsGIG5kkp+FK0kg4K4HnUFw==
+  dependencies:
+    parseley "~0.13.1"
+
 semifies@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/semifies/-/semifies-1.0.0.tgz#b69569f32c2ba2ac04f705ea82831364289b2ae2"
@@ -5678,6 +5882,15 @@ slice-ansi@^8.0.0:
   dependencies:
     ansi-styles "^6.2.3"
     is-fullwidth-code-point "^5.1.0"
+
+smtp-server@^3.21.1:
+  version "3.21.1"
+  resolved "https://registry.npmjs.org/smtp-server/-/smtp-server-3.21.1.tgz#000c9021a457faf22111100fd2927bfd08f235a4"
+  integrity sha512-gj95f6YhcL0uu3m3FvRnQ6LSotursugAuVjK5V4f0f2C/4OSVpn/+h28F4pPJFob/myli9V+F7/Hxx9DJVdwvg==
+  dependencies:
+    ipv6-normalize "1.0.1"
+    nodemailer "10.2.1"
+    punycode.js "2.3.1"
 
 source-map-support@0.5.13:
   version "0.5.13"
@@ -5981,6 +6194,11 @@ tinyglobby@^0.2.15:
     fdir "^6.5.0"
     picomatch "^4.0.4"
 
+tlds@1.261.0:
+  version "1.261.0"
+  resolved "https://registry.npmjs.org/tlds/-/tlds-1.261.0.tgz#055e412e92f01f84a9c8ac0504d3472d68b3c4c9"
+  integrity sha512-QXqwfEl9ddlGBaRFXIvNKK6OhipSiLXuRuLJX5DErz0o0Q0rYxulWLdFryTkV5PkdZct5iMInwYEGe/eR++1AA==
+
 tmpl@1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/tmpl/-/tmpl-1.0.5.tgz#8683e0b902bb9c20c4f726e3c0b69f36518c07cc"
@@ -6133,6 +6351,11 @@ typescript@^6.0.3:
   version "6.0.3"
   resolved "https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz#90251dc007916e972786cb94d74d15b185577d21"
   integrity sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==
+
+uc.micro@^2.0.0:
+  version "2.1.0"
+  resolved "https://registry.npmjs.org/uc.micro/-/uc.micro-2.1.0.tgz#f8d3f7d0ec4c3dea35a7e3c8efa4cb8b45c9e7ee"
+  integrity sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==
 
 uglify-js@^3.1.4:
   version "3.19.3"
