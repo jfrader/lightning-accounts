@@ -9,6 +9,7 @@ import { AuthTokensResponse } from "../types/response"
 import logger from "../config/logger"
 import config from "../config/config"
 import { getRecoveryPassword } from "../utils/string/getRandomWord"
+import { withoutForbiddenNameCharacters } from "../utils/string/names"
 
 const serializeAuthUser = <T extends { password?: string | null; seedHash?: string | null }>(
   user: T
@@ -86,7 +87,7 @@ const findMagicLinkUser = async (email: string) =>
   ])
 
 export const getMagicLinkRegistrationName = (email: string) => {
-  const name = email.split("@")[0]?.trim() || "jugador"
+  const name = withoutForbiddenNameCharacters(email.split("@")[0] ?? "").trim() || "jugador"
   return name.slice(0, 16)
 }
 

@@ -1,5 +1,5 @@
 import Joi from "joi"
-import { password } from "./custom.validation"
+import { password, userName } from "./custom.validation"
 
 const seedPhrase = Joi.string()
   .required()
@@ -8,7 +8,7 @@ const seedPhrase = Joi.string()
 
 const register = {
   body: Joi.object().keys({
-    name: Joi.string().required(),
+    name: userName.required(),
     email: Joi.string().required().email(),
     password: password.password(),
   }),
@@ -23,7 +23,7 @@ const login = {
 
 const magicLinkRegister = {
   body: Joi.object().keys({
-    name: Joi.string().required().max(16),
+    name: userName.required().max(16),
     email: Joi.string().required().email(),
   }),
 }
@@ -70,7 +70,7 @@ const verifyEmail = {
 
 const registerWithSeed = {
   body: Joi.object().keys({
-    name: Joi.string().required().max(16),
+    name: userName.required().max(16),
   }),
 }
 
