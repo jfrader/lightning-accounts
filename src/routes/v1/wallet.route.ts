@@ -104,7 +104,7 @@ router
  * /wallet/pay:
  *   post:
  *     summary: Pay another user
- *     description: Pay sats to another user from your balance.
+ *     description: Pay sats to another user from your balance. Supply an idempotencyKey for safe retries; omitting it is unsafe and may pay twice. Keys are scoped to the payer and retained permanently. Replays return the original transaction; reuse with a different recipient, amount or description returns 409.
  *     operationId: payUser
  *     tags: [Wallets]
  *     requestBody:
@@ -117,6 +117,10 @@ router
  *               - amountInSats
  *               - userId
  *             properties:
+ *               idempotencyKey:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 200
  *               amountInSats:
  *                 type: integer
  *               userId:

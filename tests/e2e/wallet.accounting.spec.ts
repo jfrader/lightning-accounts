@@ -95,6 +95,105 @@ afterEach(async () => {
 afterAll(() => prisma.$disconnect())
 
 describe("Lightning accounting with PostgreSQL", () => {
+  describe("idempotent internal payouts", () => {
+    let receiverId: number
+    let receiverWalletId: number
+    const payout = (
+      idempotencyKey: string | undefined = "match:1:prize:participant:1",
+      amountInSats = 100
+    ) => walletService.payUser({ payerId: userId, receiverId, amountInSats, idempotencyKey })
+    const assertSettledOnce = async () => {
+      expect(await balance()).toBe(900)
+      expect(
+        (await prisma.wallet.findUniqueOrThrow({ where: { id: receiverWalletId } })).balanceInSats
+      ).toBe(100)
+      expect(await prisma.transaction.count({ where: { walletId } })).toBe(1)
+      expect(await prisma.transaction.count({ where: { walletId: receiverWalletId } })).toBe(1)
+    }
+
+    beforeEach(async () => {
+      const receiver = await prisma.user.create({
+        data: { name: "payout recipient", wallet: { create: { balanceInSats: 0 } } },
+        include: { wallet: true },
+      })
+      receiverId = receiver.id
+      receiverWalletId = receiver.wallet!.id
+    })
+    afterEach(async () => {
+      await prisma.transaction.deleteMany({ where: { walletId: receiverWalletId } })
+      await prisma.wallet.delete({ where: { id: receiverWalletId } })
+      await prisma.user.delete({ where: { id: receiverId } })
+    })
+
+    it("returns the original result for the same key twice", async () => {
+      const original = await payout()
+      expect(await payout()).toEqual(original)
+      await assertSettledOnce()
+    })
+
+    it("claims two concurrent calls with the same key exactly once", async () => {
+      const [first, second] = await Promise.all([payout(), payout()])
+      expect(first).toEqual(second)
+      await assertSettledOnce()
+    })
+
+    it("replays a committed transfer after a lost response and an exhausted payer balance", async () => {
+      const original = await payout("lost-response", 1000)
+      expect(await payout("lost-response", 1000)).toEqual(original)
+      expect(await balance()).toBe(0)
+      expect(await prisma.transaction.count({ where: { walletId } })).toBe(1)
+    })
+
+    it("rolls back both balances and the key if ledger insertion crashes, then retries once", async () => {
+      await prisma.$executeRawUnsafe(`CREATE FUNCTION payout_reject_ledger() RETURNS trigger AS $$
+        BEGIN IF NEW."walletId" = ${receiverWalletId} THEN RAISE EXCEPTION 'simulated ledger crash'; END IF; RETURN NEW; END;
+        $$ LANGUAGE plpgsql`)
+      await prisma.$executeRawUnsafe(`CREATE TRIGGER payout_reject_ledger BEFORE INSERT ON "Transaction"
+        FOR EACH ROW EXECUTE FUNCTION payout_reject_ledger()`)
+      try {
+        await expect(payout()).rejects.toThrow()
+        expect(await balance()).toBe(1000)
+        expect(
+          (await prisma.wallet.findUniqueOrThrow({ where: { id: receiverWalletId } })).balanceInSats
+        ).toBe(0)
+        expect(await prisma.transaction.count({ where: { walletId } })).toBe(0)
+      } finally {
+        await prisma.$executeRawUnsafe(`DROP TRIGGER payout_reject_ledger ON "Transaction"`)
+        await prisma.$executeRawUnsafe(`DROP FUNCTION payout_reject_ledger()`)
+      }
+      await payout()
+      await payout()
+      await assertSettledOnce()
+    })
+
+    it("rejects key reuse with a different amount", async () => {
+      await payout()
+      await expect(payout("match:1:prize:participant:1", 200)).rejects.toMatchObject({
+        statusCode: 409,
+      })
+      await assertSettledOnce()
+    })
+
+    it("allows the same key for another payer", async () => {
+      await payout()
+      await walletService.payUser({
+        payerId: receiverId,
+        receiverId: userId,
+        amountInSats: 100,
+        idempotencyKey: "match:1:prize:participant:1",
+      })
+      expect(await balance()).toBe(1000)
+    })
+
+    it("keeps unkeyed payouts backward compatible and unsafe to retry", async () => {
+      const args = { payerId: userId, receiverId, amountInSats: 100 }
+      const first = await walletService.payUser(args)
+      const second = await walletService.payUser(args)
+      expect(first.id).not.toBe(second.id)
+      expect(await balance()).toBe(800)
+    })
+  })
+
   it("handles duplicate settlement callbacks before the invoice record commits", async () => {
     lightning.createInvoice.mockImplementation(
       async (_sats: number, onConfirmed: (event: ReturnType<typeof invoiceResult>) => void) => {

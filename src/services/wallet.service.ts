@@ -433,70 +433,105 @@ const payUser = async ({
   receiverId,
   amountInSats,
   description,
+  idempotencyKey,
 }: {
   payerId: number
   receiverId: number
   amountInSats: number
   description?: string
+  idempotencyKey?: string
 }) => {
   assertPositiveSats(amountInSats)
+  if (idempotencyKey !== undefined && (!idempotencyKey.length || idempotencyKey.length > 200)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Idempotency key must contain 1 to 200 characters")
+  }
   if (payerId === receiverId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Cannot pay the same wallet")
   }
 
-  return prisma.$transaction(async (tx) => {
-    const payerWallet = await getUserWallet(payerId, true)
-    const payeeWallet = await getUserWallet(receiverId, true)
-
-    const debitedWallet = await tx.wallet.updateMany({
-      where: {
-        id: payerWallet.id,
-        disabled: false,
-        balanceInSats: { gte: amountInSats },
-      },
-      data: { balanceInSats: { decrement: amountInSats } },
+  const payerWallet = await getUserWallet(payerId)
+  const originalPayout = async () => {
+    if (idempotencyKey === undefined) return null
+    const original = await prisma.transaction.findUnique({
+      where: { walletId_idempotencyKey: { walletId: payerWallet.id, idempotencyKey } },
     })
-
-    if (debitedWallet.count !== 1) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
+    if (
+      original &&
+      (original.payoutReceiverId !== receiverId ||
+        original.amountInSats !== amountInSats ||
+        original.description !== (description ?? null))
+    ) {
+      throw new ApiError(httpStatus.CONFLICT, "Idempotency key already used for a different payout")
     }
+    return original
+  }
+  const original = await originalPayout()
+  if (original) return original
 
-    const creditedWallet = await tx.wallet.updateMany({
-      where: {
-        id: payeeWallet.id,
-        disabled: false,
-        balanceInSats: { lte: MAX_WALLET_SATS - amountInSats },
-      },
-      data: { balanceInSats: { increment: amountInSats } },
-    })
+  try {
+    return await prisma.$transaction(async (tx) => {
+      await getUserWallet(payerId, true)
+      const payeeWallet = await getUserWallet(receiverId, true)
+      const transaction = await tx.transaction.create({
+        data: {
+          walletImpacted: true,
+          invoiceSettled: true,
+          amountInSats,
+          description,
+          idempotencyKey,
+          payoutReceiverId: receiverId,
+          type: TransactionType.SEND,
+          wallet: { connect: { id: payerWallet.id } },
+        },
+      })
 
-    if (creditedWallet.count !== 1) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Receiver wallet balance limit exceeded")
+      const debitedWallet = await tx.wallet.updateMany({
+        where: {
+          id: payerWallet.id,
+          disabled: false,
+          balanceInSats: { gte: amountInSats },
+        },
+        data: { balanceInSats: { decrement: amountInSats } },
+      })
+
+      if (debitedWallet.count !== 1) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
+      }
+
+      const creditedWallet = await tx.wallet.updateMany({
+        where: {
+          id: payeeWallet.id,
+          disabled: false,
+          balanceInSats: { lte: MAX_WALLET_SATS - amountInSats },
+        },
+        data: { balanceInSats: { increment: amountInSats } },
+      })
+
+      if (creditedWallet.count !== 1) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Receiver wallet balance limit exceeded")
+      }
+
+      await tx.transaction.create({
+        data: {
+          walletImpacted: true,
+          invoiceSettled: true,
+          amountInSats,
+          description,
+          type: TransactionType.RECEIVE,
+          wallet: { connect: { id: payeeWallet.id } },
+        },
+        select: { id: true },
+      })
+
+      return transaction
+    }, PRISMA_TRANSACTION_OPTS)
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const original = await originalPayout()
+      if (original) return original
     }
-
-    await tx.transaction.create({
-      data: {
-        walletImpacted: true,
-        invoiceSettled: true,
-        amountInSats,
-        description,
-        type: TransactionType.RECEIVE,
-        wallet: { connect: { id: payeeWallet.id } },
-      },
-      select: { id: true },
-    })
-
-    return tx.transaction.create({
-      data: {
-        walletImpacted: true,
-        invoiceSettled: true,
-        amountInSats,
-        description,
-        type: TransactionType.SEND,
-        wallet: { connect: { id: payerWallet.id } },
-      },
-    })
-  }, PRISMA_TRANSACTION_OPTS)
+    throw error
+  }
 }
 
 /**
