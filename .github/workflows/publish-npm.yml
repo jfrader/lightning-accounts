@@ -17,8 +17,8 @@ concurrency:
 env:
   ARTIFACT: .release/lightning-accounts-7.1.0.tgz
   PACKAGE_SPEC: lightning-accounts@7.1.0
-  EXPECTED_SHA256: c584b280229548982e77da52c12f340028d7e779d0d32b1508e717a11b9cd0e2
-  EXPECTED_INTEGRITY: sha512-9fqZzjeR5GdG6JNVmJjS9f1vlFMz6c9YeGAjGZayJ51vD7SaG4lm35N6Fud6Djr83WX9hhNcfm4Usom7xMiovw==
+  EXPECTED_SHA256: eb847e5548098505fdc68df794debfbdbf1137abf10d306a6bae5e88804506be
+  EXPECTED_INTEGRITY: sha512-ig8atmQrAlQ/qV0Ph+F+huL5f7wd9NNqOG3QUpaPVqiPp/DpYF2agm6fa4cgO4tujGhf4qknoRuysBEDY3VRSw==
 
 jobs:
   publish:
