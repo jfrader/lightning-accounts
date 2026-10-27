@@ -1,6 +1,6 @@
 {
   "name": "lightning-accounts",
-  "version": "7.0.1",
+  "version": "7.1.0",
   "description": "Lightning Accounts Server",
   "repository": "https://github.com/jfrader/lightning-accounts.git",
   "main": "dist/index.js",
@@ -20,6 +20,8 @@
     "custodial"
   ],
   "files": [
+    "prisma/migrations/**",
+    "CHANGELOG.md",
     "node_modules/.prisma/client/*",
     "node_modules/form-data/*",
     "dist/index.d.ts",

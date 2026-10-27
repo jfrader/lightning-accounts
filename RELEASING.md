@@ -68,7 +68,7 @@ tokens.
    ```
 
 5. Inspect the reported file list. The package should contain only the intended
-   public client files, license, README, and package metadata. Record the
+   public client files, database migrations, changelog, license, README, and package metadata. Record the
    integrity reported by `npm pack` and calculate the artifact SHA-256:
 
    ```sh
