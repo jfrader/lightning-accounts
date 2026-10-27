@@ -3,8 +3,18 @@ import ApiError from "../utils/ApiError"
 import httpStatus from "http-status"
 import config from "../config/config"
 import logger from "../config/logger"
+import PaymentFailure from "../utils/PaymentFailure"
 
 export const LND_TIMEOUT = 60 * 1000
+
+const terminalPaymentFailures = new Set([
+  "PaymentExecutionCanceled",
+  "InsufficientBalanceToAttemptPayment",
+  "PaymentRejectedByDestination",
+  "PaymentAttemptsTimedOut",
+  "PaymentPathfindingFailedToFindPossibleRoute",
+  "FailedToFindPayableRouteToDestination",
+])
 
 let connected = false
 let lnd: lightning.AuthenticatedLnd | null = null
@@ -146,7 +156,9 @@ const payInvoice = (request: string, tokens?: number) => {
             details,
           })
           return reject(
-            new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice")
+            terminalPaymentFailures.has(message)
+              ? new PaymentFailure(message)
+              : new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice")
           )
         }
         logger.info(`Payment successful for invoice ${invoiceId}`, { payment: result })

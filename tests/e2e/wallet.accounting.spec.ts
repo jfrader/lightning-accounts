@@ -2,6 +2,7 @@ import { TransactionType } from "@prisma/client"
 import { randomUUID } from "node:crypto"
 import prisma from "../../src/client"
 import * as walletLock from "../../src/services/lock.service"
+import PaymentFailure from "../../src/utils/PaymentFailure"
 
 const mockLightning = {
   createInvoice: jest.fn(),
@@ -284,6 +285,86 @@ describe("Lightning accounting with PostgreSQL", () => {
     const failure = await reconcile().catch((error: Error) => error)
     expect(await balance()).toBe(1000)
     expect(failure).toBeInstanceOf(Error)
+  })
+
+  it("refunds a definite payment rejection even when LND has no outgoing record", async () => {
+    lightning.payInvoice.mockRejectedValue(new PaymentFailure("PaymentRejectedByDestination"))
+    lightning.checkPayment.mockRejectedValue([404, "SentPaymentNotFound"])
+    await expect(walletService.payWithdrawInvoice(userId, "invoice")).rejects.toMatchObject({
+      statusCode: 400,
+    })
+    expect(await balance()).toBe(1000)
+    expect(lightning.checkPayment).not.toHaveBeenCalled()
+    expect(await prisma.transaction.findFirst({ where: { walletId } })).toMatchObject({
+      walletImpacted: false,
+      invoiceSettled: false,
+      invoice: { paymentFailed: true },
+    })
+    await Promise.all([reconcile(), reconcile()])
+    expect(await balance()).toBe(1000)
+  })
+
+  it("stops polling canceled deposits without changing the wallet", async () => {
+    await deposit()
+    lightning.checkInvoice.mockImplementation(async () => ({
+      ...invoiceResult(),
+      is_confirmed: false,
+      is_canceled: true,
+    }))
+    await reconcile()
+    lightning.checkInvoice.mockClear()
+    await reconcile()
+    expect(lightning.checkInvoice).not.toHaveBeenCalled()
+    expect(await balance()).toBe(1000)
+  })
+
+  it("recovers a definite rejection after a failed refund commit without querying LND", async () => {
+    lightning.payInvoice.mockRejectedValue(new PaymentFailure("PaymentRejectedByDestination"))
+    lightning.checkPayment.mockRejectedValue([404, "SentPaymentNotFound"])
+    await prisma.$executeRawUnsafe(`CREATE FUNCTION accounting_reject_refund() RETURNS trigger AS $$
+      BEGIN IF NEW."balanceInSats" > OLD."balanceInSats" THEN RAISE EXCEPTION 'simulated refund crash'; END IF; RETURN NEW; END;
+      $$ LANGUAGE plpgsql`)
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER accounting_reject_refund AFTER UPDATE ON "Wallet"
+      FOR EACH ROW EXECUTE FUNCTION accounting_reject_refund()`)
+    try {
+      await expect(walletService.payWithdrawInvoice(userId, "invoice")).rejects.toMatchObject({
+        statusCode: 503,
+      })
+      expect(await balance()).toBe(895)
+      expect(await prisma.transaction.findFirst({ where: { walletId } })).toMatchObject({
+        walletImpacted: true,
+        invoice: { paymentFailed: true },
+      })
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER accounting_reject_refund ON "Wallet"`)
+      await prisma.$executeRawUnsafe(`DROP FUNCTION accounting_reject_refund()`)
+    }
+    await Promise.all([reconcile(), reconcile()])
+    expect(await balance()).toBe(1000)
+    expect(lightning.checkPayment).not.toHaveBeenCalled()
+  })
+
+  it("quarantines invalid invoice data without counting the same failure every run", async () => {
+    const transaction = await deposit()
+    await prisma.transaction.update({ where: { id: transaction.id }, data: { invoice: {} } })
+    await expect(reconcile()).rejects.toThrow("Failed to reconcile 1 transaction(s)")
+    expect(
+      await prisma.transaction.findUniqueOrThrow({ where: { id: transaction.id } })
+    ).toMatchObject({
+      invoice: { reconciliation: "needs_review" },
+    })
+    await expect(reconcile()).resolves.toBeUndefined()
+    expect(await balance()).toBe(1000)
+  })
+
+  it("keeps expired unconfirmed deposits eligible for a later settlement", async () => {
+    await deposit()
+    lightning.checkInvoice.mockImplementation(async () => invoiceResult(paymentId, false))
+    await reconcile()
+    expect(await balance()).toBe(1000)
+    lightning.checkInvoice.mockImplementation(async () => invoiceResult())
+    await reconcile()
+    expect(await balance()).toBe(1100)
   })
 
   it("reconciles a lost withdrawal response without restoring spent funds", async () => {

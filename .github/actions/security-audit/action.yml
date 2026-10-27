@@ -1,5 +1,5 @@
 name: Production dependency security gate
-description: Block critical and high production findings; fail closed on incomplete audits.
+description: Block critical and high repository and npm consumer findings; fail closed on incomplete audits.
 runs:
   using: composite
   steps:
@@ -11,40 +11,15 @@ runs:
       run: |
         output="$RUNNER_TEMP/production-audit.jsonl"
         yarn audit --groups dependencies --json >"$output" || true
-        node - "$output" <<'NODE'
-        const fs = require('node:fs');
-        const counts = { info: 0, low: 0, moderate: 0, high: 0, critical: 0 };
-        const blockers = new Set();
-        let summary;
-        try {
-          const lines = fs.readFileSync(process.argv[2], 'utf8').trim().split('\n');
-          for (const line of lines) {
-            const { type, data } = JSON.parse(line);
-            if (type === 'error') throw new Error(String(data));
-            if (type === 'auditSummary') summary = data.vulnerabilities;
-            if (type !== 'auditAdvisory') continue;
-            const advisory = data.advisory;
-            if (!Object.hasOwn(counts, advisory.severity)) {
-              throw new Error('Unknown advisory severity');
-            }
-            counts[advisory.severity]++;
-            if (advisory.severity === 'high' || advisory.severity === 'critical') {
-              blockers.add(`${advisory.severity}: ${advisory.module_name} — ${advisory.title} (${advisory.url})`);
-            }
-          }
-          if (!summary || Object.keys(counts).some(key => summary[key] !== counts[key])) {
-            throw new Error('Missing or inconsistent audit summary');
-          }
-          console.log(`Production audit: ${counts.critical} critical, ${counts.high} high, ${counts.moderate} moderate, ${counts.low} low, ${counts.info} info.`);
-          for (const blocker of blockers) console.error(`BLOCKED ${blocker}`);
-          if (blockers.size) {
-            console.error('FAIL: critical or high production findings block release.');
-            process.exitCode = 1;
-          } else {
-            console.log('PASS: no critical or high production findings; moderate and low do not block release.');
-          }
-        } catch (error) {
-          console.error(`FAIL: production audit could not be verified: ${error.message}`);
-          process.exitCode = 1;
-        }
-        NODE
+        node scripts/checkSecurityAudit.cjs yarn "$output"
+    - name: Audit the npm consumer dependency graph
+      shell: bash
+      run: |
+        set -euo pipefail
+        consumer="$(mktemp -d "$RUNNER_TEMP/npm-consumer.XXXXXX")"
+        trap 'rm -rf "$consumer"' EXIT
+        artifact="${ARTIFACT:-.release/lightning-accounts-$(node -p 'require("./package.json").version').tgz}"
+        printf '{"name":"release-consumer-audit","version":"1.0.0","private":true}\n' >"$consumer/package.json"
+        npm install --prefix "$consumer" --package-lock-only --ignore-scripts --omit=dev "$GITHUB_WORKSPACE/$artifact"
+        npm audit --prefix "$consumer" --omit=dev --json >"$consumer/audit.json" || true
+        node scripts/checkSecurityAudit.cjs npm "$consumer/audit.json"

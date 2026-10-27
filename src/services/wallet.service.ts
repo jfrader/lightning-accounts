@@ -6,6 +6,7 @@ import lightningService, { LND_TIMEOUT } from "./lightning.service"
 import logger from "../config/logger"
 import config from "../config/config"
 import { setWalletBusy, clearWalletBusy, isWalletBusy } from "./lock.service"
+import PaymentFailure from "../utils/PaymentFailure"
 
 const PRISMA_TRANSACTION_OPTS = { maxWait: 10000, timeout: LND_TIMEOUT + 5000 }
 const MAX_WALLET_SATS = 2_147_483_647
@@ -27,6 +28,7 @@ const checkInconsistentTransactions = async (dryRun = false): Promise<void> => {
 
     const inconsistentTransactions = await prisma.transaction.findMany({
       where: {
+        AND: [{ invoice: { path: ["reconciliation"], equals: Prisma.DbNull } }],
         OR: [
           {
             type: TransactionType.DEPOSIT,
@@ -76,6 +78,7 @@ const checkInconsistentTransactions = async (dryRun = false): Promise<void> => {
       const invoice = tx.invoice as { id: string; request: string } | null
       if (!invoice?.id || !invoice?.request) {
         logger.error(`Transaction ${tx.id}: No valid invoice data`)
+        if (!dryRun) await markReconciliation(tx, "needs_review")
         failures++
         continue
       }
@@ -86,10 +89,17 @@ const checkInconsistentTransactions = async (dryRun = false): Promise<void> => {
           logger.info(`Transaction ${tx.id}: confirmed=${status.is_confirmed}, dryRun=${dryRun}`)
           if (status.is_confirmed && !dryRun) await _impactDeposit(status, tx)
           if (!status.is_confirmed && tx.walletImpacted) {
+            if (!dryRun) await markReconciliation(tx, "needs_review")
             throw new Error("Credited deposit lacks settlement evidence; manual review required")
           }
+          if (!status.is_confirmed && status.is_canceled && !tx.walletImpacted && !dryRun) {
+            await markReconciliation(tx, "canceled")
+          }
         } else {
-          const status = await retry(() => lightningService.checkPayment(invoice.id))
+          const status =
+            (tx.invoice as Prisma.JsonObject)?.paymentFailed === true
+              ? { is_failed: true }
+              : await retry(() => lightningService.checkPayment(invoice.id))
           logger.info(
             `Transaction ${tx.id}: confirmed=${status.is_confirmed}, failed=${status.is_failed}, dryRun=${dryRun}`
           )
@@ -317,6 +327,17 @@ const _reconcileWithdrawal = async (
   }, PRISMA_TRANSACTION_OPTS)
 }
 
+const markReconciliation = (transaction: Transaction, outcome: "canceled" | "needs_review") =>
+  prisma.transaction.updateMany({
+    where: {
+      id: transaction.id,
+      walletImpacted: transaction.walletImpacted,
+      invoiceSettled: transaction.invoiceSettled,
+      invoice: { equals: transaction.invoice ?? Prisma.DbNull },
+    },
+    data: { invoice: { ...(transaction.invoice as Prisma.JsonObject), reconciliation: outcome } },
+  })
+
 /**
  * Pay a withdrawal invoice
  * @param userId - User ID
@@ -398,7 +419,17 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
         `Payment outcome requires reconciliation for transaction ${transaction.id}: ${error.message}`
       )
       try {
-        await _reconcileWithdrawal(transaction, await lightningService.checkPayment(payment.id))
+        if (error instanceof PaymentFailure) {
+          await prisma.transaction.update({
+            where: { id: transaction.id },
+            data: {
+              invoice: { ...(transaction.invoice as Prisma.JsonObject), paymentFailed: true },
+            },
+          })
+          await _reconcileWithdrawal(transaction, { is_failed: true })
+        } else {
+          await _reconcileWithdrawal(transaction, await lightningService.checkPayment(payment.id))
+        }
       } catch (lookupError: any) {
         logger.error(`Transaction ${transaction.id}: Payment lookup failed: ${lookupError.message}`)
       }
