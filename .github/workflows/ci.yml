@@ -8,6 +8,16 @@ permissions:
   contents: read
 
 jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+      - uses: ./.github/actions/security-audit
+
   development-docker-image:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -64,6 +74,7 @@ jobs:
       - development-docker-image
       - production-docker-image
       - unit-and-build
+      - security-audit
     if: >-
       success() &&
       github.repository == 'jfrader/lightning-accounts' &&
