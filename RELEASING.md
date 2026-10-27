@@ -52,8 +52,15 @@ tokens.
      WALLET_ENABLED=0 \
      yarn test:unit
    yarn build
-   yarn security:audit
+   yarn audit --groups dependencies
    ```
+
+   Critical and high findings on production dependencies block a release;
+   moderate and low findings do not. `yarn security:audit` runs the same command.
+   Yarn Classic exits nonzero for any severity, so its raw exit code does not
+   implement this threshold. CI and the npm publish workflow use
+   `.github/actions/security-audit/action.yml` to parse the JSON advisories and
+   enforce the threshold. An incomplete or failed audit also blocks publishing.
 
 4. Generate the client package output before packing. `npm pack` does not run
    `prepublishOnly`:
@@ -68,7 +75,7 @@ tokens.
    ```
 
 5. Inspect the reported file list. The package should contain only the intended
-   public client files, license, README, and package metadata. Record the
+   public client files, database migrations, changelog, license, README, and package metadata. Record the
    integrity reported by `npm pack` and calculate the artifact SHA-256:
 
    ```sh

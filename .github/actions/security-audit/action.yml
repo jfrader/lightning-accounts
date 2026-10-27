@@ -1,0 +1,25 @@
+name: Production dependency security gate
+description: Block critical and high repository and npm consumer findings; fail closed on incomplete audits.
+runs:
+  using: composite
+  steps:
+    - name: Enable pinned Yarn
+      shell: bash
+      run: corepack enable
+    - name: Audit production dependencies
+      shell: bash
+      run: |
+        output="$RUNNER_TEMP/production-audit.jsonl"
+        yarn audit --groups dependencies --json >"$output" || true
+        node scripts/checkSecurityAudit.cjs yarn "$output"
+    - name: Audit the npm consumer dependency graph
+      shell: bash
+      run: |
+        set -euo pipefail
+        consumer="$(mktemp -d "$RUNNER_TEMP/npm-consumer.XXXXXX")"
+        trap 'rm -rf "$consumer"' EXIT
+        artifact="${ARTIFACT:-.release/lightning-accounts-$(node -p 'require("./package.json").version').tgz}"
+        printf '{"name":"release-consumer-audit","version":"1.0.0","private":true}\n' >"$consumer/package.json"
+        npm install --prefix "$consumer" --package-lock-only --ignore-scripts --omit=dev "$GITHUB_WORKSPACE/$artifact"
+        npm audit --prefix "$consumer" --omit=dev --json >"$consumer/audit.json" || true
+        node scripts/checkSecurityAudit.cjs npm "$consumer/audit.json"

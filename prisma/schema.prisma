@@ -82,19 +82,23 @@ model PayRequest {
 }
 
 model Transaction {
-  id             Int             @id @default(autoincrement())
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  walletId       Int
-  amountInSats   Int
-  type           TransactionType
-  description    String?
-  walletImpacted Boolean         @default(false)
-  invoiceSettled Boolean?
-  invoice        Json?
-  payRequestId   Int?
-  payRequest     PayRequest?     @relation(fields: [payRequestId], references: [id])
-  wallet         Wallet          @relation(fields: [walletId], references: [id])
+  id               Int             @id @default(autoincrement())
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  walletId         Int
+  amountInSats     Int
+  type             TransactionType
+  description      String?
+  walletImpacted   Boolean         @default(false)
+  invoiceSettled   Boolean?
+  invoice          Json?
+  idempotencyKey   String?         @db.VarChar(200)
+  payoutReceiverId Int?
+  payRequestId     Int?
+  payRequest       PayRequest?     @relation(fields: [payRequestId], references: [id])
+  wallet           Wallet          @relation(fields: [walletId], references: [id])
+
+  @@unique([walletId, idempotencyKey])
 }
 
 enum TransactionType {
