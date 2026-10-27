@@ -142,7 +142,7 @@
     "lightning": "^12.4.0",
     "moment": "^2.29.4",
     "morgan": "^1.11.0",
-    "nodemailer": "10.0.6",
+    "nodemailer": "10.1.4",
     "nostr-tools": "^2.7.2",
     "passport": "^0.7.0",
     "passport-cookie": "^1.0.9",
