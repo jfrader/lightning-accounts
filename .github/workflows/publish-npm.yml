@@ -41,6 +41,9 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
+      - name: Gate publishing on production dependency security
+        uses: ./.github/actions/security-audit
+
       - name: Install the pinned OIDC-capable npm CLI
         run: |
           set -euo pipefail
