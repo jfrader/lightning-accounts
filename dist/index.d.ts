@@ -165,7 +165,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          */
         createDepositInvoice: (data: {
             amountInSats: number;
-        }, params?: RequestParams) => Promise<AxiosResponse<Transaction, any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<Transaction, any, {}, any>>;
         /**
          * @description Pay a lightning invoice with the user balance, using the whole balance if it is a zero-value invoice.
          *
@@ -176,7 +176,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          */
         payWithdrawInvoice: (data: {
             invoice: string;
-        }, params?: RequestParams) => Promise<AxiosResponse<Transaction, any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<Transaction, any, {}, any>>;
         /**
          * @description Pay sats to another user from your balance. Supply an idempotencyKey for safe retries; omitting it is unsafe and may pay twice. Keys are scoped to the payer and retained permanently. Replays return the original transaction; reuse with a different recipient, amount or description returns 409.
          *
@@ -194,7 +194,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             amountInSats: number;
             userId: number;
             description?: string;
-        }, params?: RequestParams) => Promise<AxiosResponse<Transaction, any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<Transaction, any, {}, any>>;
         /**
          * @description Retrieve the status of a deposit transaction.
          *
@@ -203,7 +203,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Get deposit transaction status
          * @request GET:/wallet/deposit/{transactionId}
          */
-        getDepositTransaction: (transactionId: string, params?: RequestParams) => Promise<AxiosResponse<Transaction, any, {}>>;
+        getDepositTransaction: (transactionId: string, params?: RequestParams) => Promise<AxiosResponse<Transaction, any, {}, any>>;
         /**
          * @description Retrieve details of a payment request.
          *
@@ -212,7 +212,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Get a payment request
          * @request GET:/wallet/pay-request/{payRequestId}
          */
-        getPayRequest: (payRequestId: string, params?: RequestParams) => Promise<AxiosResponse<PayRequest, any, {}>>;
+        getPayRequest: (payRequestId: string, params?: RequestParams) => Promise<AxiosResponse<PayRequest, any, {}, any>>;
         /**
          * @description Pay a payment request sent to the user.
          *
@@ -221,7 +221,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Pay a payment request
          * @request POST:/wallet/pay-request/{payRequestId}/pay
          */
-        payRequest: (payRequestId: string, params?: RequestParams) => Promise<AxiosResponse<PayRequest, any, {}>>;
+        payRequest: (payRequestId: string, params?: RequestParams) => Promise<AxiosResponse<PayRequest, any, {}, any>>;
         /**
          * @description Create a payment request that another user can pay from their balance.
          *
@@ -235,7 +235,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             amountInSats: number;
             meta?: object;
             description?: string;
-        }, params?: RequestParams) => Promise<AxiosResponse<PayRequest, any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<PayRequest, any, {}, any>>;
         /**
          * @description Create multiple payment requests that other users can pay from their balance.
          *
@@ -249,7 +249,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             amountInSats: number;
             meta?: object;
             description?: string;
-        }, params?: RequestParams) => Promise<AxiosResponse<PayRequest[], any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<PayRequest[], any, {}, any>>;
         /**
          * @description Retrieve details of multiple payment requests.
          *
@@ -260,7 +260,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          */
         getPayRequests: (data: {
             payRequestIds: number[];
-        }, params?: RequestParams) => Promise<AxiosResponse<PayRequest[], any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<PayRequest[], any, {}, any>>;
         /**
          * @description Retrieve the hash and height of the latest Bitcoin block from the LND node using the `getLatestBitcoinBlock` method.
          *
@@ -274,7 +274,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             hash: string;
             /** The height of the latest Bitcoin block */
             height: number;
-        }, any, {}>>;
+        }, any, {}, any>>;
     };
     users: {
         /**
@@ -299,7 +299,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
              */
             password: string;
             role: "user" | "admin";
-        }, params?: RequestParams) => Promise<AxiosResponse<User, any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<User, any, {}, any>>;
         /**
          * @description Only admins can retrieve all users.
          *
@@ -337,7 +337,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             totalPages?: number;
             /** @example 1 */
             totalResults?: number;
-        }, any, {}>>;
+        }, any, {}, any>>;
         /**
          * @description Logged-in users can fetch only their own user information. Only admins can fetch other users.
          *
@@ -346,7 +346,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Get a user
          * @request GET:/users/{id}
          */
-        getUser: (id: string, params?: RequestParams) => Promise<AxiosResponse<User, any, {}>>;
+        getUser: (id: string, params?: RequestParams) => Promise<AxiosResponse<User, any, {}, any>>;
         /**
          * @description Logged-in users can only update their own information. Only admins can update other users.
          *
@@ -370,7 +370,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
              * @minLength 8
              */
             password?: string;
-        }, params?: RequestParams) => Promise<AxiosResponse<User, any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<User, any, {}, any>>;
         /**
          * @description Logged-in users can delete only themselves. Only admins can delete other users.
          *
@@ -379,7 +379,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Delete a user
          * @request DELETE:/users/{id}
          */
-        deleteUser: (id: string, params?: RequestParams) => Promise<AxiosResponse<void, any, {}>>;
+        deleteUser: (id: string, params?: RequestParams) => Promise<AxiosResponse<void, any, {}, any>>;
         /**
          * @description Get user wallet (only yourself if not admin).
          *
@@ -388,7 +388,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Get a user's wallet
          * @request GET:/users/{id}/wallet
          */
-        getUserWallet: (id: string, params?: RequestParams) => Promise<AxiosResponse<Wallet, any, {}>>;
+        getUserWallet: (id: string, params?: RequestParams) => Promise<AxiosResponse<Wallet, any, {}, any>>;
     };
     auth: {
         /**
@@ -399,7 +399,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Get user's own profile
          * @request GET:/auth/me
          */
-        getUserProfile: (params?: RequestParams) => Promise<AxiosResponse<User, any, {}>>;
+        getUserProfile: (params?: RequestParams) => Promise<AxiosResponse<User, any, {}, any>>;
         /**
          * No description
          *
@@ -423,7 +423,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             password: string;
         }, params?: RequestParams) => Promise<AxiosResponse<{
             user?: User;
-        }, any, {}>>;
+        }, any, {}, any>>;
         /**
          * No description
          *
@@ -436,7 +436,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             name: string;
             /** @format email */
             email: string;
-        }, params?: RequestParams) => Promise<AxiosResponse<void, any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<void, any, {}, any>>;
         /**
          * No description
          *
@@ -449,7 +449,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             /** @format email */
             email: string;
             next?: "profile";
-        }, params?: RequestParams) => Promise<AxiosResponse<void, any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<void, any, {}, any>>;
         /**
          * No description
          *
@@ -462,7 +462,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             token: string;
         }, params?: RequestParams) => Promise<AxiosResponse<{
             user?: User;
-        }, any, {}>>;
+        }, any, {}, any>>;
         /**
          * No description
          *
@@ -478,7 +478,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             password: string;
         }, params?: RequestParams) => Promise<AxiosResponse<{
             user?: User;
-        }, any, {}>>;
+        }, any, {}, any>>;
         /**
          * No description
          *
@@ -492,7 +492,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             token: string;
         }, params?: RequestParams) => Promise<AxiosResponse<{
             user?: User;
-        }, any, {}>>;
+        }, any, {}, any>>;
         /**
          * No description
          *
@@ -501,7 +501,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Log out a user
          * @request POST:/auth/logout
          */
-        logoutUser: (params?: RequestParams) => Promise<AxiosResponse<void, any, {}>>;
+        logoutUser: (params?: RequestParams) => Promise<AxiosResponse<void, any, {}, any>>;
         /**
          * No description
          *
@@ -516,7 +516,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             user?: User;
             /** The generated seed phrase */
             seedPhrase?: string;
-        }, any, {}>>;
+        }, any, {}, any>>;
         /**
          * No description
          *
@@ -529,7 +529,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             seedPhrase: string;
         }, params?: RequestParams) => Promise<AxiosResponse<{
             user?: User;
-        }, any, {}>>;
+        }, any, {}, any>>;
         /**
          * No description
          *
@@ -538,7 +538,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Refresh authentication tokens
          * @request POST:/auth/refresh-tokens
          */
-        refreshAuthTokens: (params?: RequestParams) => Promise<AxiosResponse<void, any, {}>>;
+        refreshAuthTokens: (params?: RequestParams) => Promise<AxiosResponse<void, any, {}, any>>;
         /**
          * @description An email will be sent to reset the password.
          *
@@ -550,7 +550,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
         requestPasswordReset: (data: {
             /** @format email */
             email: string;
-        }, params?: RequestParams) => Promise<AxiosResponse<void, any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<void, any, {}, any>>;
         /**
          * No description
          *
@@ -569,7 +569,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
              * @minLength 8
              */
             password: string;
-        }, params?: RequestParams) => Promise<AxiosResponse<void, any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<void, any, {}, any>>;
         /**
          * @description An email will be sent to verify the user's email.
          *
@@ -578,7 +578,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Send email verification
          * @request POST:/auth/send-verification-email
          */
-        sendVerificationEmail: (params?: RequestParams) => Promise<AxiosResponse<void, any, {}>>;
+        sendVerificationEmail: (params?: RequestParams) => Promise<AxiosResponse<void, any, {}, any>>;
         /**
          * No description
          *
@@ -590,7 +590,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
         verifyEmail: (query: {
             /** The verify email token */
             token: string;
-        }, params?: RequestParams) => Promise<AxiosResponse<void, any, {}>>;
+        }, params?: RequestParams) => Promise<AxiosResponse<void, any, {}, any>>;
         /**
          * No description
          *
@@ -599,7 +599,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Initiate Twitter authentication
          * @request GET:/auth/twitter
          */
-        initiateTwitterAuth: (params?: RequestParams) => Promise<AxiosResponse<User, any, {}>>;
+        initiateTwitterAuth: (params?: RequestParams) => Promise<AxiosResponse<User, any, {}, any>>;
         /**
          * No description
          *
@@ -608,7 +608,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Initiate X authentication
          * @request GET:/auth/x
          */
-        initiateXAuth: (params?: RequestParams) => Promise<AxiosResponse<User, any, {}>>;
+        initiateXAuth: (params?: RequestParams) => Promise<AxiosResponse<User, any, {}, any>>;
         /**
          * No description
          *
@@ -617,7 +617,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Handle Twitter authentication callback
          * @request GET:/auth/twitter/callback
          */
-        handleTwitterAuthCallback: (params?: RequestParams) => Promise<AxiosResponse<User, any, {}>>;
+        handleTwitterAuthCallback: (params?: RequestParams) => Promise<AxiosResponse<User, any, {}, any>>;
         /**
          * No description
          *
@@ -626,7 +626,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
          * @summary Handle X authentication callback
          * @request GET:/auth/x/callback
          */
-        handleXAuthCallback: (params?: RequestParams) => Promise<AxiosResponse<User, any, {}>>;
+        handleXAuthCallback: (params?: RequestParams) => Promise<AxiosResponse<User, any, {}, any>>;
         /**
          * No description
          *
@@ -640,7 +640,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
             user?: User;
             /** The generated seed phrase */
             seedPhrase?: string;
-        }, any, {}>>;
+        }, any, {}, any>>;
     };
 }
 //# sourceMappingURL=index.d.ts.map

@@ -1,8 +1,8 @@
-import nodemailer from "nodemailer"
+import nodemailer, { type Transporter } from "nodemailer"
 import config from "../config/config"
 import logger from "../config/logger"
 
-const transport: nodemailer.Transporter = nodemailer.createTransport({
+const transport: Transporter = nodemailer.createTransport({
   ...config.email.smtp,
   secure: false,
 })
