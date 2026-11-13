@@ -1,3 +1,4 @@
+import "./setup-env"
 import prisma from "../src/client"
 import lightningService from "../src/services/lightning.service"
 

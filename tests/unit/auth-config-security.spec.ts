@@ -1,0 +1,35 @@
+import { getFixtureSigningKeyErrors, resolveDocsEnabled } from "../../src/config/config"
+
+const publishedPublicKey =
+  "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUE0V3NnUG4za3lKZ1l5Uk91dGRJZApsTWlBbERxNkJEbmY4NDduR1djZ2pBS1dXUWozOU0xSmgxVnFKRGd2SE96dHhHcEw5aVNVSmd3RWFWOWRkZlloCmpFMHMwemdhQlVHNkt1UlloUjBXZlBqZGNaSkFwWU14d0xVZ2ZIVlhOVXR2NzZpNDZjdzJBOHE1bndSdnRPM2IKMEVuVFUraHZRdjZKRjFrZUFBdW5VWWRTK3dkSm82d3VPN2dpN3NUL2U3dW8zdTZmazBBOXpjUS96VmphUnQ5Swp0MUh2Q0lRbDJDUXMzYTh5WmxETEtid0wwWklOcURDWmNNMEd1b1hwdkRQbXNLR21CUy9wYzUyeUtoZ3d3czFiCnoyd2lyUlI4Z2xNaXlGRkgyK1JZNG5pWnBCNFg2T0VhWWpvdnB6WWZSd0t4ZC9oeXRDaE9yQi85MXZUaHc1akUKdENyb3A0WG9xMzJWbXBYY1o0djNRYmFSdklOR3JYbGtQNWJxNU9GNXdZbkROVnVnbklZQ0o5U01TTTZoZEZXbgpmRUNLRFI3d09PVkxxNTlZSHFCWmVVN0wvUUk4SlNLZ0pLNmNjZ2dGeFMvUCtYdG1PMjlkMTBXMmdIL2xVYzRiCkhPMmY2NkZFMjdUdjJVWjFJdWRsVG9nVy9zUzhLUEVlSFZtOTlFYjZFaGZ2VjhzN2Zyb056QUkrN0Q1a0JibTYKRjlKNDNlWWs2NDdQdVUxL1ZnK1ltTEZVeXhwK3NnTHFNbEFPRDNFR0ROVi9ORHVObnNLa0N3bFdEL3hVaktGLwpVeWlpcWZ6ZFNvWHlESXNHN2J4NjE5dUxMbUJxUFBQWDVnYWZjN084ZVVhTEJzMVNXR1EvT1M4WVN5MU0yNkt2CmpidEMySTdOTTdaaStuQ2I5RURWMU84Q0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo="
+
+describe("published signing-key rejection", () => {
+  it.each([
+    { NODE_ENV: "production" },
+    { NODE_ENV: "development", NODE_HOST: "https://accounts.testnet.example.org" },
+    { NODE_ENV: "test", SENTRY_ENVIRONMENT: "testnet" },
+  ])("rejects the real published public fixture in %j", (environment) => {
+    expect(
+      getFixtureSigningKeyErrors({
+        ...process.env,
+        ...environment,
+        JWT_BASE64_PUBLIC_KEY: publishedPublicKey,
+      })
+    ).toEqual([expect.stringContaining("compromised")])
+  })
+
+  it("accepts newly generated keys", () => {
+    expect(getFixtureSigningKeyErrors({ ...process.env, NODE_ENV: "production" })).toEqual([])
+  })
+})
+
+describe("docs configuration", () => {
+  it("defaults off in production and on locally", () => {
+    expect(resolveDocsEnabled({ NODE_ENV: "production" })).toBe(false)
+    expect(resolveDocsEnabled({ NODE_ENV: "development" })).toBe(true)
+  })
+  it("supports explicit enable and disable", () => {
+    expect(resolveDocsEnabled({ NODE_ENV: "production", DOCS_ENABLED: "1" })).toBe(true)
+    expect(resolveDocsEnabled({ NODE_ENV: "test", DOCS_ENABLED: "0" })).toBe(false)
+  })
+})

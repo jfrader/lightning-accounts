@@ -1,7 +1,7 @@
 import dotenv from "dotenv"
 import path from "path"
 import Joi from "joi"
-import { createPrivateKey, createPublicKey } from "node:crypto"
+import { createHash, createPrivateKey, createPublicKey } from "node:crypto"
 import addressparser from "nodemailer/lib/addressparser"
 import { getDatabaseTargetErrors } from "./databaseTarget"
 
@@ -20,6 +20,7 @@ const envVarsSchema = Joi.object()
       .description("Maximum allowed sats per wallet; 0 uses the database integer limit"),
     WALLET_RECONCILE_DRY_RUN: Joi.string().description("Dry run reconciliation on startup"),
     NODE_ENV: Joi.string().valid("production", "development", "test").required(),
+    DOCS_ENABLED: Joi.string().valid("0", "1"),
     PORT: Joi.number().description("Platform-provided HTTP port"),
     NODE_PORT: Joi.number().default(3000),
     NODE_ORIGIN: Joi.string().required().description("Allowed origin"),
@@ -108,6 +109,36 @@ const PLACEHOLDER_PATTERN =
   /(?:change me|replace[- ]with|base64[- ]encoded|example\.com|placeholder|local[- ]dev|not[- ]for[- ]production)/i
 
 const valueOf = (environment: NodeJS.ProcessEnv, key: string) => environment[key]?.trim() || ""
+
+export const PUBLISHED_SIGNING_KEY_FINGERPRINT =
+  "77d825c0b5ade43eaf8ef4e7ed779de3d96cb577f4a90270b352ef948c070af8"
+
+export const getFixtureSigningKeyErrors = (environment: NodeJS.ProcessEnv): string[] => {
+  const isDeployed =
+    environment.NODE_ENV === "production" ||
+    environment.SENTRY_ENVIRONMENT === "testnet" ||
+    environment.NODE_HOST?.includes(".testnet.")
+  if (!isDeployed) return []
+  try {
+    for (const name of ["JWT_BASE64_PUBLIC_KEY", "JWT_BASE64_PRIVATE_KEY"]) {
+      const pem = Buffer.from(valueOf(environment, name), "base64")
+      const key = createPublicKey(pem)
+      const fingerprint = createHash("sha256")
+        .update(key.export({ type: "spki", format: "der" }))
+        .digest("hex")
+      if (fingerprint === PUBLISHED_SIGNING_KEY_FINGERPRINT) {
+        return ["Published JWT fixture key is compromised; rotate the signing key pair"]
+      }
+    }
+  } catch {
+    return ["JWT signing keys must be valid for deployed environments"]
+  }
+  return []
+}
+
+export const resolveDocsEnabled = (environment: NodeJS.ProcessEnv): boolean =>
+  environment.DOCS_ENABLED === "1" ||
+  (environment.DOCS_ENABLED === undefined && environment.NODE_ENV !== "production")
 
 const validateHttpsOrigin = (key: string, value: string, errors: string[]): URL | undefined => {
   try {
@@ -288,7 +319,10 @@ export const getProductionEnvironmentErrors = (
   return errors
 }
 
-const productionErrors = getProductionEnvironmentErrors()
+const productionErrors = [
+  ...getProductionEnvironmentErrors(),
+  ...getFixtureSigningKeyErrors(process.env),
+]
 if (productionErrors.length) {
   throw new Error(`Invalid production environment:\n- ${productionErrors.join("\n- ")}`)
 }
@@ -319,6 +353,7 @@ export const resolveWalletEnabled = (env: Record<string, string | undefined>) =>
 
 export default {
   env: envVars.NODE_ENV,
+  docsEnabled: resolveDocsEnabled(envVars),
   port: envVars.PORT ?? envVars.NODE_PORT,
   origin: origins[0],
   origins,

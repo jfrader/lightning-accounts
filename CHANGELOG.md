@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Breaking
+
+- The authentication-token migration signs out existing sessions and invalidates outstanding email links.
+- Logout, password changes and email changes revoke all stored login and recovery links for the account.
+- Repeated authentication attempts are limited by IP and recipient, including failed attempts.
+
 ## 7.1.0
 
 - Refund withdrawals rejected definitively by Lightning, including the fee reserve. Keep ambiguous payment outcomes reserved until settlement or failure is established.
