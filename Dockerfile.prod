@@ -1,5 +1,5 @@
 # Build the TypeScript server and generated API artifacts with pinned tooling.
-FROM node:24.18.0-alpine AS builder
+FROM node:24.22.1-alpine AS builder
 
 WORKDIR /opt/app
 
@@ -17,7 +17,7 @@ RUN mkdir -p dist
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public yarn build
 
 # Install only runtime dependencies and copy the compiled output into the final image.
-FROM node:24.18.0-alpine AS runtime
+FROM node:24.22.1-alpine AS runtime
 
 ENV NODE_ENV=production
 WORKDIR /opt/app

@@ -1,5 +1,6 @@
 import httpStatus from "http-status"
 import tokenService from "./token.service"
+import { revokeSecurityTokens } from "./token.service"
 import userService from "./user.service"
 import ApiError from "../utils/ApiError"
 import { Prisma, Role, TokenType, User } from "@prisma/client"
@@ -9,6 +10,7 @@ import { AuthTokensResponse } from "../types/response"
 import logger from "../config/logger"
 import config from "../config/config"
 import { getRecoveryPassword } from "../utils/string/getRandomWord"
+import { withoutForbiddenNameCharacters } from "../utils/string/names"
 
 const serializeAuthUser = <T extends { password?: string | null; seedHash?: string | null }>(
   user: T
@@ -86,7 +88,7 @@ const findMagicLinkUser = async (email: string) =>
   ])
 
 export const getMagicLinkRegistrationName = (email: string) => {
-  const name = email.split("@")[0]?.trim() || "jugador"
+  const name = withoutForbiddenNameCharacters(email.split("@")[0] ?? "").trim() || "jugador"
   return name.slice(0, 16)
 }
 
@@ -179,18 +181,12 @@ const consumeMagicLink = async (
 
 const logout = async (refreshToken: string): Promise<void> => {
   logger.info("Attempting logout")
-  const refreshTokenData = await prisma.token.findFirst({
-    where: {
-      token: refreshToken,
-      type: TokenType.REFRESH,
-      blacklisted: false,
-    },
-  })
+  const refreshTokenData = await tokenService.verifyToken(refreshToken, TokenType.REFRESH)
   if (!refreshTokenData) {
     logger.error("Refresh token not found")
     throw new ApiError(httpStatus.NOT_FOUND, "Not found")
   }
-  await prisma.token.deleteMany({ where: { token: refreshToken, type: TokenType.REFRESH } })
+  await revokeSecurityTokens(refreshTokenData.userId)
   logger.info("Logout successful")
 }
 
@@ -272,12 +268,7 @@ const resetPassword = async (resetPasswordToken: string, newPassword: string): P
       }
       logger.debug("Password update verified", { userId: user.id })
 
-      await tx.token.deleteMany({
-        where: {
-          userId: user.id,
-          type: { in: [TokenType.RESET_PASSWORD, TokenType.REFRESH] },
-        },
-      })
+      await revokeSecurityTokens(user.id, tx)
       logger.debug("Reset and refresh tokens deleted")
     })
     logger.info("Password reset successful")

@@ -160,7 +160,7 @@
           "type": "string",
           "format": "date-time"
         },
-        "token": {
+        "tokenDigest": {
           "type": "string"
         },
         "type": {
@@ -188,7 +188,7 @@
       },
       "required": [
         "updatedAt",
-        "token",
+        "tokenDigest",
         "type",
         "expires",
         "blacklisted",
@@ -340,6 +340,18 @@
             "boolean",
             "object",
             "array",
+            "null"
+          ]
+        },
+        "idempotencyKey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "payoutReceiverId": {
+          "type": [
+            "integer",
             "null"
           ]
         },

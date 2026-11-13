@@ -7,8 +7,10 @@ import { UserWithWallet } from "../types/user"
 import { XProfile } from "../config/passport/xOAuth2.strategy"
 import authService from "./auth.service"
 import { getRecoveryPassword } from "../utils/string/getRandomWord"
+import { NAME_FORBIDDEN_CHARACTERS, withoutForbiddenNameCharacters } from "../utils/string/names"
 import { createHmac } from "crypto"
 import config from "../config/config"
+import { revokeSecurityTokens } from "./token.service"
 
 const hashSeedPhrase = (seedPhrase: string): string => {
   return createHmac("sha256", config.seedHashSecret).update(seedPhrase).digest("hex")
@@ -94,7 +96,10 @@ const upsertTwitterUser = async (
   currentUser?: User | null
 ) => {
   const avatarUrl = photos?.[0]?.value ?? null
-  const userName = name?.givenName || displayName || username || id
+  const userName =
+    [name?.givenName, displayName, username]
+      .map((candidate) => (candidate ? withoutForbiddenNameCharacters(candidate).trim() : ""))
+      .find(Boolean) || id
 
   const user = await prisma.user.upsert({
     where: currentUser ? { id: currentUser.id } : { twitterId: id },
@@ -206,6 +211,9 @@ const updateUserById = async <Key extends keyof User>(
   if (updateBody.name && updateBody.name.toString().length > 16) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Name too long")
   }
+  if (updateBody.name && NAME_FORBIDDEN_CHARACTERS.test(updateBody.name.toString())) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Name must not contain { or }")
+  }
   const currentUser =
     requirePassword && user.email && (updateBody.email || updateBody.password)
       ? await getUserById(userId, ["id", "email", "password"])
@@ -232,15 +240,20 @@ const updateUserById = async <Key extends keyof User>(
       }
     }
   }
-  const updatedUser = await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      ...updateBody,
-      password: updateBody.password
-        ? await encryptPassword(updateBody.password as string)
-        : undefined,
-    },
-    select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
+  const encryptedPassword = updateBody.password
+    ? await encryptPassword(updateBody.password as string)
+    : undefined
+  const updatedUser = await prisma.$transaction(async (tx) => {
+    const result = await tx.user.update({
+      where: { id: user.id },
+      data: {
+        ...updateBody,
+        password: encryptedPassword,
+      },
+      select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
+    })
+    if (updateBody.password || updateBody.email) await revokeSecurityTokens(user.id, tx)
+    return result
   })
   return updatedUser as Pick<User, Key> | null
 }

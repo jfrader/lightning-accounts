@@ -34,3 +34,5 @@ applications.json
 
 # Docker
 volumes
+
+graphify-out/

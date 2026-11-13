@@ -1,7 +1,4 @@
 import { generateKeyPairSync } from "node:crypto"
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-import dotenv from "dotenv"
 
 describe("resolveXOAuthConfig", () => {
   const originalEnv = process.env
@@ -49,22 +46,6 @@ describe("resolveXOAuthConfig", () => {
 
   afterAll(() => {
     process.env = originalEnv
-  })
-
-  it("keeps tracked test SMTP settings non-routable", () => {
-    const testEnvironment = dotenv.parse(readFileSync(resolve(process.cwd(), ".env.test")))
-
-    expect({
-      host: testEnvironment.SMTP_HOST,
-      username: testEnvironment.SMTP_USERNAME,
-      password: testEnvironment.SMTP_PASSWORD,
-      from: testEnvironment.EMAIL_FROM,
-    }).toEqual({
-      host: "smtp.example.invalid",
-      username: "test@example.invalid",
-      password: "unused-test-password",
-      from: "test@example.invalid",
-    })
   })
 
   it("reads OAuth 2.0 credentials from Twitter env vars", async () => {

@@ -2,11 +2,11 @@ import httpStatus from "http-status"
 import ApiError from "../utils/ApiError"
 import { Prisma, TransactionType, Transaction, Wallet, PayRequest } from "@prisma/client"
 import prisma from "../client"
-import { SubscribeToInvoiceInvoiceUpdatedEvent } from "lightning"
 import lightningService, { LND_TIMEOUT } from "./lightning.service"
 import logger from "../config/logger"
 import config from "../config/config"
 import { setWalletBusy, clearWalletBusy, isWalletBusy } from "./lock.service"
+import PaymentFailure from "../utils/PaymentFailure"
 
 const PRISMA_TRANSACTION_OPTS = { maxWait: 10000, timeout: LND_TIMEOUT + 5000 }
 const MAX_WALLET_SATS = 2_147_483_647
@@ -18,7 +18,7 @@ const assertPositiveSats = (amountInSats: number) => {
 }
 
 /**
- * Check for inconsistent transactions (walletImpacted !== invoiceSettled) and attempt to reconcile
+ * Reconcile pending Lightning transactions against the node's durable payment history
  * @param {boolean} dryRun - If true, log actions without applying changes (default: false)
  * @returns {Promise<void>}
  */
@@ -28,11 +28,22 @@ const checkInconsistentTransactions = async (dryRun = false): Promise<void> => {
 
     const inconsistentTransactions = await prisma.transaction.findMany({
       where: {
+        AND: [{ invoice: { path: ["reconciliation"], equals: Prisma.DbNull } }],
         OR: [
-          { walletImpacted: true, invoiceSettled: false },
-          { walletImpacted: false, invoiceSettled: true },
+          {
+            type: TransactionType.DEPOSIT,
+            OR: [{ walletImpacted: false }, { invoiceSettled: false }, { invoiceSettled: null }],
+          },
+          {
+            type: TransactionType.WITHDRAW,
+            OR: [
+              { walletImpacted: true, invoiceSettled: false },
+              { walletImpacted: false, invoiceSettled: true },
+            ],
+          },
         ],
       },
+      orderBy: { id: "asc" },
       include: {
         wallet: { select: { userId: true, balanceInSats: true } },
       },
@@ -58,6 +69,7 @@ const checkInconsistentTransactions = async (dryRun = false): Promise<void> => {
       }
     }
 
+    let failures = 0
     for (const tx of inconsistentTransactions) {
       logger.info(
         `Processing transaction ${tx.id} for user ${tx.wallet.userId}: walletImpacted=${tx.walletImpacted}, invoiceSettled=${tx.invoiceSettled}`
@@ -66,218 +78,40 @@ const checkInconsistentTransactions = async (dryRun = false): Promise<void> => {
       const invoice = tx.invoice as { id: string; request: string } | null
       if (!invoice?.id || !invoice?.request) {
         logger.error(`Transaction ${tx.id}: No valid invoice data`)
-        if (!dryRun) {
-          await prisma.transaction.update({
-            where: { id: tx.id },
-            data: { walletImpacted: false, invoiceSettled: false },
-          })
-        }
-        logger.info(
-          `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as failed due to invalid invoice data`
-        )
+        if (!dryRun) await markReconciliation(tx, "needs_review")
+        failures++
         continue
       }
 
       try {
-        const invoiceStatus = await retry(() => lightningService.checkInvoice(invoice.id))
-        logger.info(
-          `Transaction ${tx.id}: Invoice ${invoice.id} status - confirmed=${invoiceStatus.is_confirmed}`
-        )
-
         if (tx.type === TransactionType.DEPOSIT) {
-          if (tx.walletImpacted && !tx.invoiceSettled) {
-            if (invoiceStatus.is_confirmed) {
-              if (!dryRun) {
-                await prisma.transaction.update({
-                  where: { id: tx.id },
-                  data: { invoiceSettled: true },
-                })
-              }
-              logger.info(
-                `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as invoiceSettled=true (deposit confirmed)`
-              )
-            } else {
-              const wallet = await prisma.wallet.findUnique({ where: { id: tx.walletId } })
-              if (!wallet) {
-                logger.error(`Wallet ${tx.walletId} not found`)
-                continue
-              }
-              const currentBalance = wallet.balanceInSats
-              const newBalance = currentBalance - tx.amountInSats
-              if (!dryRun) {
-                await prisma.$transaction(async (txPrisma) => {
-                  await txPrisma.transaction.update({
-                    where: { id: tx.id },
-                    data: { walletImpacted: false },
-                  })
-                  await txPrisma.wallet.update({
-                    where: { id: tx.walletId },
-                    data: { balanceInSats: { decrement: tx.amountInSats } },
-                  })
-                }, PRISMA_TRANSACTION_OPTS)
-                logger.info(
-                  `Transaction ${tx.id}: Reverted deposit, balance changed from ${currentBalance} to ${newBalance}`
-                )
-              } else {
-                logger.info(
-                  `[DRY RUN] Transaction ${tx.id}: Would revert deposit, changing balance from ${currentBalance} to ${newBalance}`
-                )
-              }
-            }
-          } else if (!tx.walletImpacted && tx.invoiceSettled) {
-            if (invoiceStatus.is_confirmed) {
-              const wallet = await prisma.wallet.findUnique({ where: { id: tx.walletId } })
-              if (!wallet) {
-                logger.error(`Wallet ${tx.walletId} not found`)
-                continue
-              }
-              const currentBalance = wallet.balanceInSats
-              const newBalance = currentBalance + tx.amountInSats
-              if (!dryRun) {
-                await prisma.$transaction(async (txPrisma) => {
-                  await txPrisma.transaction.update({
-                    where: { id: tx.id },
-                    data: { walletImpacted: true },
-                  })
-                  await txPrisma.wallet.update({
-                    where: { id: tx.walletId },
-                    data: { balanceInSats: { increment: tx.amountInSats } },
-                  })
-                }, PRISMA_TRANSACTION_OPTS)
-                logger.info(
-                  `Transaction ${tx.id}: Applied deposit, balance changed from ${currentBalance} to ${newBalance}`
-                )
-              } else {
-                logger.info(
-                  `[DRY RUN] Transaction ${tx.id}: Would apply deposit, changing balance from ${currentBalance} to ${newBalance}`
-                )
-              }
-            } else {
-              if (!dryRun) {
-                await prisma.transaction.update({
-                  where: { id: tx.id },
-                  data: { invoiceSettled: false },
-                })
-              }
-              logger.info(
-                `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as invoiceSettled=false (deposit not confirmed)`
-              )
-            }
+          const status = await retry(() => lightningService.checkInvoice(invoice.id))
+          logger.info(`Transaction ${tx.id}: confirmed=${status.is_confirmed}, dryRun=${dryRun}`)
+          if (status.is_confirmed && !dryRun) await _impactDeposit(status, tx)
+          if (!status.is_confirmed && tx.walletImpacted) {
+            if (!dryRun) await markReconciliation(tx, "needs_review")
+            throw new Error("Credited deposit lacks settlement evidence; manual review required")
           }
-        } else if (tx.type === TransactionType.WITHDRAW) {
-          if (tx.walletImpacted && !tx.invoiceSettled) {
-            if (invoiceStatus.is_confirmed) {
-              if (!dryRun) {
-                await prisma.transaction.update({
-                  where: { id: tx.id },
-                  data: { invoiceSettled: true },
-                })
-              }
-              logger.info(
-                `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as invoiceSettled=true (withdrawal confirmed)`
-              )
-            } else {
-              const feeReserve = Math.round(tx.amountInSats / 20)
-              const total = tx.amountInSats + feeReserve
-              const wallet = await prisma.wallet.findUnique({ where: { id: tx.walletId } })
-              if (!wallet) {
-                logger.error(`Wallet ${tx.walletId} not found`)
-                continue
-              }
-              const currentBalance = wallet.balanceInSats
-              const newBalance = currentBalance + total
-              if (!dryRun) {
-                await prisma.$transaction(async (txPrisma) => {
-                  await txPrisma.transaction.update({
-                    where: { id: tx.id },
-                    data: { walletImpacted: false, invoiceSettled: false },
-                  })
-                  await txPrisma.wallet.update({
-                    where: { id: tx.walletId },
-                    data: { balanceInSats: { increment: total } },
-                  })
-                }, PRISMA_TRANSACTION_OPTS)
-                logger.info(
-                  `Transaction ${tx.id}: Reverted withdrawal, balance changed from ${currentBalance} to ${newBalance}`
-                )
-              } else {
-                logger.info(
-                  `[DRY RUN] Transaction ${tx.id}: Would revert withdrawal, increasing balance by ${total} to ${newBalance}`
-                )
-              }
-            }
-          } else if (!tx.walletImpacted && tx.invoiceSettled) {
-            if (invoiceStatus.is_confirmed) {
-              const feeReserve = Math.round(tx.amountInSats / 20)
-              const total = tx.amountInSats + feeReserve
-              const wallet = await prisma.wallet.findUnique({ where: { id: tx.walletId } })
-              if (!wallet) {
-                logger.error(`Wallet ${tx.walletId} not found`)
-                continue
-              }
-              const currentBalance = wallet.balanceInSats
-              if (currentBalance < total) {
-                logger.error(
-                  `Transaction ${tx.id}: Insufficient balance for deducted withdrawal, current balance: ${currentBalance}, required: ${total}`
-                )
-                if (!dryRun) {
-                  await prisma.transaction.update({
-                    where: { id: tx.id },
-                    data: { invoiceSettled: false },
-                  })
-                }
-                logger.info(
-                  `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as invoiceSettled=false due to insufficient balance`
-                )
-              } else {
-                const newBalance = currentBalance - total
-                if (!dryRun) {
-                  await prisma.$transaction(async (txPrisma) => {
-                    await txPrisma.transaction.update({
-                      where: { id: tx.id },
-                      data: { walletImpacted: true },
-                    })
-                    await txPrisma.wallet.update({
-                      where: { id: tx.walletId },
-                      data: { balanceInSats: { decrement: total } },
-                    })
-                  }, PRISMA_TRANSACTION_OPTS)
-                  logger.info(
-                    `Transaction ${tx.id}: Applied withdrawal, balance changed from ${currentBalance} to ${newBalance}`
-                  )
-                } else {
-                  logger.info(
-                    `[DRY RUN] Transaction ${tx.id}: Would apply withdrawal, decreasing balance by ${total} to ${newBalance}`
-                  )
-                }
-              }
-            } else {
-              if (!dryRun) {
-                await prisma.transaction.update({
-                  where: { id: tx.id },
-                  data: { invoiceSettled: false },
-                })
-              }
-              logger.info(
-                `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as invoiceSettled=false (withdrawal not confirmed)`
-              )
-            }
+          if (!status.is_confirmed && status.is_canceled && !tx.walletImpacted && !dryRun) {
+            await markReconciliation(tx, "canceled")
           }
+        } else {
+          const status =
+            (tx.invoice as Prisma.JsonObject)?.paymentFailed === true
+              ? { is_failed: true }
+              : await retry(() => lightningService.checkPayment(invoice.id))
+          logger.info(
+            `Transaction ${tx.id}: confirmed=${status.is_confirmed}, failed=${status.is_failed}, dryRun=${dryRun}`
+          )
+          if (!dryRun) await _reconcileWithdrawal(tx, status)
         }
       } catch (error: any) {
         logger.error(`Transaction ${tx.id}: Failed to reconcile - ${error.message}`)
-        if (!dryRun) {
-          await prisma.transaction.update({
-            where: { id: tx.id },
-            data: { walletImpacted: false, invoiceSettled: false },
-          })
-        }
-        logger.info(
-          `[DRY RUN=${dryRun}] Transaction ${tx.id}: Marked as failed due to reconciliation error`
-        )
+        failures++
       }
     }
 
+    if (failures > 0) throw new Error(`Failed to reconcile ${failures} transaction(s)`)
     logger.info(`Reconciliation completed (dryRun=${dryRun})`)
   } catch (error: any) {
     logger.error(`Failed to check inconsistent transactions: ${error.message}`)
@@ -333,7 +167,8 @@ const getUserWallet = async (
 const createDepositInvoice = async (userId: number, sats: number): Promise<Transaction> => {
   assertPositiveSats(sats)
 
-  return prisma.$transaction(async (tx) => {
+  const settlement: { transaction?: Transaction; earlyInvoice?: SettledInvoice } = {}
+  const transaction = await prisma.$transaction(async (tx) => {
     const wallet = await getUserWallet(userId, true)
 
     const walletLimit = config.wallet.limit > 0 ? config.wallet.limit : MAX_WALLET_SATS
@@ -346,10 +181,14 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
     }
 
     const invoice = await lightningService.createInvoice(sats, (settledInvoice) => {
-      _impactDeposit(settledInvoice, pendingTransaction).catch((e) => logger.error(e.message))
+      if (settlement.transaction) {
+        _impactDeposit(settledInvoice, settlement.transaction).catch((e) => logger.error(e.message))
+      } else {
+        settlement.earlyInvoice = settledInvoice
+      }
     })
 
-    const pendingTransaction = await tx.transaction.create({
+    return tx.transaction.create({
       data: {
         type: TransactionType.DEPOSIT,
         amountInSats: sats,
@@ -359,10 +198,13 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
         invoice: { id: invoice.id, request: invoice.request },
       },
     })
-
-    return pendingTransaction
   }, PRISMA_TRANSACTION_OPTS)
+  settlement.transaction = transaction
+  if (settlement.earlyInvoice) await _impactDeposit(settlement.earlyInvoice, transaction)
+  return prisma.transaction.findUniqueOrThrow({ where: { id: transaction.id } })
 }
+
+type SettledInvoice = { id: string; tokens: number; is_confirmed?: boolean }
 
 /**
  * Impact deposit on wallet balance
@@ -370,15 +212,7 @@ const createDepositInvoice = async (userId: number, sats: number): Promise<Trans
  * @param walletTransaction - Transaction record
  * @returns {Promise}
  */
-const _impactDeposit = async (
-  invoice: SubscribeToInvoiceInvoiceUpdatedEvent,
-  walletTransaction: Transaction
-) => {
-  assertPositiveSats(invoice.tokens)
-  if (invoice.tokens !== walletTransaction.amountInSats) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Settled invoice amount does not match transaction")
-  }
-
+const _impactDeposit = async (invoice: SettledInvoice, walletTransaction: Transaction) => {
   return prisma.$transaction(async (tx) => {
     if (!invoice.is_confirmed) {
       logger.info(
@@ -387,23 +221,40 @@ const _impactDeposit = async (
       return
     }
 
+    const current = await tx.transaction.findUniqueOrThrow({ where: { id: walletTransaction.id } })
+    const storedInvoice = current.invoice as { id?: string; request?: string } | null
+    assertPositiveSats(invoice.tokens)
+    if (
+      current.type !== TransactionType.DEPOSIT ||
+      storedInvoice?.id !== invoice.id ||
+      invoice.tokens !== current.amountInSats
+    ) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Settled invoice does not match transaction")
+    }
+
     const claimedTransaction = await tx.transaction.updateMany({
       where: {
         id: walletTransaction.id,
-        walletId: walletTransaction.walletId,
+        type: TransactionType.DEPOSIT,
+        walletId: current.walletId,
+        invoice: { path: ["id"], equals: invoice.id },
         walletImpacted: false,
       },
       data: { walletImpacted: true, invoiceSettled: true },
     })
 
     if (claimedTransaction.count !== 1) {
+      await tx.transaction.updateMany({
+        where: { id: current.id, walletImpacted: true },
+        data: { invoiceSettled: true },
+      })
       logger.info(`Transaction ${walletTransaction.id}: Deposit already impacted`)
       return
     }
 
     const creditedWallet = await tx.wallet.updateMany({
       where: {
-        id: walletTransaction.walletId,
+        id: current.walletId,
         balanceInSats: { lte: MAX_WALLET_SATS - invoice.tokens },
       },
       data: { balanceInSats: { increment: invoice.tokens } },
@@ -415,12 +266,77 @@ const _impactDeposit = async (
 
     await tx.transaction.update({
       where: { id: walletTransaction.id },
-      data: { invoice },
+      data: { invoice: { ...storedInvoice, ...invoice } },
     })
 
     logger.info(`Transaction ${walletTransaction.id}: Deposited ${invoice.tokens} satoshis`)
   }, PRISMA_TRANSACTION_OPTS)
 }
+
+const _reconcileWithdrawal = async (
+  transaction: Transaction,
+  status: { is_confirmed?: boolean; is_failed?: boolean }
+) => {
+  if (!status.is_confirmed && !status.is_failed) return
+  const total = transaction.amountInSats + Math.round(transaction.amountInSats / 20)
+  return prisma.$transaction(async (tx) => {
+    if (status.is_confirmed) {
+      const claim = await tx.transaction.updateMany({
+        where: {
+          id: transaction.id,
+          type: TransactionType.WITHDRAW,
+          walletImpacted: false,
+          invoiceSettled: true,
+        },
+        data: { walletImpacted: true },
+      })
+      if (claim.count === 1) {
+        const debit = await tx.wallet.updateMany({
+          where: { id: transaction.walletId, balanceInSats: { gte: total } },
+          data: { balanceInSats: { decrement: total } },
+        })
+        if (debit.count !== 1) throw new Error("Insufficient balance for confirmed withdrawal")
+      }
+      await tx.transaction.updateMany({
+        where: {
+          id: transaction.id,
+          type: TransactionType.WITHDRAW,
+          walletImpacted: true,
+          invoiceSettled: false,
+        },
+        data: { invoiceSettled: true },
+      })
+    } else {
+      const claim = await tx.transaction.updateMany({
+        where: {
+          id: transaction.id,
+          type: TransactionType.WITHDRAW,
+          walletImpacted: true,
+          invoiceSettled: false,
+        },
+        data: { walletImpacted: false },
+      })
+      if (claim.count === 1) {
+        const refund = await tx.wallet.updateMany({
+          where: { id: transaction.walletId, balanceInSats: { lte: MAX_WALLET_SATS - total } },
+          data: { balanceInSats: { increment: total } },
+        })
+        if (refund.count !== 1) throw new Error("Wallet balance limit exceeded on refund")
+      }
+    }
+  }, PRISMA_TRANSACTION_OPTS)
+}
+
+const markReconciliation = (transaction: Transaction, outcome: "canceled" | "needs_review") =>
+  prisma.transaction.updateMany({
+    where: {
+      id: transaction.id,
+      walletImpacted: transaction.walletImpacted,
+      invoiceSettled: transaction.invoiceSettled,
+      invoice: { equals: transaction.invoice ?? Prisma.DbNull },
+    },
+    data: { invoice: { ...(transaction.invoice as Prisma.JsonObject), reconciliation: outcome } },
+  })
 
 /**
  * Pay a withdrawal invoice
@@ -487,24 +403,47 @@ const payWithdrawInvoice = async (userId: number, invoice: string): Promise<Tran
           type: TransactionType.WITHDRAW,
           invoice: { id: payment.id, request: invoice },
           invoiceSettled: false,
-          walletImpacted: false,
+          walletImpacted: true,
           wallet: { connect: { id: wallet.id } },
         },
       })
 
-      try {
-        await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
-        await tx.transaction.update({
-          where: { id: newTransaction.id },
-          data: { invoiceSettled: true, walletImpacted: true },
-        })
-      } catch (error: any) {
-        logger.error(`Failed to pay invoice for transaction ${newTransaction.id}: ${error.message}`)
-        throw new ApiError(httpStatus.BAD_REQUEST, `Payment failed: ${error.message}`)
-      }
-
       return newTransaction
     }, PRISMA_TRANSACTION_OPTS)
+
+    try {
+      await lightningService.payInvoice(invoice, isZeroValue ? amountInSats : undefined)
+      await _reconcileWithdrawal(transaction, { is_confirmed: true })
+    } catch (error: any) {
+      logger.error(
+        `Payment outcome requires reconciliation for transaction ${transaction.id}: ${error.message}`
+      )
+      try {
+        if (error instanceof PaymentFailure) {
+          await prisma.transaction.update({
+            where: { id: transaction.id },
+            data: {
+              invoice: { ...(transaction.invoice as Prisma.JsonObject), paymentFailed: true },
+            },
+          })
+          await _reconcileWithdrawal(transaction, { is_failed: true })
+        } else {
+          await _reconcileWithdrawal(transaction, await lightningService.checkPayment(payment.id))
+        }
+      } catch (lookupError: any) {
+        logger.error(`Transaction ${transaction.id}: Payment lookup failed: ${lookupError.message}`)
+      }
+      const current = await prisma.transaction.findUniqueOrThrow({ where: { id: transaction.id } })
+      if (!current.invoiceSettled) {
+        if (current.walletImpacted) {
+          throw new ApiError(
+            httpStatus.SERVICE_UNAVAILABLE,
+            `Payment unresolved: ${transaction.id}`
+          )
+        }
+        throw new ApiError(httpStatus.BAD_REQUEST, `Payment failed: ${transaction.id}`)
+      }
+    }
 
     return await prisma.transaction.findUniqueOrThrow({
       where: { id: transaction.id },
@@ -525,70 +464,105 @@ const payUser = async ({
   receiverId,
   amountInSats,
   description,
+  idempotencyKey,
 }: {
   payerId: number
   receiverId: number
   amountInSats: number
   description?: string
+  idempotencyKey?: string
 }) => {
   assertPositiveSats(amountInSats)
+  if (idempotencyKey !== undefined && (!idempotencyKey.length || idempotencyKey.length > 200)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Idempotency key must contain 1 to 200 characters")
+  }
   if (payerId === receiverId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Cannot pay the same wallet")
   }
 
-  return prisma.$transaction(async (tx) => {
-    const payerWallet = await getUserWallet(payerId, true)
-    const payeeWallet = await getUserWallet(receiverId, true)
-
-    const debitedWallet = await tx.wallet.updateMany({
-      where: {
-        id: payerWallet.id,
-        disabled: false,
-        balanceInSats: { gte: amountInSats },
-      },
-      data: { balanceInSats: { decrement: amountInSats } },
+  const payerWallet = await getUserWallet(payerId)
+  const originalPayout = async () => {
+    if (idempotencyKey === undefined) return null
+    const original = await prisma.transaction.findUnique({
+      where: { walletId_idempotencyKey: { walletId: payerWallet.id, idempotencyKey } },
     })
-
-    if (debitedWallet.count !== 1) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
+    if (
+      original &&
+      (original.payoutReceiverId !== receiverId ||
+        original.amountInSats !== amountInSats ||
+        original.description !== (description ?? null))
+    ) {
+      throw new ApiError(httpStatus.CONFLICT, "Idempotency key already used for a different payout")
     }
+    return original
+  }
+  const original = await originalPayout()
+  if (original) return original
 
-    const creditedWallet = await tx.wallet.updateMany({
-      where: {
-        id: payeeWallet.id,
-        disabled: false,
-        balanceInSats: { lte: MAX_WALLET_SATS - amountInSats },
-      },
-      data: { balanceInSats: { increment: amountInSats } },
-    })
+  try {
+    return await prisma.$transaction(async (tx) => {
+      await getUserWallet(payerId, true)
+      const payeeWallet = await getUserWallet(receiverId, true)
+      const transaction = await tx.transaction.create({
+        data: {
+          walletImpacted: true,
+          invoiceSettled: true,
+          amountInSats,
+          description,
+          idempotencyKey,
+          payoutReceiverId: receiverId,
+          type: TransactionType.SEND,
+          wallet: { connect: { id: payerWallet.id } },
+        },
+      })
 
-    if (creditedWallet.count !== 1) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Receiver wallet balance limit exceeded")
+      const debitedWallet = await tx.wallet.updateMany({
+        where: {
+          id: payerWallet.id,
+          disabled: false,
+          balanceInSats: { gte: amountInSats },
+        },
+        data: { balanceInSats: { decrement: amountInSats } },
+      })
+
+      if (debitedWallet.count !== 1) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance")
+      }
+
+      const creditedWallet = await tx.wallet.updateMany({
+        where: {
+          id: payeeWallet.id,
+          disabled: false,
+          balanceInSats: { lte: MAX_WALLET_SATS - amountInSats },
+        },
+        data: { balanceInSats: { increment: amountInSats } },
+      })
+
+      if (creditedWallet.count !== 1) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Receiver wallet balance limit exceeded")
+      }
+
+      await tx.transaction.create({
+        data: {
+          walletImpacted: true,
+          invoiceSettled: true,
+          amountInSats,
+          description,
+          type: TransactionType.RECEIVE,
+          wallet: { connect: { id: payeeWallet.id } },
+        },
+        select: { id: true },
+      })
+
+      return transaction
+    }, PRISMA_TRANSACTION_OPTS)
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const original = await originalPayout()
+      if (original) return original
     }
-
-    await tx.transaction.create({
-      data: {
-        walletImpacted: true,
-        invoiceSettled: true,
-        amountInSats,
-        description,
-        type: TransactionType.RECEIVE,
-        wallet: { connect: { id: payeeWallet.id } },
-      },
-      select: { id: true },
-    })
-
-    return tx.transaction.create({
-      data: {
-        walletImpacted: true,
-        invoiceSettled: true,
-        amountInSats,
-        description,
-        type: TransactionType.SEND,
-        wallet: { connect: { id: payerWallet.id } },
-      },
-    })
-  }, PRISMA_TRANSACTION_OPTS)
+    throw error
+  }
 }
 
 /**

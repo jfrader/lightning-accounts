@@ -118,6 +118,7 @@ const payUser = catchAsync(async (req, res) => {
   const description = req.body.description
 
   const tx = await walletService.payUser({
+    idempotencyKey: req.body.idempotencyKey,
     payerId: user.id,
     receiverId,
     amountInSats,

@@ -1,12 +1,12 @@
 import { Role } from "@prisma/client"
 import Joi from "joi"
-import { password } from "./custom.validation"
+import { password, userName } from "./custom.validation"
 
 const createUser = {
   body: Joi.object().keys({
     email: Joi.string().required().email(),
     password: password.password(),
-    name: Joi.string().required(),
+    name: userName.required(),
     role: Joi.string().required().valid(Role.USER, Role.ADMIN),
   }),
 }
@@ -36,7 +36,7 @@ const updateUser = {
       email: Joi.string().email(),
       currentPassword: Joi.string(),
       password: password.password(),
-      name: Joi.string(),
+      name: userName,
     })
     .min(1),
 }

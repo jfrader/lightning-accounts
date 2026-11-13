@@ -1,11 +1,10 @@
-import nodemailer from "nodemailer"
+import nodemailer, { type Transporter } from "nodemailer"
 import config from "../config/config"
 import logger from "../config/logger"
 
-const transport: nodemailer.Transporter = nodemailer.createTransport({
+const transport: Transporter = nodemailer.createTransport({
   ...config.email.smtp,
   secure: false,
-  requireTLS: true,
 })
 
 const smtpConfigured = Boolean(
@@ -76,7 +75,7 @@ const sendMagicLinkEmail = async (to: string, token: string, next?: string) => {
   const magicLinkUrl = `${config.origin}/magic-link?${params.toString()}`
   const text = `Querido usuario,\n\nPara ingresar a Trucoshi, hace click en este link: ${magicLinkUrl}\nSi no pediste ingresar, ignora este email.`
   if (config.env === "development") {
-    logger.info("Magic link email suppressed in development")
+    logger.info(`Magic link for ${to}: ${magicLinkUrl}`)
     return
   }
   await sendEmail(to, subject, text)

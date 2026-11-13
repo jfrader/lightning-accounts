@@ -27,7 +27,7 @@ services:
       - accounts.trucoshi.com
     envVars:
       - key: NODE_VERSION
-        value: "24.18.0"
+        value: "24.22.1"
       - key: SKIP_INSTALL_DEPS
         value: "true"
       - key: NODE_ENV

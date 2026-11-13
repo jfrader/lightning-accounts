@@ -1,4 +1,5 @@
 import Joi from "joi"
+import { NAME_FORBIDDEN_CHARACTERS } from "../utils/string/names"
 
 export const password = Joi.extend((joi) => {
   return {
@@ -15,3 +16,7 @@ export const password = Joi.extend((joi) => {
     },
   }
 })
+
+export const userName = Joi.string()
+  .pattern(NAME_FORBIDDEN_CHARACTERS, { invert: true })
+  .message("name must not contain braces")

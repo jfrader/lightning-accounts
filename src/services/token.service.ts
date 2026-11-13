@@ -2,10 +2,31 @@ import jwt from "jsonwebtoken"
 import moment, { Moment } from "moment"
 import config from "../config/config"
 import userService from "./user.service"
-import { Token, TokenType } from "@prisma/client"
+import { Prisma, Token, TokenType } from "@prisma/client"
 import prisma from "../client"
 import { AuthTokensResponse } from "../types/response"
-import { randomUUID } from "node:crypto"
+import { createHash, randomUUID } from "node:crypto"
+
+export const digestToken = (token: string): string =>
+  createHash("sha256").update(token).digest("hex")
+
+export const revokeSecurityTokens = (
+  userId: number,
+  client: Pick<Prisma.TransactionClient, "token"> = prisma
+) =>
+  client.token.deleteMany({
+    where: {
+      userId,
+      type: {
+        in: [
+          TokenType.REFRESH,
+          TokenType.MAGIC_LINK,
+          TokenType.RESET_PASSWORD,
+          TokenType.VERIFY_EMAIL,
+        ],
+      },
+    },
+  })
 
 /**
  * Generate token
@@ -49,7 +70,7 @@ const saveToken = async (
 ): Promise<Token> => {
   const createdToken = await prisma.token.create({
     data: {
-      token,
+      tokenDigest: digestToken(token),
       userId: userId,
       expires: expires.toDate(),
       type,
@@ -69,8 +90,17 @@ const saveToken = async (
 const verifyToken = async (token: string, type: TokenType): Promise<Token> => {
   const payload = jwt.verify(token, config.jwt.publicKey, { algorithms: ["RS256"] })
   const userId = Number(payload.sub)
+  if (typeof payload === "string" || payload.type !== type || !Number.isSafeInteger(userId)) {
+    throw new Error("Invalid token type or subject")
+  }
   const tokenData = await prisma.token.findFirst({
-    where: { token, type, userId, blacklisted: false, expires: { gt: new Date() } },
+    where: {
+      tokenDigest: digestToken(token),
+      type,
+      userId,
+      blacklisted: false,
+      expires: { gt: new Date() },
+    },
   })
   if (!tokenData) {
     throw new Error("Token not found")

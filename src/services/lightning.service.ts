@@ -3,8 +3,18 @@ import ApiError from "../utils/ApiError"
 import httpStatus from "http-status"
 import config from "../config/config"
 import logger from "../config/logger"
+import PaymentFailure from "../utils/PaymentFailure"
 
 export const LND_TIMEOUT = 60 * 1000
+
+const terminalPaymentFailures = new Set([
+  "PaymentExecutionCanceled",
+  "InsufficientBalanceToAttemptPayment",
+  "PaymentRejectedByDestination",
+  "PaymentAttemptsTimedOut",
+  "PaymentPathfindingFailedToFindPossibleRoute",
+  "FailedToFindPayableRouteToDestination",
+])
 
 let connected = false
 let lnd: lightning.AuthenticatedLnd | null = null
@@ -85,11 +95,10 @@ const payInvoice = (request: string, tokens?: number) => {
 
       const timeout = setTimeout(() => {
         logger.info(
-          `Payment for invoice ${invoiceId}: Timed out after ${LND_TIMEOUT}ms, checking invoice status`
+          `Payment for invoice ${invoiceId}: Timed out after ${LND_TIMEOUT}ms, checking payment status`
         )
 
-        // Retry utility for checkInvoice
-        const retryCheckInvoice = async <T>(
+        const retryCheckPayment = async <T>(
           fn: () => Promise<T>,
           retries = 3,
           delay = 1000
@@ -98,17 +107,17 @@ const payInvoice = (request: string, tokens?: number) => {
             return await fn()
           } catch (error) {
             if (retries === 0) throw error
-            logger.warn(`Retrying invoice check for ${invoiceId}, ${retries} attempts left`)
+            logger.warn(`Retrying payment check for ${invoiceId}, ${retries} attempts left`)
             await new Promise((resolve) => setTimeout(resolve, delay))
-            return retryCheckInvoice(fn, retries - 1, delay)
+            return retryCheckPayment(fn, retries - 1, delay)
           }
         }
 
-        // Check invoice status after timeout
-        retryCheckInvoice(() => checkInvoice(invoiceId))
+        // Check outgoing payment status after timeout
+        retryCheckPayment(() => checkPayment(invoiceId))
           .then((invoiceStatus) => {
             logger.info(
-              `Invoice ${invoiceId} status after timeout - confirmed=${invoiceStatus.is_confirmed}`
+              `Payment ${invoiceId} status after timeout - confirmed=${invoiceStatus.is_confirmed}`
             )
             if (invoiceStatus.is_confirmed) {
               // Payment succeeded despite timeout
@@ -117,19 +126,19 @@ const payInvoice = (request: string, tokens?: number) => {
               reject(
                 new ApiError(
                   httpStatus.REQUEST_TIMEOUT,
-                  "Withdrawal timed out and invoice not confirmed"
+                  "Withdrawal timed out and payment not confirmed"
                 )
               )
             }
           })
           .catch((checkError) => {
             logger.error(
-              `Failed to check invoice ${invoiceId} after timeout: ${checkError.message}`
+              `Failed to check payment ${invoiceId} after timeout: ${checkError.message}`
             )
             reject(
               new ApiError(
                 httpStatus.SERVICE_UNAVAILABLE,
-                `Withdrawal timed out and invoice check failed: ${checkError.message}`
+                `Withdrawal timed out and payment check failed: ${checkError.message}`
               )
             )
           })
@@ -147,7 +156,9 @@ const payInvoice = (request: string, tokens?: number) => {
             details,
           })
           return reject(
-            new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice")
+            terminalPaymentFailures.has(message)
+              ? new PaymentFailure(message)
+              : new ApiError(httpStatus.INTERNAL_SERVER_ERROR, message || "Failed to pay invoice")
           )
         }
         logger.info(`Payment successful for invoice ${invoiceId}`, { payment: result })
@@ -255,6 +266,13 @@ const checkInvoice = async (invoiceId: string) => {
   })
 }
 
+const checkPayment = async (id: string) => {
+  if (!lnd) {
+    throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, "LND client not initialized")
+  }
+  return lightning.getPayment({ lnd, id })
+}
+
 /**
  * Get the latest Bitcoin block hash from the network
  * @returns {Promise<{ hash: string; height: number }>}
@@ -292,6 +310,7 @@ export default {
   createInvoice,
   decodeInvoice,
   checkInvoice,
+  checkPayment,
   getLatestBlockHash,
   lightningClient: lnd,
 }

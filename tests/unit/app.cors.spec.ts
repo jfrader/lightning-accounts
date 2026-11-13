@@ -1,7 +1,7 @@
 import request from "supertest"
 import app from "../../src/app"
 import {
-  authLimiter,
+  authAttemptLimiter,
   AUTH_RATE_LIMIT,
   AUTH_RATE_LIMIT_WINDOW_MS,
 } from "../../src/middlewares/rateLimiter"
@@ -21,12 +21,12 @@ jest.mock("../../src/config/config", () => ({
 
 jest.mock("../../src/routes/v1", () => {
   const express = jest.requireActual<typeof import("express")>("express")
-  const { authLimiter } = jest.requireActual<typeof import("../../src/middlewares/rateLimiter")>(
-    "../../src/middlewares/rateLimiter"
-  )
+  const { authAttemptLimiter } = jest.requireActual<
+    typeof import("../../src/middlewares/rateLimiter")
+  >("../../src/middlewares/rateLimiter")
   return {
     __esModule: true,
-    default: express.Router().get("/auth/profile", authLimiter, (_req, res) => {
+    default: express.Router().get("/auth/profile", authAttemptLimiter, (_req, res) => {
       res.sendStatus(204)
     }),
   }
@@ -35,15 +35,15 @@ jest.mock("../../src/routes/v1", () => {
 describe("app CORS rate-limit headers", () => {
   const allowedOrigin = "https://trusted.example"
   const deniedOrigin = "https://attacker.example"
-  const limiterKey = "cors-rate-limit-test"
-  const cookie = `${getCookieName(JwtCookie.access)}=${limiterKey}`
+  const limiterKey = "127.0.0.1"
+  const cookie = `${getCookieName(JwtCookie.access)}=cors-rate-limit-test`
 
   beforeEach(() => {
-    authLimiter.resetKey(limiterKey)
+    authAttemptLimiter.resetKey(limiterKey)
   })
 
   afterAll(() => {
-    authLimiter.resetKey(limiterKey)
+    authAttemptLimiter.resetKey(limiterKey)
   })
 
   const exhaustLimit = async () => {
@@ -55,6 +55,22 @@ describe("app CORS rate-limit headers", () => {
         .expect(204)
     }
   }
+
+  it("shares one bucket across arbitrary access cookies", async () => {
+    for (let attempt = 0; attempt < AUTH_RATE_LIMIT; attempt += 1) {
+      await request(app)
+        .get("/v1/auth/profile")
+        .set("Origin", allowedOrigin)
+        .set("Cookie", `${getCookieName(JwtCookie.access)}=rotated-${attempt}`)
+        .expect(204)
+    }
+
+    await request(app)
+      .get("/v1/auth/profile")
+      .set("Origin", allowedOrigin)
+      .set("Cookie", `${getCookieName(JwtCookie.access)}=fresh-cookie`)
+      .expect(429)
+  })
 
   it("exposes the actual Retry-After header to an allowed credentialed origin on 429", async () => {
     await exhaustLimit()

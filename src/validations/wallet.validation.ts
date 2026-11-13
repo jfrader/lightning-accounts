@@ -54,6 +54,7 @@ const payRequest = {
 
 const payUser = {
   body: Joi.object().keys({
+    idempotencyKey: Joi.string().max(200),
     amountInSats: positiveSats.required(),
     userId: positiveId.required(),
     description,

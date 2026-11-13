@@ -5,6 +5,8 @@ import walletRoute from "./wallet.route"
 import supportRoute from "./support.route"
 import docsRoute from "./docs.route"
 import config from "../../config/config"
+import auth from "../../middlewares/auth"
+import { UserPermission } from "../../config/roles"
 import {
   authLimiter,
   feedbackLimiter,
@@ -18,7 +20,7 @@ const router = express.Router()
 const defaultRoutes = [
   {
     path: "/auth",
-    middleware: config.env === "production" ? authLimiter : null,
+    middleware: authLimiter,
     route: authRoute,
   },
   {
@@ -56,13 +58,10 @@ defaultRoutes.forEach((route) => {
   }
 })
 
-if (config.env === "development") {
+if (config.docsEnabled) {
   devRoutes.forEach((route) => {
-    router.use(route.path, captureRouteBase(route.path), route.route)
-  })
-} else {
-  devRoutes.forEach((route) => {
-    router.use(route.path, captureRouteBase(route.path), route.route)
+    const middleware = config.env === "production" ? [auth(UserPermission.users_write)] : []
+    router.use(route.path, captureRouteBase(route.path), ...middleware, route.route)
   })
 }
 

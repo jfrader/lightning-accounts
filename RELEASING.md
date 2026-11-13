@@ -26,17 +26,10 @@ After the first successful OIDC release, set npm publishing access to require
 2FA and disallow traditional write tokens, then revoke any obsolete automation
 tokens.
 
-## Current migration release
+## History
 
-`lightning-accounts@7.0.0` was already published before trusted publishing was
-configured. Its exact registry tarball is committed as
-`.release/lightning-accounts-7.0.0.tgz`.
-
-The first workflow run verified that the registry had the same integrity and
-exited successfully without republishing. Provenance cannot be added to an
-existing npm version. Version `7.0.1` is the first release prepared for trusted
-publishing; it also restores the original 2022 MIT copyright notice that was
-present when the project was forked.
+`7.0.0` predates trusted publishing; its registry tarball stays in `.release/`.
+`7.0.1` is the first release prepared for trusted publishing.
 
 ## Preparing a new release
 
@@ -59,8 +52,15 @@ present when the project was forked.
      WALLET_ENABLED=0 \
      yarn test:unit
    yarn build
-   yarn security:audit
+   yarn audit --groups dependencies
    ```
+
+   Critical and high findings on production dependencies block a release;
+   moderate and low findings do not. `yarn security:audit` runs the same command.
+   Yarn Classic exits nonzero for any severity, so its raw exit code does not
+   implement this threshold. CI and the npm publish workflow use
+   `.github/actions/security-audit/action.yml` to parse the JSON advisories and
+   enforce the threshold. An incomplete or failed audit also blocks publishing.
 
 4. Generate the client package output before packing. `npm pack` does not run
    `prepublishOnly`:
@@ -75,7 +75,7 @@ present when the project was forked.
    ```
 
 5. Inspect the reported file list. The package should contain only the intended
-   public client files, license, README, and package metadata. Record the
+   public client files, database migrations, changelog, license, README, and package metadata. Record the
    integrity reported by `npm pack` and calculate the artifact SHA-256:
 
    ```sh

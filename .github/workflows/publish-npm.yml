@@ -11,14 +11,14 @@ permissions:
   id-token: write
 
 concurrency:
-  group: publish-lightning-accounts-7.0.1
+  group: publish-lightning-accounts-7.1.0
   cancel-in-progress: false
 
 env:
-  ARTIFACT: .release/lightning-accounts-7.0.1.tgz
-  PACKAGE_SPEC: lightning-accounts@7.0.1
-  EXPECTED_SHA256: 0fec5a2d58cf568a08806621bd6d21ee8e2dcc6ced29ed835401ca021bd3416c
-  EXPECTED_INTEGRITY: sha512-aJh9TtX9v26AvrcAWwmng7Sob96QdC2RJqUhDWad4VZpCiybjl4EvUB2q2uAn9ZssWzcj/3IdodIfkAPY3QMDw==
+  ARTIFACT: .release/lightning-accounts-7.1.0.tgz
+  PACKAGE_SPEC: lightning-accounts@7.1.0
+  EXPECTED_SHA256: cdaea87c25ac9034c3c228f545c7dfffa36781468b2321d686ffe0b5331cc9fd
+  EXPECTED_INTEGRITY: sha512-uK+cJbA//SJLIw+UHixspUnBKo7XgJovJxZBc/RYiUAimzDvTJbAWCXuqFz9psuE1NQgqCUOD1GfgFSzfSDufA==
 
 jobs:
   publish:
@@ -40,6 +40,9 @@ jobs:
           node-version-file: .nvmrc
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
+
+      - name: Gate publishing on production dependency security
+        uses: ./.github/actions/security-audit
 
       - name: Install the pinned OIDC-capable npm CLI
         run: |
