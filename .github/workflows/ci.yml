@@ -127,7 +127,7 @@ jobs:
           "$PACKAGE" "$GITHUB_SHA" "${{ steps.build.outputs.digest }}"
           >> "$GITHUB_OUTPUT"
 
-# The transaction E2E suite provisions PostgreSQL plus Bitcoin/LND and remains in docker:test.
+  # The transaction E2E suite provisions PostgreSQL plus Bitcoin/LND and remains in docker:test.
 
   deploy-production:
     name: Deploy production
