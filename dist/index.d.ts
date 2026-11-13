@@ -50,7 +50,7 @@ export interface Token {
     createdAt?: string;
     /** @format date-time */
     updatedAt: string;
-    token: string;
+    tokenDigest: string;
     type: "ACCESS" | "REFRESH" | "IDENTITY" | "RESET_PASSWORD" | "VERIFY_EMAIL" | "MAGIC_LINK" | "APPLICATION";
     /** @format date-time */
     expires: string;

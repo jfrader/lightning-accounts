@@ -160,7 +160,7 @@
           "type": "string",
           "format": "date-time"
         },
-        "token": {
+        "tokenDigest": {
           "type": "string"
         },
         "type": {
@@ -188,7 +188,7 @@
       },
       "required": [
         "updatedAt",
-        "token",
+        "tokenDigest",
         "type",
         "expires",
         "blacklisted",

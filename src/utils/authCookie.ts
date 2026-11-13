@@ -67,12 +67,11 @@ export const deauthCookieResponse = (res: Response) => {
   })
 }
 
-const defaultExtractorCookie = getCookieName(JwtCookie.access)
-
-export const cookieExtractor = function (req: Request, cookie: string = defaultExtractorCookie) {
+export const cookieExtractor = function (req: Request, cookie?: string) {
+  const name = cookie ?? getCookieName(JwtCookie.access)
   let token = null
-  if (req && req.cookies) token = req.cookies[cookie]
-  if (!token && req && req.signedCookies) token = req.signedCookies[cookie]
+  if (req && req.cookies) token = req.cookies[name]
+  if (!token && req && req.signedCookies) token = req.signedCookies[name]
   return token
 }
 

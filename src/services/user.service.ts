@@ -10,6 +10,7 @@ import { getRecoveryPassword } from "../utils/string/getRandomWord"
 import { NAME_FORBIDDEN_CHARACTERS, withoutForbiddenNameCharacters } from "../utils/string/names"
 import { createHmac } from "crypto"
 import config from "../config/config"
+import { revokeSecurityTokens } from "./token.service"
 
 const hashSeedPhrase = (seedPhrase: string): string => {
   return createHmac("sha256", config.seedHashSecret).update(seedPhrase).digest("hex")
@@ -239,15 +240,20 @@ const updateUserById = async <Key extends keyof User>(
       }
     }
   }
-  const updatedUser = await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      ...updateBody,
-      password: updateBody.password
-        ? await encryptPassword(updateBody.password as string)
-        : undefined,
-    },
-    select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
+  const encryptedPassword = updateBody.password
+    ? await encryptPassword(updateBody.password as string)
+    : undefined
+  const updatedUser = await prisma.$transaction(async (tx) => {
+    const result = await tx.user.update({
+      where: { id: user.id },
+      data: {
+        ...updateBody,
+        password: encryptedPassword,
+      },
+      select: keys.reduce((obj, k) => ({ ...obj, [k]: true }), {}),
+    })
+    if (updateBody.password || updateBody.email) await revokeSecurityTokens(user.id, tx)
+    return result
   })
   return updatedUser as Pick<User, Key> | null
 }

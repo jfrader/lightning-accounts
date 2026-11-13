@@ -50,4 +50,19 @@ describe("auth X/Twitter routes", () => {
         scope: ["tweet.read", "users.read", "offline.access"],
       })
   })
+
+  it.each(["/magic-link/login", "/magic-link/register", "/login", "/forgot-password"])(
+    "throttles recipient attempts before validation at %s",
+    async (path) => {
+      const app = express()
+      const authRoute = (await import("../../src/routes/v1/auth.route")).default
+      app.use(express.json())
+      app.use("/auth", authRoute)
+      const email = `${path.replace(/\//g, "-")}@invalid`
+      for (let i = 0; i < 5; i++) {
+        await request(app).post(`/auth${path}`).send({ email }).expect(400)
+      }
+      await request(app).post(`/auth${path}`).send({ email }).expect(429)
+    }
+  )
 })

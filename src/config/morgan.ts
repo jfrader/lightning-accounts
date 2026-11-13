@@ -1,13 +1,14 @@
-import { Response } from "express"
+import { Request } from "express"
 import morgan from "morgan"
 import config from "./config"
 import logger from "./logger"
 
-morgan.token("message", (req, res: Response) => res.locals.errorMessage || "")
+export const redactRequestUrl = (url: string): string => url.split(/[?#]/, 1)[0]
+morgan.token("safe-url", (req: Request) => redactRequestUrl(req.originalUrl || req.url || ""))
 
 const getIpFormat = () => (config.env === "production" ? ":remote-addr - " : "")
-const successResponseFormat = `${getIpFormat()}:method :url :status - :response-time ms`
-const errorResponseFormat = `${getIpFormat()}:method :url :status - :response-time ms - message: :message`
+const successResponseFormat = `${getIpFormat()}:method :safe-url :status - :response-time ms`
+const errorResponseFormat = `${getIpFormat()}:method :safe-url :status - :response-time ms`
 
 export const successHandler = morgan(successResponseFormat, {
   skip: (req, res) => res.statusCode >= 400,
