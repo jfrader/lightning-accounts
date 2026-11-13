@@ -6,8 +6,13 @@ import { authController } from "../../controllers"
 import auth from "../../middlewares/auth"
 import passport from "passport"
 import { AuthenticateOptions } from "passport"
+import { recipientLimiter } from "../../middlewares/rateLimiter"
 
 const router = express.Router()
+router.post(
+  ["/register", "/magic-link/register", "/magic-link/login", "/login", "/forgot-password"],
+  recipientLimiter
+)
 interface OAuthAuthenticateOptions extends AuthenticateOptions {
   scope?: string[]
   callbackURL?: string

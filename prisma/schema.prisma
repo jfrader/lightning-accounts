@@ -46,7 +46,7 @@ model Token {
   id          Int       @id @default(autoincrement())
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  token       String
+  tokenDigest String @unique
   type        TokenType
   expires     DateTime
   blacklisted Boolean

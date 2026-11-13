@@ -35,11 +35,12 @@
   "scripts": {
     "build": "yarn swagger:generate && rimraf build && tsc -p tsconfig.build.json && cp -R src/static build/src/",
     "start": "nodemon",
-    "start:migrate": "prisma migrate deploy && prisma db seed && yarn start",
+    "start:migrate": "prisma migrate deploy && yarn start",
     "start:prod": "node bin/lightning-accounts-server",
     "start:prod:migrate": "prisma migrate deploy && yarn start:prod",
     "start:test": "dotenv -e .env.test -- prisma migrate reset --force --skip-seed && dotenv -e .env.test -- prisma db seed && dotenv -e .env.test -- jest --ci --watchAll=false --detectOpenHandles --config ./jest.config.ts",
     "test:unit": "dotenv -e .env.test -- jest --ci --watchAll=false --config ./jest.config.ts tests/unit",
+    "test": "yarn test:unit",
     "test:accounting": "dotenv -e .env.test -- prisma migrate deploy && dotenv -e .env.test -- jest --ci --watchAll=false --runInBand --config ./jest.config.ts tests/e2e/wallet.accounting.spec.ts",
     "start:e2e": "dotenv -e .env.test -- prisma migrate reset --force --skip-seed && dotenv -e .env.test -- prisma db seed && dotenv -e .env.test -- nodemon",
     "lightning:payinvoice": "sudo docker compose exec -i --user lnd carol lncli -n regtest payinvoice",
