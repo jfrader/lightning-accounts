@@ -3,7 +3,7 @@ services:
     networks:
       lightningaccountsnet:
         ipv4_address: 10.29.0.11
-    image: postgres:16
+    image: postgres:16.16
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${NODE_DB_USER} -d ${NODE_DB_NAME}"]
       interval: 5s
