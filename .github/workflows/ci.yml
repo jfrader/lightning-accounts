@@ -127,4 +127,56 @@ jobs:
           "$PACKAGE" "$GITHUB_SHA" "${{ steps.build.outputs.digest }}"
           >> "$GITHUB_OUTPUT"
 
-# The transaction E2E suite provisions PostgreSQL plus Bitcoin/LND and remains in docker:test.
+  # The transaction E2E suite provisions PostgreSQL plus Bitcoin/LND and remains in docker:test.
+
+  deploy-production:
+    name: Deploy production
+    needs:
+      - security-audit
+      - unit-and-build
+      - production-docker-image
+    if: >-
+      success() &&
+      github.repository == 'jfrader/lightning-accounts' &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/master' &&
+      vars.PRODUCTION_AUTO_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    environment:
+      name: production
+      url: https://accounts.trucoshi.com
+    steps:
+      - name: Deploy exact commit to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID }}
+        run: |
+          set -euo pipefail
+          : "${RENDER_API_KEY:?missing RENDER_API_KEY secret}"
+          : "${RENDER_SERVICE_ID:?missing RENDER_SERVICE_ID variable}"
+          payload=$(printf '{"commitId":"%s","clearCache":"do_not_clear"}' "$GITHUB_SHA")
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
+            -o "$RUNNER_TEMP/deploy.json"
+          deploy_id=$(jq -r '.id' "$RUNNER_TEMP/deploy.json")
+          printf 'Triggered Render deploy %s for %s\n' "$deploy_id" "$GITHUB_SHA"
+          for _ in $(seq 1 90); do
+            status=$(curl --fail --silent --show-error \
+              -H "Authorization: Bearer $RENDER_API_KEY" \
+              "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys/$deploy_id" |
+              jq -r '.status')
+            case "$status" in
+              live) printf 'Deploy %s is live\n' "$deploy_id"; exit 0 ;;
+              build_failed|pre_deploy_failed|update_failed|canceled) printf 'Deploy %s failed: %s\n' "$deploy_id" "$status" >&2; exit 1 ;;
+            esac
+            sleep 10
+          done
+          printf 'Deploy %s did not reach live in time\n' "$deploy_id" >&2
+          exit 1
