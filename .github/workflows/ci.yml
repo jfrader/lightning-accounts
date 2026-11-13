@@ -139,7 +139,12 @@ jobs:
           IMAGE_REF: ${{ needs.build-testnet-image.outputs.image-ref }}
           REGISTRY_USER: ${{ github.actor }}
           RELEASE_SHA: ${{ github.sha }}
+          DEPLOY_TARGET: ${{ vars.TESTNET_DEPLOY_TARGET }}
+          DEPLOY_PORT: ${{ vars.TESTNET_DEPLOY_PORT }}
         run: |
+          set -euo pipefail
+          : "${DEPLOY_TARGET:?set the TESTNET_DEPLOY_TARGET repository variable to user@host}"
+          : "${DEPLOY_PORT:?set the TESTNET_DEPLOY_PORT repository variable}"
           umask 077
           printf '%s\n' "$DEPLOY_KEY" > "$RUNNER_TEMP/deploy_key"
           chmod 600 "$RUNNER_TEMP/deploy_key"
@@ -147,7 +152,7 @@ jobs:
             ssh -i "$RUNNER_TEMP/deploy_key" \
               -o StrictHostKeyChecking=accept-new \
               -o IdentitiesOnly=yes \
-              -p REDACTED_PORT REDACTED_HOST \
+              -p "$DEPLOY_PORT" "$DEPLOY_TARGET" \
               "$RELEASE_SHA $IMAGE_REF $REGISTRY_USER"
 
 # The transaction E2E suite provisions PostgreSQL plus Bitcoin/LND and remains in docker:test.
