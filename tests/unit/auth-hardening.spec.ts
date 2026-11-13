@@ -1,10 +1,13 @@
 import express from "express"
 import request from "supertest"
+import cookieParser from "cookie-parser"
 import { createHash } from "node:crypto"
 import { createRequest } from "node-mocks-http"
 import {
+  authAttemptLimiter,
   authLimiter,
   keyGenerator,
+  principalKeyGenerator,
   recipientLimiter,
   recipientKeyGenerator,
 } from "../../src/middlewares/rateLimiter"
@@ -13,23 +16,43 @@ import logger from "../../src/config/logger"
 import { getSeedCredentials } from "../../prisma/seed"
 
 describe("authentication request limits", () => {
-  it("uses IP rather than arbitrary access cookies", () => {
+  it("uses IP for unauthenticated buckets and the bearer cookie for authenticated ones", () => {
     const req = createRequest({ ip: "198.51.100.1", cookies: { access: "attacker-one" } })
     const key = keyGenerator(req)
     req.cookies.access = "attacker-two"
     expect(keyGenerator(req)).toBe(key)
     expect(key).toBe("198.51.100.1")
+    expect(principalKeyGenerator(req)).toBe("attacker-two")
   })
 
-  it("counts failed requests even when the cookie changes", async () => {
+  it("counts failed credential requests even when the cookie changes", async () => {
+    authAttemptLimiter.resetKey("127.0.0.1")
     const app = express()
-    app.post("/login", authLimiter, (_req, res) => {
+    app.post("/login", authAttemptLimiter, (_req, res) => {
       res.sendStatus(401)
     })
     for (let i = 0; i < 50; i++) {
       await request(app).post("/login").set("Cookie", `access=random-${i}`).expect(401)
     }
     await request(app).post("/login").set("Cookie", "access=new").expect(429)
+    authAttemptLimiter.resetKey("127.0.0.1")
+  })
+
+  it("keeps authenticated buckets per session so one NAT does not share a limit", async () => {
+    authLimiter.resetKey("session-one")
+    authLimiter.resetKey("session-two")
+    const app = express()
+    app.use(cookieParser())
+    app.get("/me", authLimiter, (_req, res) => {
+      res.sendStatus(204)
+    })
+    for (let i = 0; i < 50; i++) {
+      await request(app).get("/me").set("Cookie", "access=session-one").expect(204)
+    }
+    await request(app).get("/me").set("Cookie", "access=session-one").expect(429)
+    await request(app).get("/me").set("Cookie", "access=session-two").expect(204)
+    authLimiter.resetKey("session-one")
+    authLimiter.resetKey("session-two")
   })
 
   it("shares a normalized-recipient bucket across IPs and endpoints, including failures", async () => {

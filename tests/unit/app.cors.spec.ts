@@ -1,7 +1,7 @@
 import request from "supertest"
 import app from "../../src/app"
 import {
-  authLimiter,
+  authAttemptLimiter,
   AUTH_RATE_LIMIT,
   AUTH_RATE_LIMIT_WINDOW_MS,
 } from "../../src/middlewares/rateLimiter"
@@ -21,12 +21,12 @@ jest.mock("../../src/config/config", () => ({
 
 jest.mock("../../src/routes/v1", () => {
   const express = jest.requireActual<typeof import("express")>("express")
-  const { authLimiter } = jest.requireActual<typeof import("../../src/middlewares/rateLimiter")>(
-    "../../src/middlewares/rateLimiter"
-  )
+  const { authAttemptLimiter } = jest.requireActual<
+    typeof import("../../src/middlewares/rateLimiter")
+  >("../../src/middlewares/rateLimiter")
   return {
     __esModule: true,
-    default: express.Router().get("/auth/profile", authLimiter, (_req, res) => {
+    default: express.Router().get("/auth/profile", authAttemptLimiter, (_req, res) => {
       res.sendStatus(204)
     }),
   }
@@ -39,11 +39,11 @@ describe("app CORS rate-limit headers", () => {
   const cookie = `${getCookieName(JwtCookie.access)}=cors-rate-limit-test`
 
   beforeEach(() => {
-    authLimiter.resetKey(limiterKey)
+    authAttemptLimiter.resetKey(limiterKey)
   })
 
   afterAll(() => {
-    authLimiter.resetKey(limiterKey)
+    authAttemptLimiter.resetKey(limiterKey)
   })
 
   const exhaustLimit = async () => {

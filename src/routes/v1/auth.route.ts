@@ -6,9 +6,25 @@ import { authController } from "../../controllers"
 import auth from "../../middlewares/auth"
 import passport from "passport"
 import { AuthenticateOptions } from "passport"
-import { recipientLimiter } from "../../middlewares/rateLimiter"
+import { authAttemptLimiter, recipientLimiter } from "../../middlewares/rateLimiter"
 
 const router = express.Router()
+router.post(
+  [
+    "/register",
+    "/login",
+    "/login-nostr",
+    "/register-seed",
+    "/login-seed",
+    "/magic-link/register",
+    "/magic-link/login",
+    "/magic-link/consume",
+    "/forgot-password",
+    "/reset-password",
+    "/verify-email",
+  ],
+  authAttemptLimiter
+)
 router.post(
   ["/register", "/magic-link/register", "/magic-link/login", "/login", "/forgot-password"],
   recipientLimiter
