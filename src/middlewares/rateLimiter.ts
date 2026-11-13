@@ -1,7 +1,7 @@
 import rateLimit, { ipKeyGenerator, Options } from "express-rate-limit"
 import { Request } from "express"
 import { createHash } from "node:crypto"
-import { cookieExtractor } from "../utils/authCookie"
+import { cookieExtractor, getCookieName } from "../utils/authCookie"
 import { JwtCookie } from "../types"
 
 const normalizeIp = (ip: string): string => (ip.startsWith("::ffff:") ? ip.slice(7) : ip)
@@ -19,12 +19,12 @@ export const keyGenerator = (req: Request): string => ipKeyGenerator(getClientIp
  * use keyGenerator and the credential limiters below.
  */
 export const principalKeyGenerator = (req: Request): string => {
-  const accessCookie = cookieExtractor(req, JwtCookie.access)
+  const accessCookie = cookieExtractor(req, getCookieName(JwtCookie.access))
   if (accessCookie) {
     return accessCookie
   }
 
-  const refreshCookie = cookieExtractor(req, JwtCookie.refresh)
+  const refreshCookie = cookieExtractor(req, getCookieName(JwtCookie.refresh))
   if (refreshCookie) {
     return refreshCookie
   }
