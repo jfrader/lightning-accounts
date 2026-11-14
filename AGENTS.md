@@ -7,4 +7,4 @@
 - Before moving packages between `dependencies` and `devDependencies`, check whether `yarn build` inside `Dockerfile.prod` needs them.
 - Behind nginx, set `NODE_TRUSTED_PROXY_IP` to the proxy IP or CIDR so `req.ip` and rate limiting work correctly.
 - Run `yarn audit --groups dependencies` for production-relevant security checks. Critical and high findings on production dependencies block a release; moderate and low findings do not. CI and npm publishing parse the JSON advisories to enforce this rule and fail closed if the audit cannot be verified. Yarn Classic's raw exit code fails on any severity and is not the release gate.
-- Testnet images publish to the private `ghcr.io/jfrader/la-testnet` package. GitHub cannot make a public container package private again, so verify a package is private before publishing to it.
+- Testnet images are built and deployed by the private `jfrader/lightning-accounts-testnet` repository. Do not publish testnet images from this public repository; GitHub links the package to the publishing repository and cannot make a public container package private again.

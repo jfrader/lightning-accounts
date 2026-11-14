@@ -70,8 +70,10 @@ jobs:
           WALLET_ENABLED: "0"
       - run: yarn build
 
-  build-testnet-image:
-    name: Build exact testnet image
+  # The image is built in the private jfrader/lightning-accounts-testnet repo
+  # so the package is not linked to this public repository.
+  dispatch-testnet-image:
+    name: Dispatch private testnet image
     needs:
       - development-docker-image
       - production-docker-image
@@ -84,90 +86,41 @@ jobs:
       github.ref == 'refs/heads/testnet' &&
       vars.TESTNET_AUTO_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     permissions:
       contents: read
-      packages: write
-    env:
-      # The old lightning-accounts-testnet package is public and GitHub cannot
-      # make a public package private again. Keep testnet images private here.
-      PACKAGE: ghcr.io/jfrader/la-testnet
-    outputs:
-      image-ref: ${{ steps.image-ref.outputs.value }}
+    concurrency:
+      group: testnet-dispatch
+      cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and publish exact testnet image
-        id: build
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
-        with:
-          context: .
-          file: Dockerfile.prod
-          push: true
-          platforms: linux/amd64
-          tags: ${{ env.PACKAGE }}:${{ github.sha }}
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-          cache-from: type=gha,scope=la-testnet
-          cache-to: type=gha,mode=max,scope=la-testnet
-
-      - name: Export immutable image reference
-        id: image-ref
-        run: >-
-          printf 'value=%s:%s@%s\n'
-          "$PACKAGE" "$GITHUB_SHA" "${{ steps.build.outputs.digest }}"
-          >> "$GITHUB_OUTPUT"
-
-  deploy-testnet:
-    name: Deploy testnet
-    needs: build-testnet-image
-    if: >-
-      success() &&
-      github.repository == 'jfrader/lightning-accounts' &&
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/testnet' &&
-      vars.TESTNET_AUTO_DEPLOY_ENABLED == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-      packages: read
-    environment:
-      name: testnet
-      url: https://accounts.testnet.trucoshi.com
-    steps:
-      - name: Deploy exact testnet image to testnet
+      - name: Trigger the private testnet workflow
         env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          IMAGE_REF: ${{ needs.build-testnet-image.outputs.image-ref }}
-          REGISTRY_USER: ${{ github.actor }}
+          DISPATCH_KEY: ${{ secrets.TESTNET_DISPATCH_KEY }}
           RELEASE_SHA: ${{ github.sha }}
-          DEPLOY_TARGET: ${{ vars.TESTNET_DEPLOY_TARGET }}
-          DEPLOY_PORT: ${{ vars.TESTNET_DEPLOY_PORT }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_TARGET:?set the TESTNET_DEPLOY_TARGET repository variable to user@host}"
-          : "${DEPLOY_PORT:?set the TESTNET_DEPLOY_PORT repository variable}"
+          : "${DISPATCH_KEY:?missing TESTNET_DISPATCH_KEY secret}"
+          latest="$(git ls-remote https://github.com/jfrader/lightning-accounts.git refs/heads/testnet | cut -f1)"
+          if [[ "$latest" != "$RELEASE_SHA" ]]; then
+            printf 'Skipping %s: testnet is at %s\n' "$RELEASE_SHA" "$latest"
+            exit 0
+          fi
           umask 077
-          printf '%s\n' "$DEPLOY_KEY" > "$RUNNER_TEMP/deploy_key"
-          chmod 600 "$RUNNER_TEMP/deploy_key"
-          printf '%s\n' "$GHCR_TOKEN" |
-            ssh -i "$RUNNER_TEMP/deploy_key" \
-              -o StrictHostKeyChecking=accept-new \
-              -o IdentitiesOnly=yes \
-              -p "$DEPLOY_PORT" "$DEPLOY_TARGET" \
-              "$RELEASE_SHA $IMAGE_REF $REGISTRY_USER"
+          printf '%s\n' "$DISPATCH_KEY" > "$RUNNER_TEMP/dispatch_key"
+          chmod 600 "$RUNNER_TEMP/dispatch_key"
+          export GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/dispatch_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          git clone --depth=1 git@github.com:jfrader/lightning-accounts-testnet.git "$RUNNER_TEMP/dispatch"
+          cd "$RUNNER_TEMP/dispatch"
+          printf '%s\n' "$RELEASE_SHA" > release-sha
+          git add release-sha
+          if git diff --cached --quiet; then
+            printf 'release-sha is already at %s\n' "$RELEASE_SHA"
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "testnet ${RELEASE_SHA}"
+          git push origin HEAD:master
+          printf 'Dispatched testnet image build for %s\n' "$RELEASE_SHA"
 
 # The transaction E2E suite provisions PostgreSQL plus Bitcoin/LND and remains in docker:test.
