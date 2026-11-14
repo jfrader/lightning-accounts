@@ -89,23 +89,38 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
+    concurrency:
+      group: testnet-dispatch
+      cancel-in-progress: false
     steps:
       - name: Trigger the private testnet workflow
         env:
-          DISPATCH_TOKEN: ${{ secrets.TESTNET_DISPATCH_TOKEN }}
+          DISPATCH_KEY: ${{ secrets.TESTNET_DISPATCH_KEY }}
           RELEASE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          : "${DISPATCH_TOKEN:?missing TESTNET_DISPATCH_TOKEN secret}"
-          payload=$(jq -cn --arg sha "$RELEASE_SHA" \
-            '{event_type:"testnet-image",client_payload:{sha:$sha}}')
-          curl --fail --silent --show-error \
-            -X POST \
-            -H "Authorization: Bearer $DISPATCH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            -d "$payload" \
-            "https://api.github.com/repos/jfrader/lightning-accounts-testnet/dispatches"
+          : "${DISPATCH_KEY:?missing TESTNET_DISPATCH_KEY secret}"
+          latest="$(git ls-remote https://github.com/jfrader/lightning-accounts.git refs/heads/testnet | cut -f1)"
+          if [[ "$latest" != "$RELEASE_SHA" ]]; then
+            printf 'Skipping %s: testnet is at %s\n' "$RELEASE_SHA" "$latest"
+            exit 0
+          fi
+          umask 077
+          printf '%s\n' "$DISPATCH_KEY" > "$RUNNER_TEMP/dispatch_key"
+          chmod 600 "$RUNNER_TEMP/dispatch_key"
+          export GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/dispatch_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          git clone --depth=1 git@github.com:jfrader/lightning-accounts-testnet.git "$RUNNER_TEMP/dispatch"
+          cd "$RUNNER_TEMP/dispatch"
+          printf '%s\n' "$RELEASE_SHA" > release-sha
+          git add release-sha
+          if git diff --cached --quiet; then
+            printf 'release-sha is already at %s\n' "$RELEASE_SHA"
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "testnet ${RELEASE_SHA}"
+          git push origin HEAD:master
           printf 'Dispatched testnet image build for %s\n' "$RELEASE_SHA"
 
 # The transaction E2E suite provisions PostgreSQL plus Bitcoin/LND and remains in docker:test.
