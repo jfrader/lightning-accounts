@@ -89,7 +89,9 @@ jobs:
       contents: read
       packages: write
     env:
-      PACKAGE: ghcr.io/jfrader/lightning-accounts-testnet
+      # The old lightning-accounts-testnet package is public and GitHub cannot
+      # make a public package private again. Keep testnet images private here.
+      PACKAGE: ghcr.io/jfrader/la-testnet
     outputs:
       image-ref: ${{ steps.image-ref.outputs.value }}
     steps:
