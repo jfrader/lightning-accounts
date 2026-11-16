@@ -108,7 +108,7 @@ jobs:
             -d "$payload" \
             "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
             -o "$RUNNER_TEMP/deploy.json"
-          deploy_id=$(jq -r '.id // .deploy.id // (if type == "array" then (.[0].id // empty) else empty end)' "$RUNNER_TEMP/deploy.json")
+          deploy_id=$(jq -r 'if type == "array" then (.[0] | .id // .deploy.id // empty) else (.id // .deploy.id // empty) end' "$RUNNER_TEMP/deploy.json")
           : "${deploy_id:?Render deploy response did not include a deploy id}"
           printf 'Triggered Render deploy %s for %s\n' "$deploy_id" "$GITHUB_SHA"
           for _ in $(seq 1 90); do
